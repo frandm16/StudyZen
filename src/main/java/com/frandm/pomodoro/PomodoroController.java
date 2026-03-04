@@ -5,7 +5,6 @@ import atlantafx.base.theme.PrimerDark;
 import atlantafx.base.theme.PrimerLight;
 import javafx.application.Application;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
 import javafx.scene.chart.*;
 import javafx.collections.ObservableList;
 import javafx.animation.FadeTransition;
@@ -26,12 +25,13 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.media.AudioClip;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
+import me.xdrop.fuzzywuzzy.model.ExtractedResult;
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 //endregion
 
 public class PomodoroController {
@@ -84,21 +84,20 @@ public class PomodoroController {
 
     //region Variables
     private final PomodoroEngine engine = new PomodoroEngine();
-
+    private StatsDashboard statsDashboard;
     private boolean isSettingsOpen = false;
     private boolean isSetupOpen = false;
-
-    private StatsDashboard statsDashboard;
-
-    private TranslateTransition settingsAnim;
-    private TranslateTransition setupAnim;
-
-    private String selectedTag = null;
-    private String selectedTask = null;
-    private static final String DEFAULT_TAG = "";
-    private final ObservableList<String> subjectsList = FXCollections.observableArrayList();
-    private final ObservableList<String> tasksList = FXCollections.observableArrayList();
     private boolean isDarkMode = true;
+    private TranslateTransition settingsAnim;
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    private String selectedTag = "TestTag";
+    private String selectedTask = "TestTask";
+    private Map<String, List<String>> tagsWithTasksMap = new HashMap<>();
+    private Map<String, String> tagColors = new HashMap<>();
+    private ContextMenu fuzzyMenu = new ContextMenu();
+
     //endregion
 
     //region Initializer
@@ -107,6 +106,8 @@ public class PomodoroController {
         DatabaseHandler.initializeDatabase();
         //DatabaseHandler.generateRandomPomodoros();
         ConfigManager.load(engine);
+        refreshDatabaseData();
+
 
         if (isDarkMode) {
             Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
@@ -119,11 +120,11 @@ public class PomodoroController {
         }
 
         //region config de la tabla
-        colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
-        colSubject.setCellValueFactory(new PropertyValueFactory<>("subject"));
-        colTopic.setCellValueFactory(new PropertyValueFactory<>("topic"));
+        colDate.setCellValueFactory(new PropertyValueFactory<>("startDate"));
+        colSubject.setCellValueFactory(new PropertyValueFactory<>("tag"));
+        colTopic.setCellValueFactory(new PropertyValueFactory<>("task"));
         colDescription.setCellValueFactory(new PropertyValueFactory<>("description"));
-        colDuration.setCellValueFactory(new PropertyValueFactory<>("duration"));
+        colDuration.setCellValueFactory(new PropertyValueFactory<>("totalMinutes"));
 
         //endregion
 
@@ -137,8 +138,6 @@ public class PomodoroController {
         //endregion
 
         //region setup panel
-        subjectsList.addAll("Programación", "Matemáticas");
-        tasksList.addAll("UI FXML", "Ejercicios");
 
         selectTagButton.setOnAction(event -> {
             if (selectTagButton.getItems().isEmpty()) {
@@ -193,6 +192,38 @@ public class PomodoroController {
         updateUIFromEngine();
     }
     //endregion
+
+    private void refreshDatabaseData() {
+        this.tagsWithTasksMap = DatabaseHandler.getTagsWithTasksMap();
+        this.tagColors = DatabaseHandler.getTagColors();
+    }
+
+    private void setupFuzzyLogic() {
+        newTaskField.textProperty().addListener((obs, old, val) -> {
+            if (val == null || val.isEmpty()) { fuzzyMenu.hide(); return; }
+            showFuzzySuggestions(val);
+        });
+    }
+
+    private void showFuzzySuggestions(String input) {
+        fuzzyMenu.getItems().clear();
+        MenuItem createItem = new MenuItem("+ Crear: " + input);
+        createItem.setOnAction(e -> newTaskField.setText(input));
+        fuzzyMenu.getItems().add(createItem);
+        fuzzyMenu.getItems().add(new SeparatorMenuItem());
+
+        List<String> currentTasks = tagsWithTasksMap.getOrDefault(newSubjectField.getText(), new ArrayList<>());
+        List<ExtractedResult> results = FuzzySearch.extractTop(input, currentTasks, 3);
+
+        for (ExtractedResult res : results) {
+            if (res.getScore() > 50) {
+                MenuItem item = new MenuItem(res.getString());
+                item.setOnAction(e -> newTaskField.setText(res.getString()));
+                fuzzyMenu.getItems().add(item);
+            }
+        }
+        if (!fuzzyMenu.isShowing()) fuzzyMenu.show(newTaskField, javafx.geometry.Side.BOTTOM, 0, 0);
+    }
 
     //region Setup Helpers
     private void setupSlider(Slider slider, Label label, int initialValue, java.util.function.Consumer<Integer> updateAction, String text) {
@@ -292,22 +323,18 @@ public class PomodoroController {
     }
     @FXML
     private void handleFinish() {
-        String tagToSave = (selectedTag == null) ? DEFAULT_TAG : selectedTag;
-        String taskToSave = (selectedTask == null) ? null : selectedTask;
-        int minutes = engine.getRealMinutesElapsed();
-        if(minutes > 1) {
-            DatabaseHandler.saveSession(tagToSave, taskToSave, null, minutes);
+        int mins = engine.getRealMinutesElapsed();
+        if (mins >= 1) {
+            String tag = newSubjectField.getText().isEmpty() ? "General" : newSubjectField.getText();
+            String task = newTaskField.getText().isEmpty() ? "Estudio" : newTaskField.getText();
+            int taskId = DatabaseHandler.getOrCreateTask(tag, tagColors.getOrDefault(tag, "#3498db"), task);
+            java.time.LocalDateTime now = LocalDateTime.now();
+            java.time.LocalDateTime start = LocalDateTime.now().minusMinutes(mins);
+            DatabaseHandler.saveSession(taskId, "Pomodoro", "", mins, start, now);
+            refreshDatabaseData();
         }
-
-
         engine.fullReset();
         engine.stop();
-        engine.resetTimeForState(PomodoroEngine.State.MENU);
-
-        //this.selectedSubject = null;
-        //selectedSubjectLabel.setVisible(false);
-        //selectedSubjectLabel.setManaged(false);
-
         updateUIFromEngine();
     }
     @FXML
@@ -463,11 +490,6 @@ public class PomodoroController {
     //endregion
 
     //region Stats Logic
-    private final DateTimeFormatter DATE_FORMATTER = new DateTimeFormatterBuilder()
-            .appendPattern("yyyy-MM-dd")
-            .appendPattern(" HH:mm:ss")
-            .toFormatter();
-
     private void updateStatsCards(ObservableList<Session> sessions) {
         if (sessions == null) return;
         java.time.LocalDate today = java.time.LocalDate.now();
@@ -487,10 +509,10 @@ public class PomodoroController {
 
         double minsLastMonth = sessions.stream()
                 .filter(s -> {
-                    LocalDate d = LocalDate.parse(s.getDate(), DATE_FORMATTER);
+                    LocalDate d = LocalDate.parse(s.getStartDate(), DATE_FORMATTER);
                     return !d.isBefore(firstDayLastMonth) && !d.isAfter(lastDayLastMonth);
                 })
-                .mapToDouble(Session::getDuration)
+                .mapToDouble(Session::getTotalMinutes)
                 .sum();
         timeLastMonthLabel.setText(String.format("%.1fh", minsLastMonth / 60));
     }
@@ -499,10 +521,10 @@ public class PomodoroController {
         java.time.LocalDate startOfWeek = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
         double minsThisWeek = sessions.stream()
                 .filter(s -> {
-                    LocalDate d = LocalDate.parse(s.getDate(), DATE_FORMATTER);
+                    LocalDate d = LocalDate.parse(s.getStartDate(), DATE_FORMATTER);
                     return !d.isBefore(startOfWeek);
                 })
-                .mapToDouble(Session::getDuration)
+                .mapToDouble(Session::getTotalMinutes)
                 .sum();
         timeThisWeekLabel.setText(String.format("%.1fh", minsThisWeek / 60));
     }
@@ -515,8 +537,8 @@ public class PomodoroController {
 
         String bestDay = sessions.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
-                        s -> java.time.LocalDate.parse(s.getDate(), DATE_FORMATTER).getDayOfWeek(),
-                        java.util.stream.Collectors.summingInt(Session::getDuration)
+                        s -> java.time.LocalDate.parse(s.getStartDate(), DATE_FORMATTER).getDayOfWeek(),
+                        java.util.stream.Collectors.summingInt(Session::getTotalMinutes)
                 ))
                 .entrySet().stream()
                 .max(Comparator.comparingInt(Map.Entry::getValue))
@@ -533,7 +555,7 @@ public class PomodoroController {
 
     private void calculateStreak(ObservableList<Session> sessions) {
         java.util.Set<java.time.LocalDate> dates = sessions.stream()
-                .map(s -> java.time.LocalDate.parse(s.getDate(), DATE_FORMATTER))
+                .map(s -> java.time.LocalDate.parse(s.getStartDate(), DATE_FORMATTER))
                 .collect(java.util.stream.Collectors.toSet());
 
         int streak = 0;
@@ -544,11 +566,9 @@ public class PomodoroController {
             streak++;
             check = check.minusDays(1);
         }
-        if(streak>0){
-            streakVBox.getStyleClass().add("stat-cardred");
-        } else {
-            streakVBox.getStyleClass().add("stat-cardbasic");
-        }
+        streakVBox.getStyleClass().removeAll("stat-cardred", "stat-cardbasic");
+        streakVBox.getStyleClass().add(streak > 0 ? "stat-cardred" : "stat-cardbasic");
+
         streakImage.setVisible(streak>0);
         streakImage.setManaged(streak>0);
         streakLabel.setText(streak + " Days");
@@ -562,8 +582,8 @@ public class PomodoroController {
 
         java.util.Map<String, Integer> timeBySubject = sessions.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
-                        Session::getSubject,
-                        java.util.stream.Collectors.summingInt(Session::getDuration)
+                        Session::getTag,
+                        java.util.stream.Collectors.summingInt(Session::getTotalMinutes)
                 ));
 
         javafx.collections.ObservableList<PieChart.Data> pieData = javafx.collections.FXCollections.observableArrayList();
@@ -609,10 +629,10 @@ public class PomodoroController {
 
             double totalMins = sessions.stream()
                     .filter(s -> {
-                        LocalDate d = LocalDate.parse(s.getDate(), DATE_FORMATTER);
+                        LocalDate d = LocalDate.parse(s.getStartDate(), DATE_FORMATTER);
                         return !d.isBefore(startOfWeek) && !d.isAfter(endOfWeek);
                     })
-                    .mapToDouble(Session::getDuration)
+                    .mapToDouble(Session::getTotalMinutes)
                     .sum();
 
             String label = startOfWeek.format(labelFormatter);
@@ -670,33 +690,7 @@ public class PomodoroController {
     }
 
     //region Setup Handlers
-    @FXML
-    private void handleApplySetup() {
-        String tagSelected = selectTagButton.getText();
-        String taskSelected = taskListView.getSelectionModel().getSelectedItem();
-        if (tagSelected == null) return;
 
-        this.selectedTag = tagSelected;
-        this.selectedTask = taskSelected;
-        toggleSetup();
-        updateUIFromEngine();
-    }
-    @FXML
-    private void handleAddSubject() {
-        String newSub = newSubjectField.getText().trim();
-        if (!newSub.isEmpty()) {
-            subjectsList.add(newSub);
-            newSubjectField.clear();
-        }
-    }
-    @FXML
-    private void handleAddTask() {
-        String newTask = newTaskField.getText().trim();
-        if (!newTask.isEmpty()) {
-            tasksList.add(newTask);
-            newTaskField.clear();
-        }
-    }
     @FXML
     private void toggleSetup() {
 

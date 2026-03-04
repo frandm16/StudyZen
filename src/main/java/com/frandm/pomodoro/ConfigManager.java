@@ -5,7 +5,7 @@ import java.util.Properties;
 
 public class ConfigManager {
 
-    private static final String FOLDER_NAME = ".pomodoro_app";
+    private static final String FOLDER_NAME = ".StudyTracker";
     private static final String FILE_NAME = "settings.properties";
 
     private static File getConfigFile() {

@@ -5,11 +5,17 @@ import javafx.collections.ObservableList;
 import java.io.File;
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DatabaseHandler {
     private static final String FOLDER_NAME = ".StudyTracker";
     private static final String DB_NAME = "StudyTrackerDatabase.db";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static String getDatabaseUrl() {
         String userHome = System.getProperty("user.home");
@@ -27,47 +33,154 @@ public class DatabaseHandler {
     }
 
     public static void initializeDatabase() {
-        String sqlSessions = "CREATE TABLE IF NOT EXISTS sessions (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "subject TEXT NOT NULL, " +
-                "topic TEXT, " +
-                "description TEXT, " +
-                "duration_minutes INTEGER NOT NULL, " +
-                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)";
-
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
              Statement stmt = conn.createStatement()) {
-            stmt.execute(sqlSessions);
-            System.out.println("[DEBUG] Database initialized correctly");
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS tags (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "name TEXT NOT NULL UNIQUE, " +
+                    "color TEXT DEFAULT '#3498db')");
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS tasks (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "tag_id INTEGER NOT NULL, " +
+                    "name TEXT NOT NULL, " +
+                    "FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE, " +
+                    "UNIQUE(tag_id, name))");
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS sessions (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "task_id INTEGER NOT NULL, " +
+                    "title TEXT, " +
+                    "description TEXT, " +
+                    "total_minutes INTEGER NOT NULL, " +
+                    "start_date DATETIME, " +
+                    "end_date DATETIME, " +
+                    "FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE)");
+
         } catch (SQLException e) {
-            System.err.println("Error initializing database: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    public static void saveSession(String subject, String topic, String description, int minutes) {
-        if(minutes>=0){
-            String sql = "INSERT INTO sessions(subject, topic, description, duration_minutes) VALUES(?, ?, ?, ?)";
+    public static void saveSession(int taskId, String title, String desc, int mins, LocalDateTime start, LocalDateTime end) {
+
+        String sql = "INSERT INTO sessions(task_id, title, description, total_minutes, start_date, end_date) VALUES(?, ?, ?, ?, ?, ?)";
 
             try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-                 PreparedStatement test = conn.prepareStatement(sql)) {
+                 PreparedStatement pst = conn.prepareStatement(sql)) {
 
-                test.setString(1, subject);
-                test.setString(2, topic);
-                test.setString(3, description);
-                test.setInt(4, minutes);
-
-                test.executeUpdate();
-                System.out.println("[DEBUG] Session saved: " + subject + " - " + topic + " - " + description + " - " + minutes + " min");
-
+                pst.setInt(1, taskId);
+                pst.setString(2, title);
+                pst.setString(3, desc);
+                pst.setInt(4, mins);
+                pst.setString(5, start.format(DATE_FORMATTER));
+                pst.setString(6, end.format(DATE_FORMATTER));
+                pst.executeUpdate();
             } catch (SQLException e) {
                 System.err.println("Error saving session: " + e.getMessage());
             }
+
+    }
+
+    public static int getOrCreateTask(String tagName, String tagColor, String taskName) {
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl())) {
+            int tagId = -1;
+            String sqlTag = "INSERT OR IGNORE INTO tags(name, color) VALUES(?, ?)";
+            try (PreparedStatement pst = conn.prepareStatement(sqlTag)) {
+                pst.setString(1, tagName);
+                pst.setString(2, tagColor);
+                pst.executeUpdate();
+            }
+
+            String sqlGetTag = "SELECT id FROM tags WHERE name = ?";
+            try (PreparedStatement pst = conn.prepareStatement(sqlGetTag)) {
+                pst.setString(1, tagName);
+                ResultSet rs = pst.executeQuery();
+                if (rs.next()) tagId = rs.getInt(1);
+            }
+
+            String sqlTask = "INSERT OR IGNORE INTO tasks(tag_id, name) VALUES(?, ?)";
+            try (PreparedStatement pst = conn.prepareStatement(sqlTask)) {
+                pst.setInt(1, tagId);
+                pst.setString(2, taskName);
+                pst.executeUpdate();
+            }
+
+            String sqlGetTask = "SELECT id FROM tasks WHERE tag_id = ? AND name = ?";
+            try (PreparedStatement pst = conn.prepareStatement(sqlGetTask)) {
+                pst.setInt(1, tagId);
+                pst.setString(2, taskName);
+                ResultSet rs = pst.executeQuery();
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public static Map<String, List<String>> getTagsWithTasksMap() {
+        Map<String, List<String>> map = new HashMap<>();
+        String sql = "SELECT tg.name as tag_name, t.name as task_name FROM tasks t JOIN tags tg ON t.tag_id = tg.id";
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                map.computeIfAbsent(rs.getString("tag_name"), k -> new ArrayList<>()).add(rs.getString("task_name"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
+    public static Map<String, String> getTagColors() {
+        Map<String, String> colors = new HashMap<>();
+        String sql = "SELECT name, color FROM tags";
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                colors.put(rs.getString("name"), rs.getString("color"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return colors;
+    }
+
+    public static void renameTag(String oldName, String newName) {
+        String sql = "UPDATE tags SET name = ? WHERE name = ?";
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setString(1, newName);
+            pst.setString(2, oldName);
+            pst.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void updateTagColor(String tagName, String newColor) {
+        String sql = "UPDATE tags SET color = ? WHERE name = ?";
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setString(1, newColor);
+            pst.setString(2, tagName);
+            pst.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
     public static ObservableList<Session> getAllSessions() {
         ObservableList<Session> sessions = FXCollections.observableArrayList();
-        String sql = "SELECT id, subject, topic, description, duration_minutes, timestamp FROM sessions ORDER BY timestamp DESC";
+        String sql = "SELECT s.id, tg.name as tag, tg.color as color, t.name as task, s.title, s.description, s.total_minutes, s.start_date " +
+                "FROM sessions s " +
+                "JOIN tasks t ON s.task_id = t.id " +
+                "JOIN tags tg ON t.tag_id = tg.id " +
+                "ORDER BY s.start_date DESC";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
              Statement stmt = conn.createStatement();
@@ -76,12 +189,13 @@ public class DatabaseHandler {
             while (rs.next()) {
                 sessions.add(new Session(
                         rs.getInt("id"),
-                        rs.getString("timestamp"),
-                        rs.getString("timestamp"),
-                        rs.getString("subject"),
-                        rs.getString("topic"),
+                        rs.getString("tag"),
+                        rs.getString("color"),
+                        rs.getString("task"),
+                        rs.getString("title"),
                         rs.getString("description"),
-                        rs.getInt("duration_minutes")
+                        rs.getInt("total_minutes"),
+                        rs.getString("start_date")
                 ));
             }
         } catch (SQLException e) {
@@ -92,9 +206,9 @@ public class DatabaseHandler {
 
     public static java.util.Map<java.time.LocalDate, Integer> getMinutesPerDayLastYear() {
         java.util.Map<java.time.LocalDate, Integer> data = new java.util.HashMap<>();
-        String sql = "SELECT date(timestamp) as day, SUM(duration_minutes) as total " +
+        String sql = "SELECT date(start_date) as day, SUM(total_minutes) as total " +
                 "FROM sessions " +
-                "WHERE timestamp >= date('now', '-1 year') " +
+                "WHERE start_date >= date('now', '-1 year') " +
                 "GROUP BY day";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
@@ -102,7 +216,10 @@ public class DatabaseHandler {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                data.put(java.time.LocalDate.parse(rs.getString("day")), rs.getInt("total"));
+                String dayStr = rs.getString("day");
+                if (dayStr != null) {
+                    data.put(java.time.LocalDate.parse(dayStr), rs.getInt("total"));
+                }
             }
         } catch (SQLException e) {
             System.err.println("Error loading heatmap: " + e.getMessage());
@@ -111,91 +228,63 @@ public class DatabaseHandler {
     }
 
     public static void generateRandomPomodoros() {
-        String sqlSession = "INSERT INTO sessions(subject, topic, description, duration_minutes, timestamp) VALUES(?, ?, ?, ?, ?)";
-        String sqlEvent = "INSERT INTO session_events(session_id, event_timestamp, event_type) VALUES(?, ?, ?)";
+        java.util.Random random = new java.util.Random();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        String[] tags = {"test1", "test2", "test3", "tes4"};
+        String[] colors = {"#e74c3c", "#3498db", "#f1c40f", "#2ecc71"};
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl())) {
             conn.setAutoCommit(false);
 
-            try (PreparedStatement psSession = conn.prepareStatement(sqlSession, Statement.RETURN_GENERATED_KEYS);
-                 PreparedStatement psEvent = conn.prepareStatement(sqlEvent)) {
+            for (int i = 0; i < 365; i++) {
+                java.time.LocalDate date = today.minusDays(i);
 
-                java.util.Random random = new java.util.Random();
-                java.time.LocalDate today = java.time.LocalDate.now();
-                String[] subjects = {"Programación", "Matemáticas", "Diseño", "Inglés"};
+                if (random.nextDouble() < 0.65) {
+                    java.time.LocalDateTime currentTime = date.atTime(8, 0);
+                    int sessionsToday = random.nextInt(5) + 1;
 
-                for (int i = 0; i < 365; i++) {
-                    java.time.LocalDate date = today.minusDays(i);
+                    for (int s = 0; s < sessionsToday; s++) {
+                        int tagIndex = random.nextInt(tags.length);
+                        String tagName = tags[tagIndex];
+                        String tagColor = colors[tagIndex];
+                        String taskName = "taskTest " + (random.nextInt(3) + 1);
 
-                    if (random.nextDouble() < 0.65) {
+                        int taskId = getOrCreateTask(tagName, tagColor, taskName);
 
-                        java.time.LocalDateTime currentTime = date.atTime(6, 0);
-                        int sessionsToday = random.nextInt(4) + 1;
+                        int duration = 25 + random.nextInt(35);
+                        java.time.LocalDateTime start = currentTime;
+                        java.time.LocalDateTime end = start.plusMinutes(duration);
 
-                        for (int s = 0; s < sessionsToday; s++) {
-                            String subject = subjects[random.nextInt(subjects.length)];
+                        saveSession(
+                                taskId,
+                                "Sesión de prueba",
+                                "Generado automáticamente",
+                                duration,
+                                start,
+                                end
+                        );
 
-                            int duration = 40 + random.nextInt(51);
-
-                            java.time.LocalDateTime sessionStart = currentTime;
-                            java.time.LocalDateTime sessionEnd = sessionStart.plusMinutes(duration);
-
-                            psSession.setString(1, subject);
-                            psSession.setString(2, "Tema " + (i+s));
-                            psSession.setString(3, "Generado automáticamente");
-                            psSession.setInt(4, duration);
-                            psSession.setString(5, sessionStart.toString());
-                            psSession.executeUpdate();
-
-                            ResultSet rs = psSession.getGeneratedKeys();
-                            int sessionId = -1;
-                            if (rs.next()) {
-                                sessionId = rs.getInt(1);
-                            }
-
-                            psEvent.setInt(1, sessionId);
-
-                            psEvent.setString(2, sessionStart.toString());
-                            psEvent.setString(3, "started");
-                            psEvent.addBatch();
-
-                            if (random.nextDouble() < 0.4) {
-                                java.time.LocalDateTime pauseTime = sessionStart.plusMinutes(duration / 2);
-                                java.time.LocalDateTime resumeTime = pauseTime.plusMinutes(5);
-
-                                psEvent.setString(2, pauseTime.toString());
-                                psEvent.setString(3, "paused");
-                                psEvent.addBatch();
-
-                                psEvent.setString(2, resumeTime.toString());
-                                psEvent.setString(3, "resumed");
-                                psEvent.addBatch();
-                            }
-
-                            psEvent.setString(2, sessionEnd.toString());
-                            psEvent.setString(3, "finalized");
-                            currentTime = sessionEnd.plusMinutes(15);
-
-                            if (currentTime.getHour() >= 22) break;
-                        }
+                        currentTime = end.plusMinutes(15);
+                        if (currentTime.getHour() >= 21) break;
                     }
                 }
-                psEvent.executeBatch();
-                conn.commit();
-                System.out.println("[DEBUG] 365 días de datos generados secuencialmente.");
-
-            } catch (SQLException e) {
-                conn.rollback();
-                System.err.println("Error: " + e.getMessage());
             }
+            conn.commit();
+            System.out.println("[DEBUG] datos aleatorios generados");
         } catch (SQLException e) {
-            System.err.println("Error conexión: " + e.getMessage());
+            System.err.println("Error generando datos: " + e.getMessage());
         }
     }
 
     public static List<Session> getSessionsByDate(LocalDate date) {
         List<Session> sessions = new java.util.ArrayList<>();
-        String sql = "SELECT * FROM sessions WHERE date(timestamp) = ? ORDER BY timestamp ASC";
+        String sql = "SELECT s.id, tg.name as tag, tg.color as tagColor, t.name as task, " +
+                "s.title, s.description, s.total_minutes, s.start_date " +
+                "FROM sessions s " +
+                "JOIN tasks t ON s.task_id = t.id " +
+                "JOIN tags tg ON t.tag_id = tg.id " +
+                "WHERE date(s.start_date) = ? " +
+                "ORDER BY s.start_date ASC";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -206,16 +295,17 @@ public class DatabaseHandler {
             while (rs.next()) {
                 sessions.add(new Session(
                         rs.getInt("id"),
-                        rs.getString("timestamp"),
-                        rs.getString("timestamp"),
-                        rs.getString("subject"),
-                        rs.getString("topic"),
+                        rs.getString("tag"),
+                        rs.getString("tagColor"),
+                        rs.getString("task"),
+                        rs.getString("title"),
                         rs.getString("description"),
-                        rs.getInt("duration_minutes")
+                        rs.getInt("total_minutes"),
+                        rs.getString("start_date")
                 ));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error en getSessionsByDate: " + e.getMessage());
         }
         return sessions;
     }

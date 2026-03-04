@@ -1,6 +1,6 @@
 package com.frandm.pomodoro;
 
-import atlantafx.base.theme.PrimerDark; // Importante: Asegúrate de que el import funcione
+import atlantafx.base.theme.PrimerDark;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
