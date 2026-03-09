@@ -90,9 +90,9 @@ public class DatabaseHandler {
         }
     }
 
-    public static void saveSession(int taskId, String title, String desc, int mins, LocalDateTime start, LocalDateTime end) {
-        String sql = "INSERT INTO sessions(task_id, title, description, total_minutes, start_date, end_date) VALUES(?, ?, ?, ?, ?, ?)";
-        executeUpdates(sql, taskId, title, desc, mins, start.format(DATE_FORMATTER), end.format(DATE_FORMATTER));
+    public static void saveSession(int taskId, String title, String desc, int mins, LocalDateTime start, LocalDateTime end, int rating) {
+        String sql = "INSERT INTO sessions(task_id, title, description, total_minutes, start_date, end_date, rating) VALUES(?, ?, ?, ?, ?, ?, ?)";
+        executeUpdates(sql, taskId, title, desc, mins, start.format(DATE_FORMATTER), end.format(DATE_FORMATTER), rating);
     }
 
     public static int getOrCreateTask(String tagName, String tagColor, String taskName) {
@@ -528,7 +528,8 @@ private static void executeUpdates(String sql, Object... params) {
                                 "descripción test",
                                 duration,
                                 start,
-                                end
+                                end,
+                                random.nextInt(6)
                         );
 
                         currentTime = end.plusMinutes(random.nextInt(20) + 5);

@@ -5,10 +5,12 @@ import fr.brouillard.oss.cssfx.CSSFX;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
+import java.net.URL;
 import java.util.Objects;
 
 public class App extends Application {
@@ -23,6 +25,11 @@ public class App extends Application {
                 App.class.getResource("/com/frandm/pomodoro/styles.css")
         ).toExternalForm();
         scene.getStylesheets().add(customStyles);
+
+        URL iconUrl = getClass().getResource("/com/frandm/pomodoro/images/STlogo.png");
+        if (iconUrl != null) {
+            stage.getIcons().add(new Image(iconUrl.toExternalForm()));
+        }
 
         stage.setTitle("Pomodoro Tracker");
         stage.setMaximized(true);

@@ -6,9 +6,11 @@
 .primer-dark {
     -color-bg-default: #1f2f50;
     -color-fg-default: #eaeaea;
+    -color-fg-secundary: #0c1013;
     -color-fg-muted: #94a3b8;
     -color-bg-subtle: #161b22;
     -color-accent: -heatmap-high;
+    -color-accent-secundary: -color-fg-secundary;
     -color-accent-light: -heatmap-low;
 
     -color-menu: -color-bg-default;
@@ -41,9 +43,11 @@
 .primer-light {
     -color-bg-default: #f8f9fa;
     -color-fg-default: #1e293b;
+    -color-fg-secundary: #8c8c8c;
     -color-fg-muted: #64748b;
     -color-bg-subtle: #ffffff;
     -color-accent: -heatmap-high;
+    -color-accent-secundary: #ffffff;
     -color-accent-light: -heatmap-low;
 
     -color-menu: -color-bg-default;
@@ -70,5 +74,5 @@
     -color-break-secundary: #1e40af;
     -color-long-break: #ede9fe;
     -color-long-break-secundary: #5b21b6;
-    -color-border-subtle: rgba(0, 0, 0, 0.08);
+    -color-border-subtle: rgb(197, 197, 197);
 }

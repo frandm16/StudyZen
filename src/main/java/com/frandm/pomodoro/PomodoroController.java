@@ -10,21 +10,29 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
+import org.kordamp.ikonli.javafx.FontIcon;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class PomodoroController {
 
+    public GridPane summaryPane;
+    public TextField summaryTitle;
+    public TextArea summaryDesc;
+    public HBox starsContainer;
     //region FXML
     @FXML private ScrollPane mainScrollPane;
     @FXML private GridPane setupPane, mainContainer;
@@ -50,7 +58,7 @@ public class PomodoroController {
 //endregion
 
     private final PomodoroEngine engine = new PomodoroEngine();
-    private final SetupManager setupManager = new SetupManager();
+    private final SetupManager setupManager = new SetupManager(this);
     private final UIManager uiManager = new UIManager();
 
     private StatsDashboard statsDashboard;
@@ -61,6 +69,9 @@ public class PomodoroController {
     private boolean isDarkMode = true;
     private TranslateTransition settingsAnim;
     private LocalDateTime startDate;
+
+    private int currentRating = 0;
+    private List<FontIcon> starNodes = new ArrayList<FontIcon>();
 
     private Map<String, List<String>> tagsWithTasksMap = new HashMap<>();
     private Map<String, String> tagColors = new HashMap<>();
@@ -93,6 +104,10 @@ public class PomodoroController {
                 tasksLabel, timeLastMonthLabel, weeklyLineChart,
                 tagPieChart, statsPlaceholder
         );
+
+        summaryPane.setVisible(false);
+        summaryPane.setManaged(false);
+        setupStars();
 
         //region paneles
         settingsPane.setTranslateX(-600);
@@ -138,6 +153,20 @@ public class PomodoroController {
                 setupManager.updateFuzzyResults(val, fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected)
         );
 
+        fuzzySearchInput.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                String input = fuzzySearchInput.getText();
+
+                    if (!fuzzyResultsContainer.getChildren().isEmpty()) {
+                        fuzzyResultsContainer.getChildren().stream()
+                                .filter(node -> node instanceof Button)
+                                .map(node -> (Button) node)
+                                .findFirst()
+                                .ifPresent(Button::fire);
+                    }
+            }
+        });
+
         engine.setOnTick(() -> Platform.runLater(() -> {
             timerLabel.setText(engine.getFormattedTime());
             updateProgressCircle();
@@ -154,7 +183,7 @@ public class PomodoroController {
     }
 
     //region data
-    private void refreshDatabaseData() {
+    public void refreshDatabaseData() {
         this.tagsWithTasksMap = DatabaseHandler.getTagsWithTasksMap();
         this.tagColors = DatabaseHandler.getTagColors();
     }
@@ -193,26 +222,58 @@ public class PomodoroController {
 
     @FXML
     private void handleFinish() {
-        int mins = engine.getRealMinutesElapsed();
-        if (mins >= 1 && setupManager.getSelectedTask() != null) {
-            int taskId = DatabaseHandler.getOrCreateTask(
-                    setupManager.getSelectedTag(),
-                    tagColors.getOrDefault(setupManager.getSelectedTag(), "#ffffff"),
-                    setupManager.getSelectedTask()
-            );
-            DatabaseHandler.saveSession(taskId, "Pomodoro", "", mins, startDate, LocalDateTime.now());
-            refreshDatabaseData();
-        }
-        engine.stop();
-        engine.fullReset();
-        engine.resetTimeForState(PomodoroEngine.State.MENU);
-        setupManager.resetSelection();
-        updateActiveTaskDisplay("No tag selected", null);
+        engine.pause();
         updateUIFromEngine();
+
+        String task = setupManager.getSelectedTask();
+        String tag = setupManager.getSelectedTag();
+
+        if (task != null && !task.isEmpty() && tag != null && !tag.isEmpty()) {
+            summaryTitle.setText(task + ", " + tag);
+        } else {
+            summaryTitle.setText("Sesión sin nombre");
+        }
+
+        summaryPane.setVisible(true);
+        summaryPane.setManaged(true);
     }
 
     @FXML
     private void handleSkip() { engine.skip(); }
+
+    @FXML
+    private void handleSaveSummary() {
+        int taskId = DatabaseHandler.getOrCreateTask(
+                setupManager.getSelectedTag(),
+                tagColors.getOrDefault(setupManager.getSelectedTag(), "#ffffff"),
+                setupManager.getSelectedTask()
+        );
+
+        DatabaseHandler.saveSession(taskId, summaryTitle.getText(), summaryDesc.getText(), engine.getRealMinutesElapsed(), startDate, LocalDateTime.now(), currentRating);
+        refreshDatabaseData();
+
+        resetFullApp();
+        closeSummary();
+    }
+
+    @FXML
+    private void handleDiscardSummary() {
+        resetFullApp();
+        closeSummary();
+    }
+
+    @FXML
+    private void closeSummary() {
+        summaryPane.setVisible(false);
+        summaryPane.setManaged(false);
+
+        summaryTitle.clear();
+        summaryDesc.clear();
+        currentRating = 0;
+        updateStarsUI();
+
+        updateUIFromEngine();
+    }
     //endregion
 
     //region Navegación
@@ -410,7 +471,7 @@ public class PomodoroController {
 
     //region Setup
     @FXML
-    private void toggleSetup() {
+    void toggleSetup() {
         boolean opening = !setupPane.isVisible();
         setupPane.setVisible(opening);
         setupPane.setManaged(opening);
@@ -428,13 +489,21 @@ public class PomodoroController {
         }
     }
 
+    @FXML
+    private void toggleSummary() {
+
+    }
+
     private void onTaskSelected() {
         selectedNameLabel.setText("Selected: " + setupManager.getSelectedTask());
-        selectTaskBtn.setDisable(false);
+    }
+
+    private void unselectTaskLabel() {
+        selectedNameLabel.setText("Nothing selected ");
     }
 
     @FXML
-    private void handleStartSessionFromSetup() {
+    void handleStartSessionFromSetup() {
         if(setupManager.getSelectedTag() != null && setupManager.getSelectedTask() != null){
             updateActiveTaskDisplay(setupManager.getSelectedTag(), setupManager.getSelectedTask());
             toggleSetup();
@@ -443,7 +512,7 @@ public class PomodoroController {
     }
 
     public void updateActiveTaskDisplay(String tagName, String taskName) {
-        uiManager.updateActiveBadge(activeTaskContainer, tagName, taskName, tagColors.getOrDefault(tagName, "#a855f7"));
+        uiManager.updateActiveBadge(activeTaskContainer, tagName, taskName, tagColors.getOrDefault(tagName, "#a855f7"), this);
     }
     //endregion
 
@@ -470,18 +539,17 @@ public class PomodoroController {
         container.setPadding(new Insets(15));
         container.getStyleClass().add("menu-today-container");
 
-        Label title = new Label("PROGRAMADO PARA HOY");
+        Label title = new Label("TODAY'S SCHEDULED");
         title.setStyle("-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: -color-fg-muted;");
 
         VBox list = new VBox(5);
         List<Map<String, Object>> todaySessions = DatabaseHandler.getScheduleSessionsForToday();
 
         if (todaySessions.isEmpty()) {
-            Label empty = new Label("No hay sesiones para hoy");
+            Label empty = new Label("No scheduled sessions for today");
             empty.setStyle("-fx-font-style: italic; -fx-opacity: 0.6;");
             list.getChildren().add(empty);
         } else {
-            // Ordenar por hora de inicio
             todaySessions.sort(Comparator.comparing(s -> (LocalDateTime) s.get("start_time")));
 
             for (Map<String, Object> session : todaySessions) {
@@ -498,9 +566,7 @@ public class PomodoroController {
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(8));
         item.getStyleClass().add("menu-session-item");
-        item.setStyle("-fx-background-color: -color-bg-subtle; -fx-background-radius: 6; -fx-cursor: hand;");
 
-        // Indicador de color de la categoría
         String color = (String) session.getOrDefault("tag_color", "#94a3b8");
         Region colorIndicator = new Region();
         colorIndicator.setPrefSize(4, 20);
@@ -511,8 +577,9 @@ public class PomodoroController {
         lblTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
 
         LocalDateTime start = (LocalDateTime) session.get("start_time");
-        Label lblTime = new Label(start.format(DateTimeFormatter.ofPattern("HH:mm")));
-        lblTime.setStyle("-fx-font-size: 11px; -fx-opacity: 0.7;");
+        LocalDateTime end = (LocalDateTime) session.get("end_time");
+        Label lblTime = new Label(start.format(DateTimeFormatter.ofPattern("HH:mm")) + " - " + end.format(DateTimeFormatter.ofPattern("HH:mm")));
+        lblTime.setStyle("-fx-font-size: 13px; -fx-opacity: 0.7;");
 
         info.getChildren().addAll(lblTitle, lblTime);
         item.getChildren().addAll(colorIndicator, info);
@@ -526,4 +593,53 @@ public class PomodoroController {
             scheduleListContainer.getChildren().add(createTodaySchedulesList());
         }
     }
+
+
+    private void resetFullApp() {
+        engine.stop();
+        engine.fullReset();
+        engine.resetTimeForState(PomodoroEngine.State.MENU);
+        setupManager.resetSelection();
+        setupManager.setFilterTag(null);
+        unselectTaskLabel();
+        updateActiveTaskDisplay("No tag selected", null);
+        updateUIFromEngine();
+    }
+
+    private void setupStars() {
+        starsContainer.getChildren().clear();
+        starNodes.clear();
+        for (int i = 1; i <= 5; i++) {
+            int val = i;
+
+            FontIcon star = new FontIcon("fas-star");
+            star.setIconSize(30);
+            star.setCursor(javafx.scene.Cursor.HAND);
+
+            star.setOnMouseClicked(e -> {
+                if (val == currentRating) {
+                    currentRating = 0;
+                } else {
+                    currentRating = val;
+                }
+                updateStarsUI();
+            });
+
+            starNodes.add(star);
+            starsContainer.getChildren().add(star);
+        }
+        updateStarsUI();
+    }
+
+    private void updateStarsUI() {
+        for (int i = 0; i < starNodes.size(); i++) {
+            starNodes.get(i).getStyleClass().removeAll("selectedStar", "unselectedStar");
+            if (i < currentRating) {
+                starNodes.get(i).getStyleClass().add("selectedStar");
+            } else {
+                starNodes.get(i).getStyleClass().add("unselectedStar");
+            }
+        }
+    }
+
 }

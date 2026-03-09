@@ -14,6 +14,7 @@
 
 <?import javafx.scene.effect.Glow?>
 <?import javafx.scene.effect.GaussianBlur?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 <StackPane fx:id="rootPane" prefHeight="700.0" prefWidth="1000.0"
            stylesheets="@styles.css" styleClass="root-pane"
            xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
@@ -231,6 +232,7 @@
                     <VBox fx:id="scheduleListContainer" spacing="10" alignment="TOP_RIGHT" GridPane.columnIndex="2" />
                     <VBox  spacing="20" alignment="CENTER" GridPane.columnIndex="1" >
                         <padding><Insets top="80" right="50" bottom="50" left="50"/></padding>
+
                         <VBox fx:id="activeTaskContainer" alignment="CENTER" spacing="8" minHeight="30">
                         </VBox>
                         <StackPane maxWidth="-Infinity" maxHeight="-Infinity">
@@ -429,11 +431,65 @@
 
                     <VBox spacing="10" styleClass="selection-preview-box">
                         <Label fx:id="selectedNameLabel" text="Nothing selected" styleClass="selection-label" />
-                        <Button fx:id="selectTaskBtn" text="Select Task" onAction="#handleStartSessionFromSetup" disable="true" maxWidth="Infinity" styleClass="button-main" />
                     </VBox>
                 </VBox>
             </HBox>
         </StackPane>
     </GridPane>
+
+    <GridPane fx:id="summaryPane" visible="false" managed="false" maxHeight="Infinity" maxWidth="Infinity">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="35" />
+            <ColumnConstraints percentWidth="30" />
+            <ColumnConstraints percentWidth="35" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints percentHeight="20" />
+            <RowConstraints percentHeight="60" />
+            <RowConstraints percentHeight="20" />
+        </rowConstraints>
+        <Region style="-fx-background-color: rgba(0,0,0,0.7);" GridPane.columnSpan="3" GridPane.rowSpan="3"><effect><GaussianBlur radius="15" /></effect></Region>
+        <StackPane styleClass="summaryStackPane" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <VBox  spacing="40" >
+                <padding><Insets top="30" right="30" bottom="30" left="30"/></padding>
+                <VBox alignment="CENTER">
+                    <HBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button maxWidth="-Infinity" maxHeight="-Infinity" text="✕" onAction="#closeSummary" styleClass="close-button" />
+                    </HBox>
+                    <Label text="Session Finished" styleClass="summaryTitle" />
+                </VBox>
+
+                <VBox spacing="8">
+                    <padding><Insets right="50" left="50"/></padding>
+                    <Label text="Title" styleClass="section-label" />
+                    <TextField fx:id="summaryTitle" styleClass="search-input" />
+                </VBox>
+
+                <VBox spacing="8">
+                    <padding><Insets right="50" left="50"/></padding>
+                    <Label text="Description" styleClass="section-label" />
+                    <TextArea fx:id="summaryDesc" prefHeight="250" wrapText="true" />
+                </VBox>
+
+                <VBox spacing="10" alignment="CENTER">
+                    <padding><Insets top="15"/></padding>
+                    <HBox fx:id="starsContainer" spacing="10" alignment="CENTER" styleClass="starsSummary" />
+                </VBox>
+
+
+                <HBox spacing="15" alignment="CENTER">
+                    <Button text="Save Session" onAction="#handleSaveSummary" styleClass="button-main" />
+                    <Button onAction="#handleDiscardSummary" style="-fx-background-color: transparent; -fx-cursor: hand">
+                        <graphic>
+                            <FontIcon styleClass="trashIcon"/>
+                        </graphic>
+                    </Button>
+                </HBox>
+            </VBox>
+        </StackPane>
+    </GridPane>
+
+
 
 </StackPane>

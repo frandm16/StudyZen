@@ -14,6 +14,11 @@ public class SetupManager {
     private String filterTag = null;
     private String selectedTag = null;
     private String selectedTask = null;
+    private PomodoroController controller;
+
+    SetupManager(PomodoroController p){
+        this.controller = p;
+    }
 
     public void updateFuzzyResults(String input, VBox container, Map<String, List<String>> tagsMap, Map<String, String> colors, Runnable onSelect) {
         container.getChildren().clear();
@@ -57,6 +62,9 @@ public class SetupManager {
                 DatabaseHandler.getOrCreateTask(filterTag, colors.getOrDefault(filterTag, "#ffffff"), input);
                 selectedTask = input;
                 selectedTag = filterTag;
+                controller.refreshDatabaseData();
+                updateFuzzyResults(input, container, tagsMap, colors, onSelect);
+                controller.handleStartSessionFromSetup();
                 onSelect.run();
             });
             container.getChildren().add(createBtn);
@@ -73,6 +81,7 @@ public class SetupManager {
         btn.setOnAction(e -> {
             selectedTask = task;
             selectedTag = tag;
+            controller.handleStartSessionFromSetup();
             onSelect.run();
         });
         return btn;
@@ -91,6 +100,7 @@ public class SetupManager {
             row.setOnMouseClicked(e -> {
                 filterTag = (name.equals(filterTag)) ? null : name;
                 onFilterChange.run();
+                renderTagsList(container, colors, onFilterChange);
             });
             container.getChildren().add(row);
         });

@@ -4,6 +4,7 @@ import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.media.AudioClip;
@@ -60,17 +61,27 @@ public class UIManager {
         new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(fillProp, startColor)), new KeyFrame(Duration.millis(200), new KeyValue(fillProp, targetColor))).play();
     }
 
-    public void updateActiveBadge(VBox container, String tag, String task, String color) {
+    public void updateActiveBadge(VBox container, String tag, String task, String color,PomodoroController controller) {
         container.getChildren().clear();
-        Label tagL = new Label(tag);
-        tagL.setStyle("-fx-border-color: "+color+"; -fx-border-radius: 12; -fx-padding: 2 10; -fx-text-fill: "+color+"; -fx-font-weight: bold;");
+        Button tagBtn = new Button(tag);
+        tagBtn.setOnAction(e -> controller.toggleSetup());
+        tagBtn.setStyle(
+                "-fx-background-color: transparent; " +
+                        "-fx-border-color: " + color + "; " +
+                        "-fx-border-radius: 12; " +
+                        "-fx-padding: 2 10; " +
+                        "-fx-text-fill: " + color + "; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-cursor: hand;"
+        );
 
         if (task != null) {
-            Label taskL = new Label(task);
-            taskL.getStyleClass().add("task-badge");
-            container.getChildren().addAll(tagL, taskL);
+            Button taskBtn = new Button(task);
+            taskBtn.setOnAction(e -> controller.toggleSetup());
+            taskBtn.getStyleClass().add("task-badge");
+            container.getChildren().addAll(tagBtn, taskBtn);
         } else {
-            container.getChildren().add(tagL);
+            container.getChildren().add(tagBtn);
         }
     }
 }

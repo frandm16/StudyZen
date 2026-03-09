@@ -22,6 +22,7 @@
     -fx-font-size: 10px;
     -fx-text-fill: -text-muted;
     -fx-opacity: 0.8;
+    -fx-cursor: hand;
 }
 
 .state-label {
@@ -403,7 +404,7 @@
     -fx-opacity: 0.8;
 }
 
-
+/* --- planner --- */
 
 .btn-action {
     -fx-background-color: transparent;
@@ -528,4 +529,105 @@
     -fx-background-radius: 12px;
     -fx-padding: 20px;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 20, 0, 0, 10);
+}
+
+.menu-session-item {
+    -fx-background-color: transparent;
+    -fx-border-color: -color-border-subtle;
+    -fx-border-radius: 10;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+/* --- summary pane --- */
+
+.summaryStackPane {
+    -fx-background-color: -bg-panels;
+    -fx-background-radius: 20;
+    -fx-border-color: -color-border-subtle;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 30, 0, 0, 15);
+}
+
+.summaryTitle {
+    -fx-font-size: 42;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-accent;
+}
+
+#summaryTitle, #summaryDesc {
+    -fx-background-color: -color-bg-subtle;
+    -fx-border-color: -color-border-subtle;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: -text-main;
+    -fx-font-size: 14px;
+    -fx-padding: 10;
+}
+
+
+#summaryTitle:focused, #summaryDesc:focused {
+    -fx-border-color: -color-accent;
+    -fx-effect: dropshadow(gaussian, rgba(122, 122, 122, 0.2), 15, 0, 0, 0);
+}
+
+#summaryPane .section-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-muted;
+    -fx-padding: 0 0 5 0;
+}
+
+#starsContainer {
+    -fx-padding: 10 0 10 0;
+}
+
+
+#summaryPane HBox {
+    -fx-padding: 15 0 0 0;
+}
+
+#summaryPane .button-main {
+    -fx-background-color: -color-accent;
+    -fx-text-fill: -color-accent-secundary;
+    -fx-font-weight: bold;
+}
+
+#summaryPane .button-main:hover {
+    -fx-opacity: 0.9;
+    -fx-translate-y: -1;
+}
+
+.selectedStar {
+    -fx-icon-size: 30px;
+    -fx-icon-color: #ffc107;
+    -fx-effect: dropshadow(three-pass-box, rgba(255,193,7,0.4), 10, 0, 0, 0);
+}
+
+.unselectedStar {
+    -fx-icon-size: 30px;
+    -fx-icon-color: -color-fg-secundary;
+}
+
+.selectedStar:hover, .unselectedStar:hover {
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+.trashIcon {
+    -fx-icon-code: "fas-trash-alt";
+    -fx-icon-color: -color-fg-secundary;
+    -fx-icon-size: 25px;
+}
+
+.trashIcon:hover {
+    -fx-icon-code: "fas-trash-alt";
+    -fx-icon-size: 25px;
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+.editIcon {
+    -fx-icon-code: "fas-pen";
 }
