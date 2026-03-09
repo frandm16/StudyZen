@@ -35,9 +35,9 @@ public class PomodoroController {
     public HBox starsContainer;
     //region FXML
     @FXML private ScrollPane mainScrollPane;
-    @FXML private GridPane setupPane, mainContainer;
+    @FXML private GridPane setupPane, mainContainer, settingsPane;
     @FXML private StackPane rootPane;
-    @FXML private VBox settingsPane, notificationContainer, scheduleListContainer, statsContainer, plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage, fuzzyResultsContainer, tagsListContainer, activeTaskContainer;
+    @FXML private VBox notificationContainer, scheduleListContainer, statsContainer, plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage, fuzzyResultsContainer, tagsListContainer, activeTaskContainer;
     @FXML private Label timerLabel, stateLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
             alarmVolumeValLabel, widthSliderValLabel, streakLabel, timeThisWeekLabel,
             timeLastMonthLabel, tasksLabel, bestDayLabel, selectedNameLabel;
@@ -114,7 +114,6 @@ public class PomodoroController {
         NotificationManager.init(notificationContainer);
 
         //region paneles
-        settingsPane.setTranslateX(-600);
         //endregion
         refreshSideMenu();
 
@@ -426,20 +425,9 @@ public class PomodoroController {
 
     @FXML
     private void toggleSettings() {
-        if (settingsAnim != null) settingsAnim.stop();
-        settingsAnim = new TranslateTransition(Duration.millis(400), settingsPane);
-        if (isSettingsOpen) {
-            updateEngineSettings();
-            ConfigManager.save(engine);
-            settingsAnim.setToX(-600);
-            settingsAnim.setOnFinished(e -> settingsPane.setVisible(false));
-        }
-        else {
-            settingsPane.setVisible(true);
-            settingsAnim.setToX(0);
-        }
-        settingsAnim.play();
-        isSettingsOpen = !isSettingsOpen;
+        boolean opening = !settingsPane.isVisible();
+        settingsPane.setVisible(opening);
+        settingsPane.setManaged(opening);
     }
 
     private void applyTheme() {

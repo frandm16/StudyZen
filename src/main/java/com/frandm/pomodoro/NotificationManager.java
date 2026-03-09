@@ -10,6 +10,8 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 public class NotificationManager {
+    private static final Duration DISPLAY_TIME = Duration.seconds(4);
+    private static final int MAX_NOTIFICATIONS = 5;
 
     public enum NotificationType {
         SUCCESS("toast-success", "mdi2c-check-circle-outline", "#37FF00"),
@@ -33,7 +35,7 @@ public class NotificationManager {
     }
 
     private static VBox container;
-    private static final Duration DISPLAY_TIME = Duration.seconds(4);
+
 
     public static void init(VBox notificationVBox) {
         container = notificationVBox;
@@ -43,7 +45,7 @@ public class NotificationManager {
         if (container == null) return;
 
         VBox toastRoot = new VBox();
-        toastRoot.getStyleClass().addAll("notification-toast", type.getStyleClass());
+        toastRoot.getStyleClass().addAll("notification-toast");
         toastRoot.setMinWidth(320);
         toastRoot.setMaxWidth(320);
         toastRoot.setPickOnBounds(true);
@@ -55,7 +57,7 @@ public class NotificationManager {
         content.setAlignment(Pos.CENTER_LEFT);
 
         FontIcon icon = new FontIcon(type.getIconCode());
-        icon.getStyleClass().add("notification-icon");
+        icon.getStyleClass().addAll("notification-icon", type.getStyleClass());
 
         VBox textSection = new VBox(2);
         Label lblTitle = new Label(title);
@@ -98,7 +100,11 @@ public class NotificationManager {
         PauseTransition delay = new PauseTransition(DISPLAY_TIME);
         delay.setOnFinished(_ -> fadeOut.play());
 
-        container.getChildren().add(0, toastRoot);
+        if(container.getChildren().size() >= MAX_NOTIFICATIONS){
+            container.getChildren().removeLast();
+        }
+
+        container.getChildren().addFirst(toastRoot);
         updateContainerTransparency();
         slideIn.play();
         progressTimeline.play();
@@ -109,6 +115,8 @@ public class NotificationManager {
         if (container == null) return;
 
         boolean hasNotifications = !container.getChildren().isEmpty();
+        container.setVisible(hasNotifications);
+        container.setManaged(hasNotifications);
         container.setMouseTransparent(!hasNotifications);
         container.setPickOnBounds(hasNotifications);
     }

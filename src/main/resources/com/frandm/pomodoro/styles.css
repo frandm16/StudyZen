@@ -81,8 +81,7 @@
 /* --- settings sidebar --- */
 .settings-sidebar {
     -fx-background-color: -bg-panels;
-    -fx-background-radius: 0 40 40 0;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 30, 0, 8, 0);
+    -fx-background-radius: 20 20 20 20;
 }
 
 .sidebar-title {
@@ -102,6 +101,27 @@
     -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: -text-dark;
+}
+
+.settings-tabpane .tab-header-area .tab-header-background {
+    -fx-background-color: -bg-panels;
+}
+
+.settings-tabpane .tab {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+
+.settings-tabpane .tab-container .tab-label {
+    -fx-background-color: transparent;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-cursor: hand;
+}
+
+.settings-tabpane .tab:selected {
+    -fx-border-color: -color-accent;
+    -fx-border-width: 0 0 3 0;
 }
 
 /* --- heatmap --- */
@@ -679,12 +699,21 @@
     -fx-background-radius: 0 0 10 10;
 }
 
-.toast-success .notification-progress,
-.toast-success .font-icon {
-    -fx-background-color: #10b981;
-    -fx-icon-color: #10b981;
-}
-
 .notification-icon {
     -fx-icon-size: 25px;
+}
+
+.toast-success {
+    -fx-icon-color: #37FF00;
+}
+
+.toast-error {
+
+    -fx-icon-color: #ff0000 ;
+}
+.toast-info {
+    -fx-icon-color: #009DFF;
+}
+.toast-warning {
+    -fx-icon-color: #FFDD00;
 }

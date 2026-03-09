@@ -67,7 +67,7 @@ public class SetupManager {
                     updateFuzzyResults(input, container, tagsMap, colors, onSelect);
                     controller.handleStartSessionFromSetup();
                     onSelect.run();
-                    NotificationManager.show("Task created", "Successfully created " + input, NotificationManager.NotificationType.INFO);
+                    NotificationManager.show("Task created", "Successfully created " + input, NotificationManager.NotificationType.SUCCESS);
                 });
             }else{
                 createBtn.setOnAction(e -> {
