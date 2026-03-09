@@ -14,7 +14,7 @@ public class SetupManager {
     private String filterTag = null;
     private String selectedTag = null;
     private String selectedTask = null;
-    private PomodoroController controller;
+    private final PomodoroController controller;
 
     SetupManager(PomodoroController p){
         this.controller = p;
@@ -31,8 +31,8 @@ public class SetupManager {
             if (totalResults.get() >= GLOBAL_LIMIT) return;
 
             if (filterTag == null || filterTag.equals(tag)) {
+                int remaining = GLOBAL_LIMIT - totalResults.get();
                 if (isQueryEmpty) {
-                    int remaining = GLOBAL_LIMIT - totalResults.get();
                     tasks.stream()
                             .limit(remaining)
                             .forEach(t -> {
@@ -40,7 +40,6 @@ public class SetupManager {
                                 totalResults.incrementAndGet();
                             });
                 } else {
-                    int remaining = GLOBAL_LIMIT - totalResults.get();
                     if (remaining > 0) {
                         List<ExtractedResult> matches = FuzzySearch.extractTop(input, tasks, Math.min(5, remaining));
                         matches.stream()
@@ -54,19 +53,25 @@ public class SetupManager {
             }
         });
 
-        if (filterTag != null && !isQueryEmpty) {
+        if (!isQueryEmpty) {
+
             container.getChildren().add(new Separator());
             Button createBtn = new Button("+ Create Task: '" + input + "'");
             createBtn.setMaxWidth(Double.MAX_VALUE);
-            createBtn.setOnAction(e -> {
-                DatabaseHandler.getOrCreateTask(filterTag, colors.getOrDefault(filterTag, "#ffffff"), input);
-                selectedTask = input;
-                selectedTag = filterTag;
-                controller.refreshDatabaseData();
-                updateFuzzyResults(input, container, tagsMap, colors, onSelect);
-                controller.handleStartSessionFromSetup();
-                onSelect.run();
-            });
+            if(filterTag != null){
+                createBtn.setOnAction(e -> {
+                    DatabaseHandler.getOrCreateTask(filterTag, colors.getOrDefault(filterTag, "#ffffff"), input);
+                    selectedTask = input;
+                    selectedTag = filterTag;
+                    controller.refreshDatabaseData();
+                    updateFuzzyResults(input, container, tagsMap, colors, onSelect);
+                    controller.handleStartSessionFromSetup();
+                    onSelect.run();
+                });
+            }else{
+
+            }
+
             container.getChildren().add(createBtn);
         }
     }

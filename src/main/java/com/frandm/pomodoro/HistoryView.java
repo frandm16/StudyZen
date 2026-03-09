@@ -8,6 +8,9 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
+import org.kordamp.ikonli.javafx.FontIcon;
+
+import java.awt.event.ActionEvent;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,14 +28,16 @@ public class HistoryView extends StackPane {
     private final ScrollPane detailScrollPane;
 
     private String currentTag = null;
+    private PomodoroController controller;
     private int currentOffset = 0;
     private final int PAGE_SIZE = 50;
     private LocalDate lastDate = null;
     private VBox lastSessionsContainer = null;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public HistoryView(Map<String, String> tagColors) {
+    public HistoryView(Map<String, String> tagColors, PomodoroController controller) {
         this.tagColors = tagColors;
+        this.controller = controller;
 
         tagsGridRoot = new VBox(25);
         tagsGridRoot.setPadding(new Insets(30));
@@ -167,10 +172,10 @@ public class HistoryView extends StackPane {
 
     private void loadTasksSummary(String tagName) {
         Map<String, Integer> summary = DatabaseHandler.getTaskSummaryByTag(tagName);
-        summary.forEach((task, minutes) -> tasksSummaryContainer.getChildren().add(createTaskSummaryRow(task, minutes)));
+        summary.forEach((task, minutes) -> tasksSummaryContainer.getChildren().add(createTaskSummaryRow(tagName, task, minutes)));
     }
 
-    private HBox createTaskSummaryRow(String task, int minutes) {
+    private HBox createTaskSummaryRow(String tagName, String task, int minutes) {
         HBox row = new HBox(15);
         row.getStyleClass().add("task-summary-row");
         row.setAlignment(Pos.CENTER_LEFT);
@@ -185,7 +190,15 @@ public class HistoryView extends StackPane {
         Label time = new Label(minutes + " min");
         time.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; -fx-text-fill: -color-accent;");
 
-        Button btnPlayTask = new Button("▶");
+        Button btnPlayTask = new Button();
+        FontIcon playIcon = new FontIcon("fas-play");
+        btnPlayTask.setGraphic(playIcon);
+        btnPlayTask.getStyleClass().add("play-schedule-session");
+        btnPlayTask.setOnAction(e -> {
+            e.consume();
+            controller.playScheduleSession(tagName, task);
+            controller.switchToTimer();
+        });
         btnPlayTask.getStyleClass().addAll("btn-action", "btn-repeat");
         Tooltip ttPlay = new Tooltip("Start task");
         ttPlay.setShowDelay(Duration.millis(75));
@@ -297,13 +310,30 @@ public class HistoryView extends StackPane {
         btnDelete.setOnAction(e -> { e.consume(); deleteSession(s, card); });
 
         actionButtons.getChildren().addAll(btnRepeat, btnEdit, btnDelete);
-        header.getChildren().addAll(sessionTitle, spacer, actionButtons);
+
+        HBox stars = new HBox();
+        stars.setAlignment(Pos.CENTER_LEFT);
+        for (int i = 1; i <= 5; i++) {
+
+            FontIcon star = new FontIcon("fas-star");
+            star.setIconSize(10);
+            star.setCursor(javafx.scene.Cursor.HAND);
+
+            if (i <= s.getRating()) {
+                star.getStyleClass().add("selectedStarHistory");
+            } else {
+                star.getStyleClass().add("unselectedStarHistory");
+            }
+            stars.getChildren().add(star);
+        }
+
+        header.getChildren().addAll(sessionTitle, stars, spacer, actionButtons);
 
         HBox tagsContainer = new HBox(8);
         tagsContainer.setAlignment(Pos.CENTER_LEFT);
         Label taskLabel = new Label(s.getTask());
         taskLabel.getStyleClass().add("task-badge");
-        tagsContainer.getChildren().add(taskLabel);
+        tagsContainer.getChildren().addAll(taskLabel);
 
         VBox details = new VBox(12);
         details.setManaged(false);

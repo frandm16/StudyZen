@@ -455,7 +455,7 @@
     -fx-text-fill: -color-fg-muted;
     -fx-font-size: 11px;
     -fx-font-weight: 700;
-    -fx-letter-spacing: 0.5px;
+    -fx-letter-spacing: 0.5;
 }
 
 .calendar-day-name-today {
@@ -536,7 +536,6 @@
     -fx-border-color: -color-border-subtle;
     -fx-border-radius: 10;
     -fx-background-radius: 6;
-    -fx-cursor: hand;
 }
 
 /* --- summary pane --- */
@@ -630,4 +629,29 @@
 
 .editIcon {
     -fx-icon-code: "fas-pen";
+}
+
+.selectedStarHistory {
+    -fx-icon-size: 12px;
+    -fx-icon-color: #ffc107;
+    -fx-effect: dropshadow(three-pass-box, rgba(255,193,7,0.4), 10, 0, 0, 0);
+}
+
+.unselectedStarHistory {
+    -fx-icon-size: 12px;
+    -fx-icon-color: -color-fg-secundary;
+}
+
+.play-schedule-session {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+
+.play-icon {
+    -fx-icon-color: -color-fg-muted;
+    -fx-icon-size: 20px;
+}
+.play-icon:hover {
+    -fx-icon-size: 22px;
+    -fx-icon-color: -color-fg-muted;
 }

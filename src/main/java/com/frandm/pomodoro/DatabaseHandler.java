@@ -229,11 +229,11 @@ public class DatabaseHandler {
                 "FROM sessions s JOIN tasks t ON s.task_id = t.id JOIN tags tg ON t.tag_id = tg.id " +
                 "WHERE tg.name = ? ORDER BY s.is_favorite DESC, s.start_date DESC LIMIT ? OFFSET ?";
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, tag);
-            pstmt.setInt(2, limit);
-            pstmt.setInt(3, offset);
-            ResultSet rs = pstmt.executeQuery();
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, tag);
+            preparedStatement.setInt(2, limit);
+            preparedStatement.setInt(3, offset);
+            ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
                 Session s = new Session(rs.getInt("id"), rs.getString("tag_name"), rs.getString("tag_color"),
                         rs.getString("task_name"), rs.getString("title"), rs.getString("description"),
@@ -267,9 +267,9 @@ public class DatabaseHandler {
                 "LEFT JOIN sessions s ON t.id = s.task_id " +
                 "WHERE tg.name = ? AND s.start_date >= date('now', 'weekday 0', '-7 days')";
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, tagName);
-            ResultSet rs = pstmt.executeQuery();
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, tagName);
+            ResultSet rs = preparedStatement.executeQuery();
             if (rs.next()) {
                 int goal = rs.getInt("weekly_goal_min");
                 int total = rs.getInt("total");
@@ -287,9 +287,9 @@ public class DatabaseHandler {
                 "JOIN tags tg ON t.tag_id = tg.id WHERE tg.name = ? " +
                 "GROUP BY t.name ORDER BY total DESC";
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, tag);
-            ResultSet rs = pstmt.executeQuery();
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, tag);
+            ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) summary.put(rs.getString("task_name"), rs.getInt("total"));
         } catch (SQLException e) { System.err.println("Error getTaskSummary: " + e.getMessage()); }
         return summary;
@@ -302,9 +302,9 @@ public class DatabaseHandler {
                 "FROM sessions s JOIN tasks t ON s.task_id = t.id JOIN tags tg ON t.tag_id = tg.id " +
                 "WHERE date(s.start_date) = ? ORDER BY s.start_date ASC";
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, date.toString());
-            ResultSet rs = pstmt.executeQuery();
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, date.toString());
+            ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
                 Session s = new Session(rs.getInt("id"), rs.getString("tag"), rs.getString("tagColor"),
                         rs.getString("task"), rs.getString("title"), rs.getString("description"),
@@ -328,12 +328,12 @@ public class DatabaseHandler {
                 "ORDER BY s.start_date DESC LIMIT ? OFFSET ?";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
 
-            pstmt.setInt(1, limit);
-            pstmt.setInt(2, offset);
+            preparedStatement.setInt(1, limit);
+            preparedStatement.setInt(2, offset);
 
-            ResultSet rs = pstmt.executeQuery();
+            ResultSet rs = preparedStatement.executeQuery();
 
             while (rs.next()) {
                 Session session = new Session(
@@ -383,10 +383,10 @@ public class DatabaseHandler {
                 "WHERE date(ss.start_time) BETWEEN ? AND ? AND ss.is_completed = 0";
 
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, start.toString());
-            pstmt.setString(2, end.toString());
-            ResultSet rs = pstmt.executeQuery();
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, start.toString());
+            preparedStatement.setString(2, end.toString());
+            ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", rs.getInt("id"));
@@ -447,10 +447,10 @@ public class DatabaseHandler {
                 "LEFT JOIN tags tg ON d.tag_id = tg.id " +
                 "WHERE date(d.due_date) BETWEEN ? AND ?";
         try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, start.toString());
-            pstmt.setString(2, end.toString());
-            ResultSet rs = pstmt.executeQuery();
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, start.toString());
+            preparedStatement.setString(2, end.toString());
+            ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("title", rs.getString("title"));
@@ -533,7 +533,7 @@ private static void executeUpdates(String sql, Object... params) {
                         );
 
                         currentTime = end.plusMinutes(random.nextInt(20) + 5);
-                        if (currentTime.getHour() >= 23) break;
+                        if (currentTime.getHour() == 23) break;
                     }
                 }
             }
@@ -581,7 +581,7 @@ private static void executeUpdates(String sql, Object... params) {
 
                         currentTime = end.plusMinutes(15 + random.nextInt(31));
 
-                        if (currentTime.getHour() >= 23) break;
+                        if (currentTime.getHour() == 23) break;
                     }
                 }
             }

@@ -2,7 +2,6 @@ package com.frandm.pomodoro;
 
 import atlantafx.base.theme.PrimerDark;
 import atlantafx.base.theme.PrimerLight;
-import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -10,7 +9,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.PieChart;
@@ -18,11 +16,13 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import javax.swing.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -71,7 +71,7 @@ public class PomodoroController {
     private LocalDateTime startDate;
 
     private int currentRating = 0;
-    private List<FontIcon> starNodes = new ArrayList<FontIcon>();
+    private final List<FontIcon> starNodes = new ArrayList<>();
 
     private Map<String, List<String>> tagsWithTasksMap = new HashMap<>();
     private Map<String, String> tagColors = new HashMap<>();
@@ -79,8 +79,10 @@ public class PomodoroController {
     @FXML
     public void initialize() {
         DatabaseHandler.initializeDatabase();
+        // ---------------- TEST/DEV -----------------
         //DatabaseHandler.generateRandomPomodoros();
         //DatabaseHandler.generateRandomSchedule();
+        // -------------------------------------------
         ConfigManager.load(engine);
         refreshDatabaseData();
         applyTheme();
@@ -93,7 +95,7 @@ public class PomodoroController {
         //endregion
 
         //region history view
-        historyView = new HistoryView(tagColors);
+        historyView = new HistoryView(tagColors, this);
         historyContainer.getChildren().clear();
         historyContainer.getChildren().add(historyView);
         VBox.setVgrow(historyView, Priority.ALWAYS);
@@ -174,9 +176,7 @@ public class PomodoroController {
 
         engine.setOnStateChange(() -> Platform.runLater(this::updateUIFromEngine));
 
-        engine.setOnTimerFinished(() -> Platform.runLater(() -> {
-            uiManager.playAlarmSound(engine.getAlarmSoundVolume());
-        }));
+        engine.setOnTimerFinished(() -> Platform.runLater(() -> uiManager.playAlarmSound(engine.getAlarmSoundVolume())));
 
         updateEngineSettings();
         updateUIFromEngine();
@@ -278,7 +278,7 @@ public class PomodoroController {
 
     //region Navegación
     @FXML
-    private void handleNavClick(ActionEvent event) {
+    void handleNavClick(ActionEvent event) {
         Button clickedBtn = (Button) event.getSource();
         menuBtn.getStyleClass().remove("active");
         plannerBtn.getStyleClass().remove("active");
@@ -287,19 +287,19 @@ public class PomodoroController {
         clickedBtn.getStyleClass().add("active");
 
         if (clickedBtn == menuBtn) {
-            switchPanels(getActivePanel(), mainContainer);
+            uiManager.switchPanels(getActivePanel(), mainContainer);
             mainScrollPane.setFitToHeight(true);
         } else if (clickedBtn == plannerBtn) {
             calendarView.refresh();
-            switchPanels(getActivePanel(), plannerContainer);
+            uiManager.switchPanels(getActivePanel(), plannerContainer);
             mainScrollPane.setFitToHeight(false);
         } else if (clickedBtn == statsBtn) {
             statsDashboard.refresh();
-            switchPanels(getActivePanel(), statsContainer);
+            uiManager.switchPanels(getActivePanel(), statsContainer);
             mainScrollPane.setFitToHeight(false);
         } else if (clickedBtn == historyBtn) {
             historyView.refreshTagsGrid();
-            switchPanels(getActivePanel(), historyContainer);
+            uiManager.switchPanels(getActivePanel(), historyContainer);
             mainScrollPane.setFitToHeight(false);
         }
     }
@@ -354,24 +354,6 @@ public class PomodoroController {
         if (statsContainer.isVisible()) return statsContainer;
         if (historyContainer.isVisible()) return historyContainer;
         return plannerContainer;
-    }
-
-    private void switchPanels(Region toHide, Region toShow) {
-        toShow.setOpacity(0.0);
-        toShow.setVisible(true);
-        toShow.setManaged(true);
-
-        FadeTransition out = new FadeTransition(Duration.millis(200), toHide);
-        out.setFromValue(1.0);
-        out.setToValue(0.0);
-        out.setOnFinished(e -> {
-            toHide.setVisible(false);
-            toHide.setManaged(false);
-            FadeTransition in = new FadeTransition(Duration.millis(200), toShow);
-            in.setToValue(1.0);
-            in.play();
-        });
-        out.play();
     }
     //endregion
 
@@ -567,7 +549,7 @@ public class PomodoroController {
         item.setPadding(new Insets(8));
         item.getStyleClass().add("menu-session-item");
 
-        String color = (String) session.getOrDefault("tag_color", "#94a3b8");
+        String color = (String) session.getOrDefault("tag_color", "#ffffff");
         Region colorIndicator = new Region();
         colorIndicator.setPrefSize(4, 20);
         colorIndicator.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 2;");
@@ -581,8 +563,26 @@ public class PomodoroController {
         Label lblTime = new Label(start.format(DateTimeFormatter.ofPattern("HH:mm")) + " - " + end.format(DateTimeFormatter.ofPattern("HH:mm")));
         lblTime.setStyle("-fx-font-size: 13px; -fx-opacity: 0.7;");
 
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+
+        Button btnPlay = new Button();
+        FontIcon playIcon = new FontIcon("fas-play");
+        playIcon.setIconColor(Color.web(color));
+        playIcon.getStyleClass().add("play-icon");
+
+        btnPlay.setGraphic(playIcon);
+        btnPlay.getStyleClass().add("play-schedule-session");
+        btnPlay.setOnAction(e -> {
+           String tag = (String)session.getOrDefault("tag_name", null);
+           String task = (String)session.getOrDefault("task_name", null);
+            playScheduleSession(tag, task);
+        });
+
+
         info.getChildren().addAll(lblTitle, lblTime);
-        item.getChildren().addAll(colorIndicator, info);
+        item.getChildren().addAll(colorIndicator, info, spacer, btnPlay);
 
         return item;
     }
@@ -640,6 +640,19 @@ public class PomodoroController {
                 starNodes.get(i).getStyleClass().add("unselectedStar");
             }
         }
+    }
+
+    public void switchToTimer() {
+        if (getActivePanel() == mainContainer) return;
+        menuBtn.fire();
+        mainScrollPane.setVvalue(0.0);
+    }
+
+    public void playScheduleSession(String tag, String task) {
+        setupManager.setSelectedTag(tag);
+        setupManager.setSelectedTask(task);
+        updateActiveTaskDisplay(setupManager.getSelectedTag(), setupManager.getSelectedTask());
+        uiManager.switchPanels(getActivePanel(), mainContainer);
     }
 
 }

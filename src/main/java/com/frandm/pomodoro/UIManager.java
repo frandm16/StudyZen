@@ -1,11 +1,8 @@
 package com.frandm.pomodoro;
 
 import javafx.animation.*;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.media.AudioClip;
 import javafx.scene.paint.Color;
@@ -18,6 +15,7 @@ import java.net.URL;
 public class UIManager {
 
     public void switchPanels(Region toHide, Region toShow) {
+        if(toHide == toShow) return;
         toShow.setOpacity(0);
         toShow.setVisible(true);
         toShow.setManaged(true);
