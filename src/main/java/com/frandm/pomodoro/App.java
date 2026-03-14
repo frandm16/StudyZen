@@ -2,13 +2,18 @@ package com.frandm.pomodoro;
 
 import atlantafx.base.theme.PrimerDark;
 import fr.brouillard.oss.cssfx.CSSFX;
+import javafx.animation.FadeTransition;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.net.URL;
 import java.util.Objects;
@@ -19,12 +24,24 @@ public class App extends Application {
         Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
 
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("main_view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load());
+        Parent root = fxmlLoader.load();
 
-        String customStyles = Objects.requireNonNull(
-                App.class.getResource("/com/frandm/pomodoro/styles.css")
-        ).toExternalForm();
-        scene.getStylesheets().add(customStyles);
+        javafx.scene.Node content = ((javafx.scene.layout.Pane) root).getChildren().getFirst();
+
+        content.setOpacity(0);
+
+        Scene scene = new Scene(root);
+        scene.setFill(Color.TRANSPARENT);
+
+        String mainStyles = Objects.requireNonNull(App.class.getResource("/com/frandm/pomodoro/styles.css")).toExternalForm();
+        scene.getStylesheets().add(mainStyles);
+
+        stage.setScene(scene);
+
+        root.applyCss();
+        root.layout();
+
+        stage.show();
 
         URL iconUrl = getClass().getResource("/com/frandm/pomodoro/images/STlogo.png");
         if (iconUrl != null) {
@@ -43,8 +60,14 @@ public class App extends Application {
 
         CSSFX.start();
 
-        stage.setScene(scene);
-        stage.show();
+
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(800), content);
+        fadeIn.setFromValue(0);
+        fadeIn.setToValue(1);
+
+        Platform.runLater(() -> {
+            fadeIn.play();
+        });
     }
 
     public static void main(String[] args) {

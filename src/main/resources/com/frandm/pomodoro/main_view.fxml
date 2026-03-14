@@ -14,9 +14,9 @@
 <?import javafx.scene.effect.GaussianBlur?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<?import javafx.scene.Group?>
 <StackPane fx:id="rootPane" prefHeight="700.0" prefWidth="1000.0"
-           stylesheets="@styles.css" styleClass="root-pane"
+           stylesheets="@/com/frandm/pomodoro/styles.css"
+           styleClass="root-pane"
            xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.frandm.pomodoro.PomodoroController">
     <VBox >

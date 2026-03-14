@@ -2,9 +2,8 @@
 
 /* --- main --- */
 .root-pane {
-    -fx-background-color: -color-menu;
+    -fx-background-color: -color-menu !important;
 }
-
 /* --- labels --- */
 .timer-label {
     -fx-font-family: "JetBrains Mono", "Monospaced";
