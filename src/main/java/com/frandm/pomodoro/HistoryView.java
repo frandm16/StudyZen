@@ -17,9 +17,13 @@ public class HistoryView extends StackPane {
     private final PomodoroController controller;
     private final VBox globalHistoryRoot;
     private final VBox focusAreasRoot;
+    private final VBox calendarHistoryRoot;
     private final VBox detailRoot;
+
     private final Button btnGlobalHistory;
     private final Button btnFocusAreas;
+    private final Button btnCalendarHistory;
+
     private final VBox sessionsContainer;
     private final VBox tasksSummaryContainer;
     private final Label detailTitleLabel;
@@ -27,6 +31,7 @@ public class HistoryView extends StackPane {
     private final ComboBox<String> tagFilterCombo;
     private final ComboBox<String> taskFilterCombo;
 
+    private final HistoryCalendarView historyCalendar;
     private String currentTag = null;
     private String currentTask = null;
     private int currentOffset = 0;
@@ -41,11 +46,15 @@ public class HistoryView extends StackPane {
         HBox navigationBar = new HBox();
         navigationBar.getStyleClass().add("history-nav-bar");
 
-        btnGlobalHistory = new Button("Global History");
-        btnFocusAreas = new Button("Focus Areas");
+        btnGlobalHistory = new Button("History");
+        btnFocusAreas = new Button("Focus");
+        btnCalendarHistory = new Button("Calendar");
+
         btnGlobalHistory.getStyleClass().addAll("title-button", "active");
         btnFocusAreas.getStyleClass().add("title-button");
-        navigationBar.getChildren().addAll(btnGlobalHistory, btnFocusAreas);
+        btnCalendarHistory.getStyleClass().add("title-button");
+
+        navigationBar.getChildren().addAll(btnGlobalHistory, btnFocusAreas, btnCalendarHistory);
 
         globalHistoryRoot = new VBox();
         globalHistoryRoot.getStyleClass().add("history-content-root");
@@ -60,6 +69,9 @@ public class HistoryView extends StackPane {
         taskFilterCombo.setPromptText("All Tasks");
         taskFilterCombo.setDisable(true);
 
+        tagFilterCombo.getStyleClass().add("filter-combobox");
+        taskFilterCombo.getStyleClass().add("filter-combobox");
+
         Label filterIcon = new Label();
         filterIcon.setGraphic(new FontIcon("mdi2f-filter-variant"));
         filterIcon.getStyleClass().add("filter-label-icon");
@@ -71,7 +83,7 @@ public class HistoryView extends StackPane {
 
         loadMoreBtn = new Button("Load more");
         loadMoreBtn.getStyleClass().add("button-secondary");
-        loadMoreBtn.setOnAction(e -> loadMore());
+        loadMoreBtn.setOnAction(_ -> loadMore());
 
         VBox scrollContent = new VBox( sessionsContainer, loadMoreBtn);
         scrollContent.getStyleClass().add("history-scroll-content");
@@ -86,15 +98,25 @@ public class HistoryView extends StackPane {
         focusAreasRoot.setVisible(false);
         focusAreasRoot.setManaged(false);
 
+        calendarHistoryRoot = new VBox();
+        calendarHistoryRoot.getStyleClass().add("history-calendar-root");
+        calendarHistoryRoot.setVisible(false);
+        calendarHistoryRoot.setManaged(false);
+        VBox.setVgrow(calendarHistoryRoot, Priority.ALWAYS);
+
+        historyCalendar = new HistoryCalendarView(controller, this);
+        calendarHistoryRoot.getChildren().add(historyCalendar);
+
         detailRoot = new VBox();
         detailRoot.getStyleClass().add("history-detail-root");
         detailRoot.setVisible(false);
         detailRoot.setManaged(false);
 
+
         Button backBtn = new Button("Back");
         backBtn.getStyleClass().add("button-secondary");
         backBtn.setGraphic(new FontIcon("mdi2a-arrow-left"));
-        backBtn.setOnAction(e -> switchTab(false));
+        backBtn.setOnAction(_ -> switchTab(1));
 
         detailTitleLabel = new Label();
         detailTitleLabel.getStyleClass().add("detail-title-label");
@@ -110,11 +132,12 @@ public class HistoryView extends StackPane {
         detailScroll.getStyleClass().add("setup-scroll");
         detailRoot.getChildren().addAll(details, detailScroll);
 
-        btnGlobalHistory.setOnAction(e -> switchTab(true));
-        btnFocusAreas.setOnAction(e -> switchTab(false));
+        btnGlobalHistory.setOnAction(_ -> switchTab(1));
+        btnFocusAreas.setOnAction(_ -> switchTab(2));
+        btnCalendarHistory.setOnAction(_ -> switchTab(3));
 
         setupFilterListeners();
-        VBox layout = new VBox(navigationBar, globalHistoryRoot, focusAreasRoot, detailRoot);
+        VBox layout = new VBox(navigationBar, globalHistoryRoot, focusAreasRoot, calendarHistoryRoot, detailRoot);
         layout.getStyleClass().add("history-view-layout");
         this.getChildren().add(layout);
 
@@ -126,22 +149,35 @@ public class HistoryView extends StackPane {
         resetAndReload();
     }
 
-    private void switchTab(boolean showGlobal) {
+    private void switchTab(int tabIndex) {
         btnGlobalHistory.getStyleClass().remove("active");
         btnFocusAreas.getStyleClass().remove("active");
-        globalHistoryRoot.setVisible(showGlobal);
-        globalHistoryRoot.setManaged(showGlobal);
-        focusAreasRoot.setVisible(!showGlobal);
-        focusAreasRoot.setManaged(!showGlobal);
-        detailRoot.setVisible(false);
-        detailRoot.setManaged(false);
+        btnCalendarHistory.getStyleClass().remove("active");
 
-        if (showGlobal) {
-            btnGlobalHistory.getStyleClass().add("active");
-            resetAndReload();
-        } else {
-            btnFocusAreas.getStyleClass().add("active");
-            refreshFocusAreasGrid();
+        globalHistoryRoot.setVisible(false); globalHistoryRoot.setManaged(false);
+        focusAreasRoot.setVisible(false); focusAreasRoot.setManaged(false);
+        calendarHistoryRoot.setVisible(false); calendarHistoryRoot.setManaged(false);
+        detailRoot.setVisible(false); detailRoot.setManaged(false);
+
+        switch (tabIndex) {
+            case 1 -> {
+                btnGlobalHistory.getStyleClass().add("active");
+                globalHistoryRoot.setVisible(true);
+                globalHistoryRoot.setManaged(true);
+                resetAndReload();
+            }
+            case 2 -> {
+                btnFocusAreas.getStyleClass().add("active");
+                focusAreasRoot.setVisible(true);
+                focusAreasRoot.setManaged(true);
+                refreshFocusAreasGrid();
+            }
+            case 3 -> {
+                btnCalendarHistory.getStyleClass().add("active");
+                calendarHistoryRoot.setVisible(true);
+                calendarHistoryRoot.setManaged(true);
+                historyCalendar.refresh();
+            }
         }
     }
 
@@ -188,7 +224,7 @@ public class HistoryView extends StackPane {
     }
 
     private void setupFilterListeners() {
-        tagFilterCombo.setOnAction(e -> {
+        tagFilterCombo.setOnAction(_ -> {
             String selected = tagFilterCombo.getValue();
             if (selected == null || selected.equals("All Tags")) {
                 currentTag = null;
@@ -204,7 +240,7 @@ public class HistoryView extends StackPane {
             }
             resetAndReload();
         });
-        taskFilterCombo.setOnAction(e -> {
+        taskFilterCombo.setOnAction(_ -> {
             String selected = taskFilterCombo.getValue();
             currentTask = (selected == null || selected.equals("All Tasks")) ? null : selected;
             resetAndReload();
@@ -353,7 +389,7 @@ public class HistoryView extends StackPane {
         nameLabel.getStyleClass().add("tag-card-name");
         topRow.getChildren().addAll(dot, nameLabel);
         card.getChildren().add(topRow);
-        card.setOnMouseClicked(e -> showTagDetail(name));
+        card.setOnMouseClicked(_ -> showTagDetail(name));
         return card;
     }
 
@@ -385,17 +421,17 @@ public class HistoryView extends StackPane {
 
         MenuItem editItem = new MenuItem("Edit");
         editItem.setGraphic(new FontIcon("mdi2p-pencil"));
-        editItem.setOnAction(e -> controller.openEditSession(s));
+        editItem.setOnAction(_ -> controller.openEditSession(s));
 
 
         MenuItem deleteItem = new MenuItem("Delete");
         deleteItem.setGraphic(new FontIcon("mdi2t-trash-can-outline"));
         deleteItem.getStyleClass().add("menu-item-delete");
-        deleteItem.setOnAction(e -> controller.showDeleteConfirmation(s, this));
+        deleteItem.setOnAction(_ -> controller.showDeleteConfirmation(s, this));
 
         contextMenu.getItems().addAll(editItem, deleteItem);
 
-        optionsBtn.setOnAction(e -> contextMenu.show(optionsBtn, Side.BOTTOM, 0, 0));
+        optionsBtn.setOnAction(_ -> contextMenu.show(optionsBtn, Side.BOTTOM, 0, 0));
 
         header.getChildren().addAll(sessionTitle, timeRange, spacer, optionsBtn);
 
@@ -434,7 +470,7 @@ public class HistoryView extends StackPane {
 
         details.getChildren().addAll(stars, desc);
 
-        card.setOnMouseClicked(e -> {
+        card.setOnMouseClicked(_ -> {
             boolean isExpanded = details.isVisible();
             details.setVisible(!isExpanded);
             details.setManaged(!isExpanded);
@@ -445,6 +481,10 @@ public class HistoryView extends StackPane {
 
         card.getChildren().addAll(header, badges, details);
         return card;
+    }
+
+    public HistoryCalendarView getHistoryCalendar() {
+        return historyCalendar;
     }
 
 }

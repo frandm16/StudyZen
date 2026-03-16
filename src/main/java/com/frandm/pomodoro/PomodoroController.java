@@ -57,14 +57,14 @@ public class PomodoroController {
     @FXML private TextField editTitleField;
     @FXML private TextArea editDescArea;
     @FXML private HBox editStarsContainer;
-    @FXML private ScrollPane mainScrollPane;
     @FXML private GridPane setupPane, mainContainer, settingsPane;
     @FXML private StackPane rootPane;
-    @FXML private VBox notificationContainer, scheduleListContainer, statsContainer, plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage, fuzzyResultsContainer, tagsListContainer, activeTaskContainer;
+    @FXML private VBox notificationContainer, scheduleListContainer, statsContainer, plannerContainer, historyContainer,
+            statsPlaceholder, streakVBox, streakImage, fuzzyResultsContainer, tagsListContainer, activeTaskContainer;
     @FXML private Label timerLabel, stateLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
             alarmVolumeValLabel, widthSliderValLabel, streakLabel, timeThisWeekLabel,
             timeLastMonthLabel, tasksLabel, bestDayLabel, selectedNameLabel;
-    @FXML private Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn, plannerBtn, historyBtn, selectTaskBtn;
+    @FXML private Button startPauseBtn, skipBtn, finishBtn, menuBtn, statsBtn, plannerBtn, historyBtn;
     @FXML public TextField tagNameInput, fuzzySearchInput;
     @FXML public ColorPicker tagColorInput;
     @FXML public Circle circleMain;
@@ -92,7 +92,6 @@ public class PomodoroController {
     private int editRating = 0;
 
     private boolean isDarkMode = true;
-    private TranslateTransition settingsAnim;
     private LocalDateTime startDate;
 
     private int currentRating = 0;
@@ -138,8 +137,8 @@ public class PomodoroController {
         summaryPane.setManaged(false);
         setupStars();
 
-        stackpaneCircle.widthProperty().addListener((obs, oldVal, newVal) -> resizeCircle());
-        stackpaneCircle.heightProperty().addListener((obs, oldVal, newVal) -> resizeCircle());
+        stackpaneCircle.widthProperty().addListener((_, _, _) -> resizeCircle());
+        stackpaneCircle.heightProperty().addListener((_, _, _) -> resizeCircle());
         SIZE_FACTOR=engine.getUiSize()* 0.005;
         resizeCircle();
 
@@ -188,7 +187,7 @@ public class PomodoroController {
         }
         updateSettingsVisibility(engine.getCurrentMode());
 
-        modeGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+        modeGroup.selectedToggleProperty().addListener((_, oldToggle, newToggle) -> {
             if (newToggle != null) {
                 PomodoroEngine.Mode selectedMode = (PomodoroEngine.Mode) newToggle.getUserData();
                 engine.setMode(selectedMode);
@@ -199,7 +198,7 @@ public class PomodoroController {
         });
         //endregion
 
-        fuzzySearchInput.textProperty().addListener((obs, old, val) ->
+        fuzzySearchInput.textProperty().addListener((_, _, val) ->
             setupManager.updateFuzzyResults(val, fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected)
         );
 
@@ -567,6 +566,10 @@ public class PomodoroController {
             rootPane.getStyleClass().add("primer-light");
         }
     }
+
+    public String getCurrentTheme() {
+        return isDarkMode ? "primer-dark" : "primer-light";
+    }
     //endregion
 
     //region Setup
@@ -631,7 +634,7 @@ public class PomodoroController {
         s.setValue(v);
         if (l != null) l.setText(v + unit);
 
-        s.valueProperty().addListener((o, ov, nv) -> {
+        s.valueProperty().addListener((_, _, nv) -> {
             if (l != null) l.setText(nv.intValue() + unit);
             a.accept(nv.intValue());
             if (engine.getCurrentState() == PomodoroEngine.State.MENU) {
@@ -698,7 +701,7 @@ public class PomodoroController {
 
         btnPlay.setGraphic(playIcon);
         btnPlay.getStyleClass().add("play-schedule-session");
-        btnPlay.setOnAction(e -> {
+        btnPlay.setOnAction(_ -> {
            String tag = (String)session.getOrDefault("tag_name", null);
            String task = (String)session.getOrDefault("task_name", null);
             playScheduleSession(tag, task);
@@ -741,7 +744,7 @@ public class PomodoroController {
             star.setIconSize(30);
             star.setCursor(javafx.scene.Cursor.HAND);
 
-            star.setOnMouseClicked(e -> {
+            star.setOnMouseClicked(_ -> {
                 if (val == currentRating) {
                     currentRating = 0;
                 } else {
@@ -814,6 +817,10 @@ public class PomodoroController {
             DatabaseHandler.deleteSession(sessionToDelete.getId());
             if (historyView != null) {
                 historyView.resetAndReload();
+
+                if (historyView.getHistoryCalendar() != null) {
+                    historyView.getHistoryCalendar().refresh();
+                }
             }
             toggleConfirmDelete();
             sessionToDelete = null;
@@ -836,7 +843,7 @@ public class PomodoroController {
             FontIcon star = new FontIcon("fas-star");
             star.setIconSize(30);
             star.setCursor(javafx.scene.Cursor.HAND);
-            star.setOnMouseClicked(e -> {
+            star.setOnMouseClicked(_ -> {
                 editRating = (val == editRating) ? 0 : val;
                 updateEditStarsUI();
             });
@@ -904,6 +911,10 @@ public class PomodoroController {
 
         if (historyView != null) {
             historyView.resetAndReload();
+
+            if (historyView.getHistoryCalendar() != null) {
+                historyView.getHistoryCalendar().refresh();
+            }
         }
 
         toggleEditSession();
@@ -919,7 +930,7 @@ public class PomodoroController {
     }
 
     private void setupEditComboListeners() {
-        editTagCombo.setOnAction(e -> {
+        editTagCombo.setOnAction(_ -> {
             String selectedTag = editTagCombo.getValue();
             if (selectedTag != null) {
                 updateEditTaskCombo(selectedTag);

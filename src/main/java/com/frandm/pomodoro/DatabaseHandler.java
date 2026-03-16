@@ -676,5 +676,39 @@ private static void executeUpdates(String sql, Object... params) {
         }
         return sessions;
     }
+
+    public static List<Map<String, Object>> getCompletedSessionsForCalendar(LocalDate start, LocalDate end) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        // Usamos start_date y end_date de la tabla 'sessions'
+        String sql = "SELECT s.*, t.name as task_name, tg.name as tag_name, tg.color as tag_color " +
+                "FROM sessions s " +
+                "JOIN tasks t ON s.task_id = t.id " +
+                "JOIN tags tg ON t.tag_id = tg.id " +
+                "WHERE date(s.start_date) BETWEEN ? AND ?";
+
+        try (Connection conn = DriverManager.getConnection(getDatabaseUrl());
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, start.toString());
+            preparedStatement.setString(2, end.toString());
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", rs.getInt("id"));
+                map.put("task_id", rs.getInt("task_id"));
+                map.put("title", rs.getString("title"));
+                map.put("start_time", LocalDateTime.parse(rs.getString("start_date"), DATE_FORMATTER));
+                map.put("end_time", LocalDateTime.parse(rs.getString("end_date"), DATE_FORMATTER));
+                map.put("task_name", rs.getString("task_name"));
+                map.put("tag_color", rs.getString("tag_color"));
+                map.put("tag_name", rs.getString("tag_name"));
+                map.put("description", rs.getString("description"));
+                map.put("rating", rs.getInt("rating"));
+                list.add(map);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getCompletedSessionsForCalendar: " + e.getMessage());
+        }
+        return list;
+    }
     //endregion
 }

@@ -674,7 +674,7 @@
 }
 
 .title-schedule-session {
-    -fx-text-fill: #818181;
+    -fx-text-fill: -text-main;
     -fx-font-size: 20px;
     -fx-font-weight: bold;
 }
@@ -770,6 +770,85 @@
     -fx-cursor: hand;
     -fx-padding: 8 15;
     -fx-background-radius: 10;
+}
+
+.input-calendar {
+    -fx-background-color: -color-bg-subtle;
+    -fx-background-radius: 10;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 10;
+    -fx-padding: 8 12;
+    -fx-text-fill: -text-main;
+    -fx-font-size: 13px;
+    -fx-prompt-text-fill: -text-muted;
+}
+
+.input-calendar:hover {
+    -fx-border-color: -color-accent;
+    -fx-background-color: rgba(255, 255, 255, 0.03);
+}
+
+.input-calendar:focused {
+    -fx-border-color: -color-accent;
+    -fx-border-width: 1.5;
+    -fx-background-color: -color-bg-subtle;
+}
+
+.date-picker.input-calendar > .text-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: -text-main;
+    -fx-padding: 0;
+}
+
+.date-picker.input-calendar > .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.date-picker.input-calendar > .arrow-button > .arrow {
+    -fx-background-color: -text-muted;
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+.date-picker.input-calendar:hover > .arrow-button > .arrow {
+    -fx-background-color: -color-accent;
+}
+
+.date-picker-popup {
+    -fx-background-color: -bg-panels;
+    -fx-background-radius: 12;
+    -fx-border-color: -color-border-subtle;
+    -fx-border-radius: 12;
+    -fx-padding: 5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 8);
+}
+
+.date-picker-popup > .month-year-pane {
+    -fx-background-color: transparent;
+}
+
+.date-picker-popup .calendar-grid {
+    -fx-background-color: transparent;
+}
+
+.date-picker-popup .day-cell {
+    -fx-text-fill: -text-muted;
+    -fx-background-color: -bg-panels;
+    -fx-background-radius: 5;
+}
+
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: -bg-panels;
+    -fx-text-fill: -text-main;
+}
+
+.date-picker-popup .selected {
+    -fx-background-color: -color-accent;
+    -fx-text-fill: white;
+}
+
+.date-picker-popup .today {
+    -fx-font-weight: bold;
 }
 
 /* --- summary pane --- */
@@ -1006,9 +1085,8 @@
 
 
 /* --- combobox --- */
-
 .combo-box {
-    -fx-background-color: -color-bg-subtle; /* Fondo oscuro sutil */
+    -fx-background-color: -color-bg-subtle;
     -fx-background-radius: 10;
     -fx-border-color: -color-border-subtle-light;
     -fx-border-radius: 10;
@@ -1080,6 +1158,10 @@
 .combo-box:disabled {
     -fx-opacity: 0.4;
     -fx-cursor: default;
+}
+
+.filter-combobox {
+    -fx-background-color: transparent;
 }
 
 /* --- delete dialog --- */

@@ -34,7 +34,7 @@
                 <Button fx:id="menuBtn" text="Timer" onAction="#handleNavClick" styleClass="title-button, active" />
                 <Button fx:id="plannerBtn" text="Planner" onAction="#handleNavClick" styleClass="title-button" />
                 <Button fx:id="statsBtn" text="Stats" onAction="#handleNavClick" styleClass="title-button" />
-                <Button fx:id="historyBtn" text="History" onAction="#handleNavClick" styleClass="title-button" />
+                <Button fx:id="historyBtn" text="Logs" onAction="#handleNavClick" styleClass="title-button" />
             </HBox>
 
             <Button text="⚙ Settings" onAction="#toggleSettings" GridPane.columnIndex="2" styleClass="title-button"/>
@@ -305,7 +305,6 @@
                     <RowConstraints vgrow="ALWAYS" />
                 </rowConstraints>
                 <VBox fx:id="historyContainer" visible="false" managed="false" alignment="TOP_CENTER" GridPane.columnIndex="1" >
-                    <padding><Insets top="40" bottom="40" left="50" right="50"/></padding>
                 </VBox>
             </GridPane>
         </StackPane>
