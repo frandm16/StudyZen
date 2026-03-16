@@ -35,11 +35,9 @@ public class PomodoroController {
     public TextArea summaryDesc;
     public HBox starsContainer;
     public StackPane confirmOverlay, stackpaneCircle;
-    public Pane arcPane;
     public VBox timerTextContainer;
     public Slider circleSizeSlider;
     public Label circleSizeValLabel;
-    public ComboBox<PomodoroEngine.Mode> modeComboBox;
     public HBox buttonsHbox;
     public Slider countdownSlider;
     public Label countdownValLabel;
@@ -75,9 +73,6 @@ public class PomodoroController {
     @FXML public CategoryAxis weeksXAxis;
     @FXML public PieChart tagPieChart;
     @FXML private Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider, widthSlider;
-    @FXML private TableView<Session> sessionsTable;
-    @FXML private TableColumn<Session, String> colDate, colSubject, colTopic, colDescription;
-    @FXML private TableColumn<Session, Integer> colDuration;
     @FXML private ColumnConstraints colRightStats, colCenterStats, colLeftStats;
 //endregion
 
@@ -89,7 +84,6 @@ public class PomodoroController {
     private CalendarView calendarView;
     private double SIZE_FACTOR = 0.25;
 
-    private ToggleGroup modeGroup;
 
     private HistoryView historyView;
     private Session sessionToDelete;
@@ -97,7 +91,6 @@ public class PomodoroController {
     private final List<FontIcon> editStarNodes = new ArrayList<>();
     private int editRating = 0;
 
-    private boolean isSettingsOpen = false;
     private boolean isDarkMode = true;
     private TranslateTransition settingsAnim;
     private LocalDateTime startDate;
@@ -179,7 +172,7 @@ public class PomodoroController {
         autoPomoToggle.setSelected(engine.isAutoStartPomo());
         countBreakTime.setSelected(engine.isCountBreakTime());
 
-        modeGroup = new ToggleGroup();
+        ToggleGroup modeGroup = new ToggleGroup();
         pomoModeBtn.setToggleGroup(modeGroup);
         timerModeBtn.setToggleGroup(modeGroup);
         countdownModeBtn.setToggleGroup(modeGroup);

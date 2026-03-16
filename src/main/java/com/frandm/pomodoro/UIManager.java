@@ -40,11 +40,9 @@ public class UIManager {
                 AudioClip clip = new AudioClip(url.toExternalForm());
                 clip.setVolume((double) volumePercent / 100);
                 clip.play();
-            } else {
-                System.err.println("No se encontró el archivo de sonido en: sounds/birds.mp3");
             }
         } catch (Exception e) {
-            System.err.println("Error al reproducir el sonido: " + e.getMessage());
+            System.err.println("Error UIManager.playAlarmSound: " + e.getMessage());
         }
     }
 

@@ -24,8 +24,8 @@ public class HistoryView extends StackPane {
     private final VBox tasksSummaryContainer;
     private final Label detailTitleLabel;
     private final Button loadMoreBtn;
-    private ComboBox<String> tagFilterCombo;
-    private ComboBox<String> taskFilterCombo;
+    private final ComboBox<String> tagFilterCombo;
+    private final ComboBox<String> taskFilterCombo;
 
     private String currentTag = null;
     private String currentTask = null;
@@ -240,7 +240,7 @@ public class HistoryView extends StackPane {
 
         if (currentOffset == 0) {
             boolean hasTodaySessions = !sessions.isEmpty() &&
-                    LocalDateTime.parse(sessions.get(0).getStartDate(), DATE_FORMATTER).toLocalDate().equals(today);
+                    LocalDateTime.parse(sessions.getFirst().getStartDate(), DATE_FORMATTER).toLocalDate().equals(today);
 
             if (!hasTodaySessions) {
                 createNewDayBlock(today, 0, "No sessions registered for today");
@@ -385,23 +385,17 @@ public class HistoryView extends StackPane {
 
         MenuItem editItem = new MenuItem("Edit");
         editItem.setGraphic(new FontIcon("mdi2p-pencil"));
-        editItem.setOnAction(e -> {
-            controller.openEditSession(s);
-        });
+        editItem.setOnAction(e -> controller.openEditSession(s));
 
 
         MenuItem deleteItem = new MenuItem("Delete");
         deleteItem.setGraphic(new FontIcon("mdi2t-trash-can-outline"));
         deleteItem.getStyleClass().add("menu-item-delete");
-        deleteItem.setOnAction(e -> {
-            controller.showDeleteConfirmation(s, this);
-        });
+        deleteItem.setOnAction(e -> controller.showDeleteConfirmation(s, this));
 
         contextMenu.getItems().addAll(editItem, deleteItem);
 
-        optionsBtn.setOnAction(e -> {
-            contextMenu.show(optionsBtn, Side.BOTTOM, 0, 0);
-        });
+        optionsBtn.setOnAction(e -> contextMenu.show(optionsBtn, Side.BOTTOM, 0, 0));
 
         header.getChildren().addAll(sessionTitle, timeRange, spacer, optionsBtn);
 

@@ -65,9 +65,7 @@ public class App extends Application {
         fadeIn.setFromValue(0);
         fadeIn.setToValue(1);
 
-        Platform.runLater(() -> {
-            fadeIn.play();
-        });
+        Platform.runLater(fadeIn::play);
     }
 
     public static void main(String[] args) {

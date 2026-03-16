@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class StatsDashboard {
 
@@ -313,7 +312,7 @@ public class StatsDashboard {
         };
         for (int i = 0; i < days.length; i++) {
             if (days[i] != null) {
-                String name = days[i].getDisplayName(TextStyle.SHORT, Locale.getDefault());
+                String name = Objects.requireNonNull(days[i]).getDisplayName(TextStyle.SHORT, Locale.getDefault());
                 name = capitalize(name.replace(".", ""));
                 Label l = new Label(name);
                 l.getStyleClass().add("month-label");

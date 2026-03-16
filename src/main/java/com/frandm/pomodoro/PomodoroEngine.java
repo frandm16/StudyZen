@@ -29,7 +29,7 @@ public class PomodoroEngine {
     private int secondsRemaining;
     private int secondsElapsed = 0;
 
-    private int timePerSeconds = 102;
+    private final int timePerSeconds = 1;
     private int totalSecondsInActiveSession;
 
     private int alarmSoundVolume = 100;

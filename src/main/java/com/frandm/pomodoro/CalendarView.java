@@ -20,7 +20,7 @@ public class CalendarView extends VBox {
     private GridPane calendarGrid;
     private ScrollPane scrollPane;
     private LocalDate currentWeekStart;
-    private PomodoroController controller;
+    private final PomodoroController controller;
     private long lastPopupCloseTime = 0;
     private Popup activePopup = null;
     private final double ROW_HEIGHT = 60.0;
@@ -316,7 +316,7 @@ public class CalendarView extends VBox {
         tf.setStyle("-fx-background-color: -color-bg-subtle; -fx-background-radius: 4; -fx-padding: 4 0; -fx-font-family: 'JetBrains Mono';");
 
         tf.textProperty().addListener((obs, oldV, newV) -> {
-            if (!newV.matches("\\d*")) tf.setText(newV.replaceAll("[^\\d]", ""));
+            if (!newV.matches("\\d*")) tf.setText(newV.replaceAll("\\D", ""));
             if (tf.getText().length() > 2) tf.setText(tf.getText().substring(0, 2));
             if (!tf.getText().isEmpty() && Integer.parseInt(tf.getText()) > max) tf.setText(String.valueOf(max));
         });

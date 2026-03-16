@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Session {
-    private int id;
+    private final int id;
     private final String tag;
     private final String tagColor;
     private final String task;

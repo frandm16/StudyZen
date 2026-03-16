@@ -84,9 +84,7 @@ public class NotificationManager {
             updateContainerTransparency();
         });
 
-        toastRoot.setOnMouseClicked(_ -> {
-            fadeOut.play();
-        });
+        toastRoot.setOnMouseClicked(_ -> fadeOut.play());
 
         toastRoot.setTranslateX(350);
         TranslateTransition slideIn = new TranslateTransition(Duration.millis(300), toastRoot);

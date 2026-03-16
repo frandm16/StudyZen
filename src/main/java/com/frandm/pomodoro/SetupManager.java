@@ -42,9 +42,7 @@ public class SetupManager {
                     NotificationManager.show("Task created", "Successfully created " + input, NotificationManager.NotificationType.SUCCESS);
                 });
             }else{
-                createBtn.setOnAction(e -> {
-                    NotificationManager.show("Cant create task", "A tag must be selected", NotificationManager.NotificationType.ERROR);
-                });
+                createBtn.setOnAction(e -> NotificationManager.show("Cant create task", "A tag must be selected", NotificationManager.NotificationType.ERROR));
             }
             container.getChildren().addAll(createBtn, new Separator());
         }
