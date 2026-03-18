@@ -8,6 +8,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 import me.xdrop.fuzzywuzzy.model.ExtractedResult;
+import org.kordamp.ikonli.javafx.FontIcon;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -100,7 +102,24 @@ public class SetupManager {
             row.setPadding(new javafx.geometry.Insets(8));
             if (name.equals(filterTag)) row.setStyle("-fx-background-color: rgba(255,255,255,0.1); -fx-background-radius: 5;");
 
-            row.getChildren().addAll(new Circle(6, Color.web(color)), new Label(name));
+            Circle colorCircle = new Circle(6, Color.web(color));
+            Label tagLabel = new Label(name);
+
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            Button deleteBtn = new Button();
+            deleteBtn.getStyleClass().add("card-options-button");
+            FontIcon optionsIcon = new FontIcon("mdi2d-dots-horizontal");
+            optionsIcon.getStyleClass().add("options-icon");
+            deleteBtn.setGraphic(optionsIcon);
+
+            deleteBtn.setOnAction(e -> {
+                e.consume();
+                controller.openConfirmDeleteTag(name);
+            });
+
+            row.getChildren().addAll(colorCircle, tagLabel, spacer, deleteBtn);
             row.setOnMouseClicked(e -> {
                 filterTag = (name.equals(filterTag)) ? null : name;
                 onFilterChange.run();

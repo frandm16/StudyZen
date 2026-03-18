@@ -20,6 +20,7 @@ import java.util.*;
 public class PlannerView extends VBox {
 
     private GridPane calendarGrid;
+    private GridPane headerGrid;
     private ScrollPane scrollPane;
     private LocalDate currentWeekStart;
     private final PomodoroController controller;
@@ -82,14 +83,18 @@ public class PlannerView extends VBox {
 
         header.getChildren().addAll(btnToday, btnPrev, btnNext, lblMonth, spacer, btnCreate);
 
+        headerGrid = new GridPane();
+        headerGrid.getStyleClass().add("calendar-header-grid");
+
         calendarGrid = new GridPane();
         calendarGrid.getStyleClass().add("calendar-grid");
 
         scrollPane = new ScrollPane(calendarGrid);
         scrollPane.getStyleClass().add("main-scroll");
         scrollPane.setFitToWidth(true);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
-        this.getChildren().addAll(header, scrollPane);
+        this.getChildren().addAll(header, headerGrid, scrollPane);
         refresh();
         javafx.application.Platform.runLater(this::scrollToCurrentTime);
     }
@@ -104,27 +109,33 @@ public class PlannerView extends VBox {
     }
 
     private void setupGridConstraints() {
-        calendarGrid.getColumnConstraints().clear();
-        calendarGrid.getColumnConstraints().add(new ColumnConstraints(55));
-        for (int i = 0; i < 7; i++) {
-            ColumnConstraints dayCol = new ColumnConstraints();
-            dayCol.setHgrow(Priority.ALWAYS);
-            dayCol.setMinWidth(100);
-            calendarGrid.getColumnConstraints().add(dayCol);
+        for (GridPane grid : new GridPane[]{headerGrid, calendarGrid}) {
+            grid.getColumnConstraints().clear();
+            grid.getColumnConstraints().add(new ColumnConstraints(55));
+            for (int i = 0; i < 7; i++) {
+                ColumnConstraints dayCol = new ColumnConstraints();
+                dayCol.setHgrow(Priority.ALWAYS);
+                dayCol.setMinWidth(100);
+                grid.getColumnConstraints().add(dayCol);
+            }
         }
     }
 
     private void renderBaseGrid() {
         LocalDate today = LocalDate.now();
+        headerGrid.getChildren().clear();
+
+        Region corner = new Region();
+        headerGrid.add(corner, 0, 0);
 
         Pane timeColumn = new Pane();
         timeColumn.setPrefWidth(55);
-        calendarGrid.add(timeColumn, 0, 1);
+        calendarGrid.add(timeColumn, 0, 0);
 
         for (int i = 0; i < 7; i++) {
             LocalDate date = currentWeekStart.plusDays(i);
             boolean isToday = date.equals(today);
-            calendarGrid.add(createDayHeader(date, isToday), i + 1, 0);
+            headerGrid.add(createDayHeader(date, isToday), i + 1, 0);
 
             Pane columnCanvas = new Pane();
             columnCanvas.getStyleClass().add(isToday ? "calendar-cell-today" : "calendar-column-canvas");
@@ -158,7 +169,7 @@ public class PlannerView extends VBox {
                 });
                 columnCanvas.getChildren().add(hourCell);
             }
-            calendarGrid.add(columnCanvas, i + 1, 1);
+            calendarGrid.add(columnCanvas, i + 1, 0);
         }
     }
 
@@ -495,7 +506,7 @@ public class PlannerView extends VBox {
         lbl.setText(m.substring(0, 1).toUpperCase() + m.substring(1) + " " + currentWeekStart.getYear());
     }
 
-    private void scrollToCurrentTime() {
+    public void scrollToCurrentTime() {
         double currentHour = LocalTime.now().getHour();
         scrollPane.setVvalue((currentHour > 3) ? (currentHour - 3) / 24.0 : 0);
     }

@@ -206,6 +206,9 @@ public class StatsDashboard {
             initializeHeatmapUI();
         }
 
+        int maxMinutes = data.values().stream().max(Integer::compare).orElse(0);
+        System.out.println(maxMinutes);
+
         heatmapGrid.getChildren().clear();
         heatmapGrid.getColumnConstraints().clear();
         monthLabelContainer.getChildren().clear();
@@ -240,7 +243,7 @@ public class StatsDashboard {
                     lastMonthValue = date.getMonthValue();
                 }
 
-                Rectangle rect = createHeatmapRect(data.getOrDefault(date, 0), date);
+                Rectangle rect = createHeatmapRect(data.getOrDefault(date, 0), maxMinutes, date);
                 heatmapGrid.add(rect, week + 1, day);
             }
         }
@@ -329,16 +332,26 @@ public class StatsDashboard {
         GridPane.setHalignment(label, HPos.LEFT);
         monthLabelContainer.add(label, week, 0);
     }
-    private Rectangle createHeatmapRect(int minutes, LocalDate date) {
+    private Rectangle createHeatmapRect(int minutes, int maxMinutes, LocalDate date) {
         Rectangle rect = new Rectangle(15, 15);
         rect.setArcWidth(4); rect.setArcHeight(4);
         rect.getStyleClass().add("heatmap-cell");
 
-        if (minutes == 0) rect.getStyleClass().add("cell-empty");
-        else if (minutes < 60)  rect.getStyleClass().add("cell-low");
-        else if (minutes < 150) rect.getStyleClass().add("cell-medium");
-        else if (minutes < 250) rect.getStyleClass().add("cell-high");
-        else rect.getStyleClass().add("cell-extreme");
+        if (minutes == 0 || maxMinutes == 0) {
+            rect.getStyleClass().add("cell-empty");
+        } else {
+            double percentage = (double) minutes / maxMinutes;
+
+            if (percentage < 0.25) {
+                rect.getStyleClass().add("cell-low");
+            } else if (percentage < 0.50) {
+                rect.getStyleClass().add("cell-medium");
+            } else if (percentage < 0.75) {
+                rect.getStyleClass().add("cell-high");
+            } else {
+                rect.getStyleClass().add("cell-extreme");
+            }
+        }
 
         String tooltipText = String.format("%s, %s %d\n%dh %dm",
                 capitalize(date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.getDefault())),

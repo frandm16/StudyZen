@@ -178,6 +178,11 @@
     -fx-max-height: Infinity;
 }
 
+.stat-icon{
+    -fx-icon-color: -color-accent;
+    -fx-icon-size: 30;
+}
+
 .small-card-title {
     -fx-text-fill: -text-muted;
     -fx-font-size: 13px;
@@ -242,6 +247,9 @@
     -fx-border-radius: 15;
     -fx-border-color: -color-border-subtle-light;
     -fx-border-width: 1;
+}
+
+#tagsListContainer {
 }
 
 .setup-section-title {

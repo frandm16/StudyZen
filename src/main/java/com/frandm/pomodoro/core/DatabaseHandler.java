@@ -75,17 +75,6 @@ public class DatabaseHandler {
                     "is_completed INTEGER DEFAULT 0, " +
                     "FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE)");
 
-            //tabla deadlines
-            stmt.execute("CREATE TABLE IF NOT EXISTS deadlines (" +
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "title TEXT NOT NULL, " +
-                    "due_date DATETIME NOT NULL, " +
-                    "priority INTEGER DEFAULT 0, " +
-                    "tag_id INTEGER, " +
-                    "task_id INTEGER, " +
-                    "FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE SET NULL, " +
-                    "FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL)");
-
         } catch (SQLException e) {
             System.err.println("Error initializeDatabase: " + e.getMessage());
         }
@@ -532,8 +521,8 @@ private static void executeUpdates(String sql, Object... params) {
                 java.time.LocalDate date = today.minusDays(i);
 
                 if (random.nextDouble() < 0.80) {
-                    java.time.LocalDateTime currentTime = date.atTime(8, 0);
-                    int sessionsToday = random.nextInt(6) + 1;
+                    java.time.LocalDateTime currentTime = date.atTime(7 + random.nextInt(3), 0);
+                    int sessionsToday = random.nextInt(3) + 3;
 
                     for (int s = 0; s < sessionsToday; s++) {
                         int tagIndex = random.nextInt(tags.length);
@@ -545,7 +534,7 @@ private static void executeUpdates(String sql, Object... params) {
 
                         int taskId = getOrCreateTask(tagName, tagColor, taskName);
 
-                        int duration = 25 + random.nextInt(35);
+                        int duration = 10 + random.nextInt(75);
                         java.time.LocalDateTime start = currentTime;
                         java.time.LocalDateTime end = start.plusMinutes(duration);
 
@@ -559,7 +548,7 @@ private static void executeUpdates(String sql, Object... params) {
                                 random.nextInt(6)
                         );
 
-                        currentTime = end.plusMinutes(random.nextInt(20) + 5);
+                        currentTime = end.plusMinutes(random.nextInt(30) + 5);
                         if (currentTime.getHour() == 23) break;
                     }
                 }
@@ -590,7 +579,7 @@ private static void executeUpdates(String sql, Object... params) {
                 LocalDate date = today.plusDays(i);
 
                 if (random.nextDouble() < 0.90) {
-                    int sessionsToday = random.nextInt(4) + 3;
+                    int sessionsToday = random.nextInt(6) + 3;
 
                     LocalDateTime currentTime = date.atTime(7 + random.nextInt(3), 0);
 
@@ -613,9 +602,9 @@ private static void executeUpdates(String sql, Object... params) {
                 }
             }
             conn.commit();
-            System.out.println("[DEBUG] Calendario 'Abundante' generado con éxito.");
+            System.out.println("[DEBUG] scheduled sessions generated");
         } catch (SQLException e) {
-            System.err.println("Error en generateAbundantSchedule: " + e.getMessage());
+            System.err.println("Error en generateRandomSchedule: " + e.getMessage());
         }
     }
     //endregion
@@ -710,6 +699,12 @@ private static void executeUpdates(String sql, Object... params) {
             System.err.println("Error getCompletedSessionsForCalendar: " + e.getMessage());
         }
         return list;
+    }
+
+    public static void deleteTag(String tagName) {
+        String sql = "DELETE FROM tags WHERE name = ?";
+
+        executeUpdates(sql, tagName);
     }
     //endregion
 }

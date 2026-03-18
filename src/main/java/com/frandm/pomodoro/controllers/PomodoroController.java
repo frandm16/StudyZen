@@ -22,6 +22,7 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
@@ -75,6 +76,8 @@ public class PomodoroController {
     public Slider backgroundMusicVolumeSlider;
     public Label backgroundMusicVolumeLabel;
     public Button musicBtn;
+    public StackPane confirmTagOverlay;
+    public VBox confirmTagBox;
 
     private StatsDashboard statsDashboard;
     private PlannerView plannerView;
@@ -90,6 +93,7 @@ public class PomodoroController {
 
     private Map<String, List<String>> tagsWithTasksMap = new HashMap<>();
     private Map<String, String> tagColors = new HashMap<>();
+    private String tagToDelete = null;
 
     @FXML
     public void initialize() {
@@ -281,6 +285,12 @@ public class PomodoroController {
     public void refreshDatabaseData() {
         tagsWithTasksMap = DatabaseHandler.getTagsWithTasksMap();
         tagColors = DatabaseHandler.getTagColors();
+
+        setupManager.renderTagsList(tagsListContainer, tagColors, () ->
+                setupManager.updateFuzzyResults(fuzzySearchInput.getText(), fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected)
+        );
+
+        setupManager.updateFuzzyResults("", fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected);
     }
 
     private void updateEngineSettings() {
@@ -378,6 +388,7 @@ public class PomodoroController {
             uiManager.switchPanels(getActivePanel(), mainContainer);
         } else if (clickedBtn == plannerBtn) {
             plannerView.refresh();
+            plannerView.scrollToCurrentTime();
             uiManager.switchPanels(getActivePanel(), plannerContainer);
         } else if (clickedBtn == statsBtn) {
             statsDashboard.refresh();
@@ -784,6 +795,26 @@ public class PomodoroController {
         toggleConfirmDelete();
     }
 
+    public void openConfirmDeleteTag(String tagName) {
+        tagToDelete = tagName;
+        Animations.show(confirmTagOverlay, confirmTagBox, null);
+    }
+
+    public void closeConfirmDeleteTag() {
+        tagToDelete = null;
+        Animations.hide(confirmTagOverlay, confirmTagBox, null);
+    }
+
+    @FXML
+    private void onConfirmDeleteTagClick() {
+        if (tagToDelete != null) {
+            DatabaseHandler.deleteTag(tagToDelete);
+            closeConfirmDeleteTag();
+            refreshDatabaseData();
+            NotificationManager.show("Tag Deleted", "Success", NotificationManager.NotificationType.SUCCESS);
+        }
+    }
+
     private void applyStyle(String labelText, String colorVar) {
         stateLabel.setText(labelText);
         stateLabel.setStyle("-fx-text-fill: " + colorVar + ";");
@@ -863,6 +894,7 @@ public class PomodoroController {
     private void handleMusicToggle() {
         SoundManager.toggleMusic(SoundManager.SoundType.BACKGROUND_MUSIC);
     }
+
     //endregion
 
 
