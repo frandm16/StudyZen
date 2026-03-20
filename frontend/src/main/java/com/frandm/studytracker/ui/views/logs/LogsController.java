@@ -1,7 +1,6 @@
 package com.frandm.studytracker.ui.views.logs;
 
 import com.frandm.studytracker.controllers.PomodoroController;
-import com.frandm.studytracker.database.DatabaseHandler;
 import com.frandm.studytracker.models.Session;
 import com.frandm.studytracker.core.NotificationManager;
 import javafx.scene.control.*;

@@ -1,7 +1,6 @@
 package com.frandm.studytracker.ui.views;
 
 import com.frandm.studytracker.models.Session;
-import com.frandm.studytracker.database.DatabaseHandler;
 import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;

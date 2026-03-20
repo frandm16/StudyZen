@@ -1,7 +1,6 @@
 package com.frandm.studytracker.ui.views;
 
 import com.frandm.studytracker.controllers.PomodoroController;
-import com.frandm.studytracker.database.DatabaseHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;

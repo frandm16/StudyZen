@@ -5,8 +5,6 @@ import atlantafx.base.controls.ToggleSwitch;
 import atlantafx.base.theme.PrimerDark;
 import atlantafx.base.theme.PrimerLight;
 import com.frandm.studytracker.core.*;
-import com.frandm.studytracker.database.DatabaseHandler;
-import com.frandm.studytracker.database.MigrationManager;
 import com.frandm.studytracker.models.Session;
 import com.frandm.studytracker.ui.util.Animations;
 import com.frandm.studytracker.ui.util.UIManager;
