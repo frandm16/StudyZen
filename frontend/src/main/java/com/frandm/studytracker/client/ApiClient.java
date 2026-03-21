@@ -88,7 +88,8 @@ public class ApiClient {
     }
 
     public static List<Map<String, Object>> getAllSessions() throws Exception {
-        return mapper.readValue(get("/sessions/all"), new TypeReference<>() {});
+        String json = get("/stats/sessions/all");
+        return mapper.readValue(json, new TypeReference<>() {});
     }
 
     public static List<Map<String, Object>> getSessionsByRange(String start, String end) throws Exception {
