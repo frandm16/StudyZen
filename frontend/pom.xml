@@ -8,12 +8,11 @@
     <parent>
         <groupId>com.frandm</groupId>
         <artifactId>studytracker-parent</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>frontend</artifactId>
-    <version>1.0.0</version>
 
     <properties>
         <maven.build.timestamp.format>yyyy-MM-dd_HH-mm</maven.build.timestamp.format>
