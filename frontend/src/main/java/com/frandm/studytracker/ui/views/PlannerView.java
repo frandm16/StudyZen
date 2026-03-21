@@ -2,20 +2,23 @@ package com.frandm.studytracker.ui.views;
 
 import com.frandm.studytracker.client.ApiClient;
 import com.frandm.studytracker.controllers.PomodoroController;
+import com.frandm.studytracker.core.PomodoroEngine;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.stage.Popup;
 import org.kordamp.ikonli.javafx.FontIcon;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
+import java.util.stream.Collectors;
+
 
 
 public class PlannerView extends VBox {
@@ -33,7 +36,7 @@ public class PlannerView extends VBox {
     private static final double MIN_BLOCK_HEIGHT = 30.0;
 
     public PlannerView(PomodoroController controller) {
-        this.currentWeekStart = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
+        this.currentWeekStart = LocalDate.now().with(DayOfWeek.MONDAY);
         this.getStyleClass().add("calendar-root");
         this.controller = controller;
         VBox.setVgrow(this, Priority.ALWAYS);
@@ -53,7 +56,7 @@ public class PlannerView extends VBox {
 
         MenuItem itemSession = new MenuItem("Schedule session");
         itemSession.setOnAction(_ -> {
-            javafx.geometry.Point2D point = btnCreate.localToScreen(0, btnCreate.getHeight());
+            Point2D point = btnCreate.localToScreen(0, btnCreate.getHeight());
 
             if (point != null) {
                 showPopup(null, LocalDate.now(), point.getX(), point.getY(), LocalTime.now().getHour(), 0, true);
@@ -81,7 +84,7 @@ public class PlannerView extends VBox {
 
         btnPrev.setOnAction(_ -> { currentWeekStart = currentWeekStart.minusWeeks(1); updateMonthLabel(lblMonth); refresh(); });
         btnNext.setOnAction(_ -> { currentWeekStart = currentWeekStart.plusWeeks(1); updateMonthLabel(lblMonth); refresh(); });
-        btnToday.setOnAction(_ -> { currentWeekStart = LocalDate.now().with(java.time.DayOfWeek.MONDAY); updateMonthLabel(lblMonth); refresh(); scrollToCurrentTime(); });
+        btnToday.setOnAction(_ -> { currentWeekStart = LocalDate.now().with(DayOfWeek.MONDAY); updateMonthLabel(lblMonth); refresh(); scrollToCurrentTime(); });
 
         header.getChildren().addAll(btnToday, btnPrev, btnNext, lblMonth, spacer, btnCreate);
 
@@ -98,7 +101,7 @@ public class PlannerView extends VBox {
 
         this.getChildren().addAll(header, headerGrid, scrollPane);
         refresh();
-        javafx.application.Platform.runLater(this::scrollToCurrentTime);
+        Platform.runLater(this::scrollToCurrentTime);
     }
 
     public void refresh() {
@@ -237,14 +240,14 @@ public class PlannerView extends VBox {
         comboTags.setMaxWidth(Double.MAX_VALUE);
         comboTasks.setMaxWidth(Double.MAX_VALUE);
 
-        final Map<String, List<String>> tagTasksMap = new java.util.LinkedHashMap<>();
+        final Map<String, List<String>> tagTasksMap = new LinkedHashMap<>();
         try {
             ApiClient.getTags().forEach(t -> {
                 String tagName = (String) t.get("name");
                 try {
                     List<String> tasks = ApiClient.getTasksByTag(tagName).stream()
                             .map(task -> (String) task.get("name"))
-                            .collect(java.util.stream.Collectors.toList());
+                            .collect(Collectors.toList());
                     tagTasksMap.put(tagName, tasks);
                 } catch (Exception e) {
                     tagTasksMap.put(tagName, new ArrayList<>());
@@ -548,7 +551,7 @@ public class PlannerView extends VBox {
     private void drawTimeIndicator() {
         LocalDate today = LocalDate.now();
         int dayIdx = today.getDayOfWeek().getValue() - 1;
-        if (currentWeekStart.equals(today.with(java.time.DayOfWeek.MONDAY)) && dayIdx >= 0 && dayIdx < 7) {
+        if (currentWeekStart.equals(today.with(DayOfWeek.MONDAY)) && dayIdx >= 0 && dayIdx < 7) {
             double yPos = (LocalTime.now().getHour() * ROW_HEIGHT) + (LocalTime.now().getMinute() * (ROW_HEIGHT / 60.0));
             HBox timeIndicator = new HBox();
             timeIndicator.setAlignment(Pos.CENTER_LEFT);

@@ -165,12 +165,12 @@
     -heatmap-very-high: #94e2d5;
     -heatmap-extreme:   #89dceb;
 
-    -color-work: #1e3a2a;
-    -color-work-secundary: #a6e3a1;
-    -color-break: #1a2640;
-    -color-break-secundary: #89dceb;
-    -color-long-break: #2a1e3a;
-    -color-long-break-secundary: #cba6f7;
+    -color-work: #a6e3a1;
+    -color-work-secundary: #315c3f;
+    -color-break: #89dceb;
+    -color-break-secundary: #27385e;
+    -color-long-break: #cba6f7;
+    -color-long-break-secundary: #3b2a51;
 
     -color-border-subtle: rgba(203, 166, 247, 0.4);
     -color-border-subtle-light: rgba(203, 166, 247, 0.12);

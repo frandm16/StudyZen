@@ -73,12 +73,6 @@ public class PomodoroController {
     private final SetupManager setupManager = new SetupManager(this);
     private final UIManager uiManager = new UIManager();
     public VBox themeButtonsContainer;
-    public VBox customThemePane;
-    public ColorPicker customBgPicker;
-    public ColorPicker customPanelsPicker;
-    public ColorPicker customTextPicker;
-    public ColorPicker customAccentPicker;
-    public ColorPicker customHeatmapPicker;
 
     private StatsDashboard statsDashboard;
     private PlannerView plannerView;
@@ -92,7 +86,6 @@ public class PomodoroController {
     private final List<FontIcon> starNodes = new ArrayList<>();
     private final List<FontIcon> editStarNodes = new ArrayList<>();
 
-    private String currentThemeName = "primer-dark";
 
     private Map<String, List<String>> tagsWithTasksMap = new HashMap<>();
     private Map<String, String> tagColors = new HashMap<>();
@@ -120,7 +113,6 @@ public class PomodoroController {
         // -------------------------------------------
         ConfigManager.load(engine);
         refreshDatabaseData();
-        currentThemeName = ConfigManager.loadTheme();
         applyTheme();
         NotificationManager.init(notificationContainer);
     }
@@ -331,7 +323,8 @@ public class PomodoroController {
                 (int)widthSlider.getValue(),
                 (int)circleSizeSlider.getValue(),
                 engine.getCurrentMode(),
-                (int)countdownSlider.getValue()
+                (int)countdownSlider.getValue(),
+                engine.getCurrentTheme()
         );
     }
     //endregion
@@ -588,20 +581,14 @@ public class PomodoroController {
                 "primer-cappuccino", "primer-sunset", "primer-midnight", "primer-custom"
         );
 
-        switch (currentThemeName) {
+        switch (engine.getCurrentTheme()) {
             case "primer-light" -> Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
             default -> Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
         }
 
-        rootPane.getStyleClass().add(currentThemeName);
+        rootPane.getStyleClass().add(engine.getCurrentTheme());
     }
 
-    public void setTheme(String themeName) {
-        this.currentThemeName = themeName;
-        this.isDarkMode = !themeName.equals("primer-light");
-        applyTheme();
-        ConfigManager.saveTheme(themeName);
-    }
 
     //endregion
 
@@ -680,7 +667,9 @@ public class PomodoroController {
     private void handleThemeChange(ActionEvent event) {
         Button clicked = (Button) event.getSource();
         String theme = (String) clicked.getUserData();
-        setTheme(theme);
+        engine.setCurrentTheme(theme);
+        updateEngineSettings();
+        applyTheme();
     }
 
     private VBox createTodaySchedulesList() {
@@ -886,6 +875,7 @@ public class PomodoroController {
         if (tagToDelete != null) {
             try {
                 ApiClient.deleteTag(tagToDelete);
+                resetFullApp();
             } catch (Exception e) {
                 System.err.println("Error deleting tag: " + e.getMessage());
             }
@@ -975,10 +965,7 @@ public class PomodoroController {
         SoundManager.toggleMusic(SoundManager.SoundType.BACKGROUND_MUSIC);
     }
 
-
-    public String getCurrentTheme() {
-        return currentThemeName;
-    }
+    public String getCurrentTheme() { return engine.getCurrentTheme();}
 
     //endregion
 

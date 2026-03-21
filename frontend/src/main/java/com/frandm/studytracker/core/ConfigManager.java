@@ -8,13 +8,7 @@ public class ConfigManager {
     private static final String FOLDER_NAME = ".StudyTracker";
     private static final String FILE_NAME = "settings.properties";
     private static File getConfigFile() {
-        // dev mode
-        String devMode = System.getProperty("dev_mode");
-        if ("true".equals(devMode)) {
-            return new File("settings_dev.properties");
-        }
 
-        //normal mode
         String userHome = System.getProperty("user.home");
         File configDir = new File(userHome, FOLDER_NAME);
 
@@ -46,6 +40,7 @@ public class ConfigManager {
         props.setProperty("uiSizeFactor", String.valueOf(engine.getUiSize()));
         props.setProperty("currentMode", engine.getCurrentMode().name());
         props.setProperty("countdownMins", String.valueOf(engine.getCountdownMins()));
+        props.setProperty("theme", String.valueOf(engine.getCurrentTheme()));
 
 
         File configFile = getConfigFile();
@@ -83,44 +78,12 @@ public class ConfigManager {
                     Integer.parseInt(props.getProperty("widthStats", String.valueOf(engine.getWidthStats()))),
                     Integer.parseInt(props.getProperty("uiSizeFactor", String.valueOf(engine.getUiSize()))),
                     PomodoroEngine.Mode.valueOf(props.getProperty("currentMode", String.valueOf(engine.getCurrentMode()))),
-                    Integer.parseInt(props.getProperty("countdownMins", String.valueOf(engine.getCountdownMins())))
+                    Integer.parseInt(props.getProperty("countdownMins", String.valueOf(engine.getCountdownMins()))),
+                    props.getProperty("theme", String.valueOf(engine.getCurrentTheme()))
             );
         } catch (IOException | NumberFormatException e) {
             System.err.println("Error ConfigManager.load: " + e.getMessage());
         }
     }
 
-    public static void saveTheme(String themeName) {
-        File configFile = getConfigFile();
-        Properties props = new Properties();
-
-        if (configFile.exists()) {
-            try (InputStream in = new FileInputStream(configFile)) {
-                props.load(in);
-            } catch (IOException e) {
-                System.err.println("Error loading props: " + e.getMessage());
-            }
-        }
-
-        props.setProperty("theme", themeName);
-
-        try (OutputStream out = new FileOutputStream(configFile)) {
-            props.store(out, "Study Tracker Settings");
-        } catch (IOException e) {
-            System.err.println("Error saving theme: " + e.getMessage());
-        }
-    }
-
-    public static String loadTheme() {
-        File configFile = getConfigFile();
-        if (!configFile.exists()) return "primer-dark";
-
-        Properties props = new Properties();
-        try (InputStream in = new FileInputStream(configFile)) {
-            props.load(in);
-            return props.getProperty("theme", "primer-dark");
-        } catch (IOException e) {
-            return "primer-dark";
-        }
-    }
 }

@@ -26,6 +26,8 @@ public class PomodoroEngine {
     private int CountdownMins = 10;
     //endregion
 
+    private String currentTheme = "primer-dark";
+
     private int secondsRemaining;
     private int secondsElapsed = 0;
 
@@ -94,7 +96,7 @@ public class PomodoroEngine {
         if (onTick != null) onTick.run();
         if (onStateChange != null) onStateChange.run();
     }
-    public void updateSettings(int w, int s, int l, int i, boolean aBreak, boolean aPomo, boolean cBreak, int masterVolume, int alarmVolume, int notificationVolume, int backgroundMusicVolume, int inWidthStats, int uiSize, Mode mode, int countdownMins) {
+    public void updateSettings(int w, int s, int l, int i, boolean aBreak, boolean aPomo, boolean cBreak, int masterVolume, int alarmVolume, int notificationVolume, int backgroundMusicVolume, int inWidthStats, int uiSize, Mode mode, int countdownMins, String currentTheme) {
         this.workMins = w;
         this.shortMins = s;
         this.longMins = l;
@@ -110,6 +112,8 @@ public class PomodoroEngine {
         this.masterVolume = masterVolume;
         this.notificationVolume = notificationVolume;
         this.backgroundMusicVolume = backgroundMusicVolume;
+
+        this.currentTheme = currentTheme;
 
         if (currentState == State.MENU) {
             setMode(mode);
@@ -203,6 +207,7 @@ public class PomodoroEngine {
     public void setOnTimerFinished(Runnable r) {this.onTimerFinished = r;}
     public void setWidthStats(int widthStats) {this.widthStats = widthStats;}
     public void setUiSize(int uiSize) { this.uiSize = uiSize; }
+    public void setCurrentTheme(String currentTheme) { this.currentTheme = currentTheme;}
     public void setMode(Mode mode) {
         stop();
         this.currentMode = mode;
@@ -284,6 +289,8 @@ public class PomodoroEngine {
     public int getUiSize() { return uiSize; }
     public int getCountdownMins() { return CountdownMins; }
     public Mode getCurrentMode() { return currentMode; }
+
+    public String getCurrentTheme() {return currentTheme; }
 
     public int getMasterVolume() {return masterVolume;}
     public int getAlarmVolume() {return alarmVolume;}
