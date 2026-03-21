@@ -8,8 +8,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class ApiClient {
 
@@ -142,5 +147,108 @@ public class ApiClient {
 
     public static Map<String, Integer> getSummaryByTag(String tag) throws Exception {
         return mapper.readValue(get("/stats/summary?tag=" + tag), new TypeReference<>() {});
+    }
+
+    // --- Development ---
+    public static void generateRandomPomodoros() {
+        Random random = new Random();
+        LocalDate today = LocalDate.now();
+        String[] verbs = {"Study", "Code", "Design", "Review", "Write", "Analyze", "Read"};
+        String[] nouns = {"Java", "Database", "Interface", "Algorithms", "CSS", "Backend", "Spring Boot"};
+        String[] tags = {"Work", "Studies", "Personal", "Health", "Projects"};
+        String[] colors = {"#e74c3c", "#3498db", "#f1c40f", "#2ecc71", "#9b59b6"};
+
+        try {
+            for (int t = 0; t < tags.length; t++) {
+                String tagName = tags[t];
+                String tagColor = colors[t];
+                post("/tags", Map.of("name", tagName, "color", tagColor));
+
+                for (int i = 0; i < 3; i++) {
+                    String taskName = verbs[random.nextInt(verbs.length)] + " " + nouns[random.nextInt(nouns.length)];
+                    post("/tasks", Map.of("tagName", tagName, "tagColor", tagColor, "taskName", taskName));
+                }
+            }
+
+            List<Map<String, Object>> taskList = mapper.readValue(
+                    get("/tasks/all"), new TypeReference<>() {});
+
+            if (taskList.isEmpty()) {
+                return;
+            }
+
+            for (int i = 0; i < 365; i++) {
+                LocalDate date = today.minusDays(i);
+                if (random.nextDouble() < 0.80) {
+                    LocalDateTime currentTime = date.atTime(7 + random.nextInt(3), 0);
+                    int sessionsToday = random.nextInt(3) + 3;
+
+                    for (int s = 0; s < sessionsToday; s++) {
+                        Map<String, Object> task = taskList.get(random.nextInt(taskList.size()));
+                        int duration = 10 + random.nextInt(75);
+                        LocalDateTime start = currentTime;
+                        LocalDateTime end = start.plusMinutes(duration);
+
+                        String tagName = (String) ((Map<?, ?>) task.get("tag")).get("name");
+                        String tagColor = (String) ((Map<?, ?>) task.get("tag")).get("color");
+                        String taskName = (String) task.get("name");
+
+                        saveSession(tagName, tagColor, taskName,
+                                "Test session", "Generated session",
+                                duration,
+                                start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                                end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                                random.nextInt(6));
+
+                        currentTime = end.plusMinutes(random.nextInt(30) + 5);
+                        if (currentTime.getHour() >= 23) break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error generateRandomPomodoros: " + e.getMessage());
+        }
+    }
+
+    public static void generateRandomSchedule() {
+        Random random = new Random();
+        LocalDate today = LocalDate.now();
+        String[] titles = {"Deep Work Session", "Study Sprint", "Focus Block", "Practice Run", "Module Review"};
+
+        try {
+            List<Map<String, Object>> taskList = mapper.readValue(
+                    get("/tasks/all"), new TypeReference<>() {});
+
+            if (taskList.isEmpty()) {
+                return;
+            }
+
+            for (int i = -4; i <= 10; i++) {
+                LocalDate date = today.plusDays(i);
+                if (random.nextDouble() < 0.90) {
+                    LocalDateTime currentTime = date.atTime(7 + random.nextInt(3), 0);
+                    int sessionsToday = random.nextInt(6) + 3;
+
+                    for (int s = 0; s < sessionsToday; s++) {
+                        Map<String, Object> task = taskList.get(random.nextInt(taskList.size()));
+                        String tagName = (String) ((Map<?, ?>) task.get("tag")).get("name");
+                        String taskName = (String) task.get("name");
+                        int duration = 60 + (random.nextInt(7) * 15);
+                        LocalDateTime start = currentTime;
+                        LocalDateTime end = start.plusMinutes(duration);
+
+                        saveScheduledSession(tagName, taskName,
+                                titles[random.nextInt(titles.length)],
+                                start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                                end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+                        currentTime = end.plusMinutes(15 + random.nextInt(31));
+                        if (currentTime.getHour() >= 23) break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error generateRandomSchedule: " + e.getMessage());
+        }
     }
 }

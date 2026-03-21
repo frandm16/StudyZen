@@ -31,4 +31,8 @@ public class TaskService {
                     return taskRepository.save(task);
                 });
     }
+
+    public List<Task> getAll() {
+        return taskRepository.findAll();
+    }
 }
