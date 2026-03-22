@@ -6,6 +6,7 @@ import com.frandm.studytracker.backend.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,5 +44,34 @@ public class StatsService {
                 Integer::sum
         ));
         return summary;
+    }
+
+    public List<Map<String, Object>> getAllSessionsForStats() {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return sessionRepository.findAll().stream().map(s -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", s.getId());
+            map.put("tag", s.getTask().getTag().getName());
+            map.put("tagColor", s.getTask().getTag().getColor());
+            map.put("task", s.getTask().getName());
+            map.put("title", s.getTitle());
+            map.put("description", s.getDescription());
+            map.put("totalMinutes", s.getTotalMinutes());
+            map.put("startDate", s.getStartDate().format(fmt));
+            map.put("endDate", s.getEndDate() != null ? s.getEndDate().format(fmt) : null);
+            map.put("rating", s.getRating());
+            map.put("isFavorite", s.getIsFavorite());
+            return map;
+        }).collect(Collectors.toList());
+    }
+
+    public Map<String, Double> getWeeklyStats() {
+        LocalDateTime from = LocalDate.now().minusWeeks(12).atStartOfDay();
+        List<Session> sessions = sessionRepository.findByDateRange(from, LocalDateTime.now());
+        return sessions.stream().collect(Collectors.groupingBy(
+                s -> s.getStartDate().toLocalDate()
+                        .with(java.time.DayOfWeek.MONDAY).toString(),
+                Collectors.summingDouble(s -> s.getTotalMinutes() / 60.0)
+        ));
     }
 }

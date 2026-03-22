@@ -3,6 +3,7 @@ package com.frandm.studytracker.backend.controller;
 import com.frandm.studytracker.backend.service.StatsService;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -24,5 +25,15 @@ public class StatsController {
     @GetMapping("/summary")
     public Map<String, Integer> getSummaryByTag(@RequestParam String tag) {
         return statsService.getSummaryByTag(tag);
+    }
+
+    @GetMapping("/sessions/all")
+    public List<Map<String, Object>> getAllSessionsForStats() {
+        return statsService.getAllSessionsForStats();
+    }
+
+    @GetMapping("/weekly")
+    public Map<String, Double> getWeeklyStats() {
+        return statsService.getWeeklyStats();
     }
 }

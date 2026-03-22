@@ -30,4 +30,9 @@ public class TaskController {
                 body.get("taskName")
         );
     }
+
+    @GetMapping("/all")
+    public List<Task> getAll() {
+        return taskService.getAll();
+    }
 }
