@@ -131,11 +131,12 @@ public class ApiClient {
     }
 
     public static void updateScheduledSession(long id, String tagName, String taskName,
-                                              String start, String end) throws Exception {
+                                              String title, String start, String end) throws Exception {
         put("/scheduled/" + id, Map.of(
                 "tagName", tagName, "taskName", taskName,
-                "startTime", start, "endTime", end
+                "title", title, "startTime", start, "endTime", end
         ));
+        System.out.println(title);
     }
 
     public static void deleteScheduledSession(long id) throws Exception {

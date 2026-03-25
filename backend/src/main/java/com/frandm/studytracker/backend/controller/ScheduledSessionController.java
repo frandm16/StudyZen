@@ -20,6 +20,11 @@ public class ScheduledSessionController {
         this.scheduledSessionService = scheduledSessionService;
     }
 
+    @GetMapping("/all")
+    public List<ScheduledSession> getAll() {
+        return scheduledSessionService.getAll();
+    }
+
     @GetMapping
     public List<ScheduledSession> getByRange(
             @RequestParam String start,
@@ -46,10 +51,12 @@ public class ScheduledSessionController {
     @PutMapping("/{id}")
     public ScheduledSession update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        System.out.println(body.get("title") + "Controller");
         return scheduledSessionService.update(
                 id,
                 (String) body.get("tagName"),
                 (String) body.get("taskName"),
+                (String) body.get("title"),
                 LocalDateTime.parse((String) body.get("startTime"), fmt),
                 LocalDateTime.parse((String) body.get("endTime"), fmt)
         );

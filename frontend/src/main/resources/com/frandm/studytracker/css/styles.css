@@ -1550,3 +1550,17 @@
     -fx-border-color: -text-muted;
     -fx-border-width: 0 1 0 0;
 }
+
+
+.day-column-wrapper {
+    -fx-background-color: rgba(255, 255, 255, 0.01);
+    -fx-background-radius: 15;
+}
+
+
+
+
+/* Hover sobre una columna completa */
+.day-column-wrapper:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+}
