@@ -1,6 +1,7 @@
 package com.frandm.studytracker.ui.views.planner;
 
 import com.frandm.studytracker.controllers.PomodoroController;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -81,6 +82,12 @@ public class PlannerView extends VBox {
         btnCreate.setGraphic(new FontIcon("mdi2p-plus"));
         btnCreate.getStyleClass().add("calendar-button-add");
 
+        MenuItem addScheduled = new MenuItem("Scheduled Session");
+        addScheduled.setGraphic(new FontIcon("mdi2c-clock-outline"));
+        MenuItem addDeadline = new MenuItem("Deadline");
+        addDeadline.setGraphic(new FontIcon("mdi2a-alarm"));
+        btnCreate.getItems().addAll(addScheduled, addDeadline);
+
         header.getChildren().addAll(btnToday, btnPrev, btnNext, lblTitle, spacer, btnCreate);
 
         btnNext.setOnAction(_ -> {
@@ -96,6 +103,28 @@ public class PlannerView extends VBox {
         btnToday.setOnAction(_ -> {
             plannerController.today();
             updateTitle();
+        });
+
+        addScheduled.setOnAction(_ -> {
+            Bounds bounds = btnCreate.localToScreen(btnCreate.getBoundsInLocal());
+            double x = bounds != null ? bounds.getMinX() : 200;
+            double y = bounds != null ? bounds.getMaxY() + 8 : 200;
+            if (isDaily()) {
+                plannerController.getDailyTab().openCreateScheduledSession(x, y);
+            } else {
+                plannerController.getWeeklyTab().openCreateScheduledSession(x, y);
+            }
+        });
+
+        addDeadline.setOnAction(_ -> {
+            Bounds bounds = btnCreate.localToScreen(btnCreate.getBoundsInLocal());
+            double x = bounds != null ? bounds.getMinX() : 220;
+            double y = bounds != null ? bounds.getMaxY() + 8 : 220;
+            if (isDaily()) {
+                plannerController.getDailyTab().openCreateDeadline(x, y);
+            } else {
+                plannerController.getWeeklyTab().openCreateDeadline(x, y);
+            }
         });
 
         return header;

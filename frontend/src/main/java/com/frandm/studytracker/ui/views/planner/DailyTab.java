@@ -62,6 +62,14 @@ public class DailyTab extends VBox {
         this.refreshAction = refreshAction != null ? refreshAction : () -> {};
     }
 
+    public void openCreateScheduledSession(double screenX, double screenY) {
+        showScheduledSessionPopup(new LinkedHashMap<>(), screenX, screenY);
+    }
+
+    public void openCreateDeadline(double screenX, double screenY) {
+        showDeadlinePopup(new LinkedHashMap<>(), screenX, screenY);
+    }
+
     private void initLayout() {
         deadlinesContainer.getStyleClass().add("daily-container");
         dayEventsContainer.getStyleClass().add("daily-container");
@@ -227,6 +235,7 @@ public class DailyTab extends VBox {
 
     private void showScheduledSessionPopup(Map<String, Object> data, double screenX, double screenY) {
         closeActivePopup();
+        boolean isEdit = data.get("id") != null;
 
         Popup popup = buildPopup();
         VBox root = popupRoot();
@@ -266,7 +275,7 @@ public class DailyTab extends VBox {
         String initialTask = String.valueOf(data.getOrDefault("task_name", ""));
         preselectTask(tagMap, tags, tasks, initialTask);
 
-        Button save = new Button("Update");
+        Button save = new Button(isEdit ? "Update" : "Save");
         save.getStyleClass().add("button-primary");
         save.setMaxWidth(Double.MAX_VALUE);
         save.setOnAction(_ -> {
@@ -274,46 +283,59 @@ public class DailyTab extends VBox {
             LocalDateTime newStart = dpStart.getValue().atTime(parseInt(hs.getText()), parseInt(ms.getText()));
             LocalDateTime newEnd = dpEnd.getValue().atTime(parseInt(he.getText()), parseInt(me.getText()));
             try {
-                ApiClient.updateScheduledSession(
-                        ((Number) data.get("id")).longValue(),
-                        tags.getValue(),
-                        tasks.getValue(),
-                        titleField.getText().trim(),
-                        newStart.format(API_FMT),
-                        newEnd.format(API_FMT)
-                );
-            } catch (Exception ignored) {}
-            popup.hide();
-            refreshAction.run();
-        });
-
-        Button delete = new Button("Delete");
-        delete.getStyleClass().add("button-danger");
-        delete.setMaxWidth(Double.MAX_VALUE);
-        delete.setOnAction(_ -> {
-            try {
-                ApiClient.deleteScheduledSession(((Number) data.get("id")).longValue());
+                if (isEdit) {
+                    ApiClient.updateScheduledSession(
+                            ((Number) data.get("id")).longValue(),
+                            tags.getValue(),
+                            tasks.getValue(),
+                            titleField.getText().trim(),
+                            newStart.format(API_FMT),
+                            newEnd.format(API_FMT)
+                    );
+                } else {
+                    ApiClient.saveScheduledSession(
+                            tags.getValue(),
+                            tasks.getValue(),
+                            titleField.getText().trim(),
+                            newStart.format(API_FMT),
+                            newEnd.format(API_FMT)
+                    );
+                }
             } catch (Exception ignored) {}
             popup.hide();
             refreshAction.run();
         });
 
         root.getChildren().addAll(
-                sectionTitle("Edit Scheduled Session"),
+                sectionTitle(isEdit ? "Edit Scheduled Session" : "Create Scheduled Session"),
                 new Label("Title"), titleField,
                 new Label("Tag"), tags,
                 new Label("Task"), tasks,
                 new Label("Start"), startRow,
                 new Label("End"), endRow,
-                save,
-                delete
+                save
         );
+
+        if (isEdit) {
+            Button delete = new Button("Delete");
+            delete.getStyleClass().add("button-danger");
+            delete.setMaxWidth(Double.MAX_VALUE);
+            delete.setOnAction(_ -> {
+                try {
+                    ApiClient.deleteScheduledSession(((Number) data.get("id")).longValue());
+                } catch (Exception ignored) {}
+                popup.hide();
+                refreshAction.run();
+            });
+            root.getChildren().add(delete);
+        }
 
         showPopup(popup, root, screenX, screenY);
     }
 
     private void showDeadlinePopup(Map<String, Object> data, double screenX, double screenY) {
         closeActivePopup();
+        boolean isEdit = data.get("id") != null;
 
         Popup popup = buildPopup();
         VBox root = popupRoot();
@@ -359,7 +381,7 @@ public class DailyTab extends VBox {
         String initialTask = String.valueOf(data.getOrDefault("task_name", data.getOrDefault("taskName", "")));
         preselectTask(tagMap, tags, tasks, initialTask);
 
-        Button save = new Button("Update");
+        Button save = new Button(isEdit ? "Update" : "Save");
         save.getStyleClass().add("button-primary");
         save.setMaxWidth(Double.MAX_VALUE);
         save.setOnAction(_ -> {
@@ -369,18 +391,36 @@ public class DailyTab extends VBox {
             LocalDateTime newDue = dueDate.getValue().atTime(hour, minute);
 
             try {
-                ApiClient.updateDeadline(
-                        ((Number) data.get("id")).longValue(),
-                        tags.getValue(),
-                        tagData.tagColors().getOrDefault(tags.getValue(), ""),
-                        tasks.getValue(),
-                        titleField.getText().trim(),
-                        descriptionArea.getText().trim(),
-                        urgency.getValue(),
-                        newDue.format(API_FMT),
-                        allDay.isSelected()
-                );
+                if (isEdit) {
+                    ApiClient.updateDeadline(
+                            ((Number) data.get("id")).longValue(),
+                            tags.getValue(),
+                            tagData.tagColors().getOrDefault(tags.getValue(), ""),
+                            tasks.getValue(),
+                            titleField.getText().trim(),
+                            descriptionArea.getText().trim(),
+                            urgency.getValue(),
+                            newDue.format(API_FMT),
+                            allDay.isSelected()
+                    );
+                } else {
+                    ApiClient.saveDeadline(
+                            tags.getValue(),
+                            tagData.tagColors().getOrDefault(tags.getValue(), ""),
+                            tasks.getValue(),
+                            titleField.getText().trim(),
+                            descriptionArea.getText().trim(),
+                            urgency.getValue(),
+                            newDue.format(API_FMT),
+                            allDay.isSelected()
+                    );
+                }
             } catch (Exception updateError) {
+                if (!isEdit) {
+                    popup.hide();
+                    refreshAction.run();
+                    return;
+                }
                 try {
                     ApiClient.deleteDeadline(((Number) data.get("id")).longValue());
                     ApiClient.saveDeadline(
@@ -399,19 +439,8 @@ public class DailyTab extends VBox {
             refreshAction.run();
         });
 
-        Button delete = new Button("Delete");
-        delete.getStyleClass().add("button-danger");
-        delete.setMaxWidth(Double.MAX_VALUE);
-        delete.setOnAction(_ -> {
-            try {
-                ApiClient.deleteDeadline(((Number) data.get("id")).longValue());
-            } catch (Exception ignored) {}
-            popup.hide();
-            refreshAction.run();
-        });
-
         root.getChildren().addAll(
-                sectionTitle("Edit Deadline"),
+                sectionTitle(isEdit ? "Edit Deadline" : "Create Deadline"),
                 new Label("Title"), titleField,
                 new Label("Description"), descriptionArea,
                 new Label("Tag"), tags,
@@ -419,9 +448,22 @@ public class DailyTab extends VBox {
                 new Label("Urgency"), urgency,
                 new Label("Due"), dueRow,
                 allDay,
-                save,
-                delete
+                save
         );
+
+        if (isEdit) {
+            Button delete = new Button("Delete");
+            delete.getStyleClass().add("button-danger");
+            delete.setMaxWidth(Double.MAX_VALUE);
+            delete.setOnAction(_ -> {
+                try {
+                    ApiClient.deleteDeadline(((Number) data.get("id")).longValue());
+                } catch (Exception ignored) {}
+                popup.hide();
+                refreshAction.run();
+            });
+            root.getChildren().add(delete);
+        }
 
         showPopup(popup, root, screenX, screenY);
     }

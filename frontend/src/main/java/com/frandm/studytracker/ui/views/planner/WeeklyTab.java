@@ -49,6 +49,14 @@ public class WeeklyTab extends VBox {
         this.refreshAction = refreshAction != null ? refreshAction : () -> {};
     }
 
+    public void openCreateScheduledSession(double screenX, double screenY) {
+        showPopup(null, currentWeekStart, screenX, screenY, 9, 0, true);
+    }
+
+    public void openCreateDeadline(double screenX, double screenY) {
+        showDeadlinePopup(new LinkedHashMap<>(), screenX, screenY);
+    }
+
     private void initializeUI() {
         headerGrid = new GridPane();
         headerGrid.getStyleClass().add("calendar-header-grid");
@@ -773,6 +781,7 @@ public class WeeklyTab extends VBox {
     }
 
     private void showDeadlinePopup(Map<String, Object> deadline, double sx, double sy) {
+        boolean isEdit = deadline.get("id") != null;
         if (activePopup != null && activePopup.isShowing()) {
             activePopup.hide();
             activePopup = null;
@@ -792,7 +801,7 @@ public class WeeklyTab extends VBox {
         root.setPadding(new Insets(20));
         root.setPrefWidth(420);
 
-        Label titleLabel = new Label("Edit Deadline");
+        Label titleLabel = new Label(isEdit ? "Edit Deadline" : "Create Deadline");
         titleLabel.getStyleClass().add("title-schedule-session");
 
         TextField titleField = new TextField(String.valueOf(deadline.getOrDefault("title", "")));
@@ -837,7 +846,7 @@ public class WeeklyTab extends VBox {
         String initialTask = String.valueOf(deadline.getOrDefault("task_name", deadline.getOrDefault("taskName", "")));
         preselectTask(tagMap, tagBox, taskBox, initialTask);
 
-        Button saveButton = new Button("Update");
+        Button saveButton = new Button(isEdit ? "Update" : "Save");
         saveButton.getStyleClass().add("button-primary");
         saveButton.setMaxWidth(Double.MAX_VALUE);
         saveButton.setOnAction(_ -> {
@@ -847,18 +856,36 @@ public class WeeklyTab extends VBox {
             LocalDateTime newDue = duePicker.getValue().atTime(hour, minute);
 
             try {
-                ApiClient.updateDeadline(
-                        ((Number) deadline.get("id")).longValue(),
-                        tagBox.getValue(),
-                        tagData.tagColors().getOrDefault(tagBox.getValue(), ""),
-                        taskBox.getValue(),
-                        titleField.getText().trim(),
-                        descriptionArea.getText().trim(),
-                        urgencyBox.getValue(),
-                        newDue.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                        allDayBox.isSelected()
-                );
+                if (isEdit) {
+                    ApiClient.updateDeadline(
+                            ((Number) deadline.get("id")).longValue(),
+                            tagBox.getValue(),
+                            tagData.tagColors().getOrDefault(tagBox.getValue(), ""),
+                            taskBox.getValue(),
+                            titleField.getText().trim(),
+                            descriptionArea.getText().trim(),
+                            urgencyBox.getValue(),
+                            newDue.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                            allDayBox.isSelected()
+                    );
+                } else {
+                    ApiClient.saveDeadline(
+                            tagBox.getValue(),
+                            tagData.tagColors().getOrDefault(tagBox.getValue(), ""),
+                            taskBox.getValue(),
+                            titleField.getText().trim(),
+                            descriptionArea.getText().trim(),
+                            urgencyBox.getValue(),
+                            newDue.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                            allDayBox.isSelected()
+                    );
+                }
             } catch (Exception updateError) {
+                if (!isEdit) {
+                    popup.hide();
+                    refreshAction.run();
+                    return;
+                }
                 try {
                     ApiClient.deleteDeadline(((Number) deadline.get("id")).longValue());
                     ApiClient.saveDeadline(
@@ -878,18 +905,6 @@ public class WeeklyTab extends VBox {
             refreshAction.run();
         });
 
-        Button deleteButton = new Button("Delete");
-        deleteButton.getStyleClass().add("button-danger");
-        deleteButton.setMaxWidth(Double.MAX_VALUE);
-        deleteButton.setOnAction(_ -> {
-            try {
-                ApiClient.deleteDeadline(((Number) deadline.get("id")).longValue());
-            } catch (Exception ignored) {}
-
-            popup.hide();
-            refreshAction.run();
-        });
-
         root.getChildren().addAll(
                 titleLabel,
                 new Label("Title"), titleField,
@@ -899,9 +914,23 @@ public class WeeklyTab extends VBox {
                 new Label("Urgency"), urgencyBox,
                 new Label("Due"), dueRow,
                 allDayBox,
-                saveButton,
-                deleteButton
+                saveButton
         );
+
+        if (isEdit) {
+            Button deleteButton = new Button("Delete");
+            deleteButton.getStyleClass().add("button-danger");
+            deleteButton.setMaxWidth(Double.MAX_VALUE);
+            deleteButton.setOnAction(_ -> {
+                try {
+                    ApiClient.deleteDeadline(((Number) deadline.get("id")).longValue());
+                } catch (Exception ignored) {}
+
+                popup.hide();
+                refreshAction.run();
+            });
+            root.getChildren().add(deleteButton);
+        }
 
         popup.setOnHidden(_ -> {
             lastPopupCloseTime = System.currentTimeMillis();
