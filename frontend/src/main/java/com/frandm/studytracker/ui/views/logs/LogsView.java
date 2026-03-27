@@ -84,11 +84,6 @@ public class LogsView extends StackPane {
         }
     }
 
-    private void showTagDetail(String tagName) {
-        switchTab(2);
-        focusTab.showTagDetail(tagName);
-    }
-
     public LogsController getLogsController() {
         return logsController;
     }

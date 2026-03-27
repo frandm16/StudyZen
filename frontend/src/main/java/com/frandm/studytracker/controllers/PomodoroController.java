@@ -88,6 +88,9 @@ public class PomodoroController {
     private final List<FontIcon> starNodes = new ArrayList<>();
     private final List<FontIcon> editStarNodes = new ArrayList<>();
     private static final int UPCOMING_DEADLINES_LIMIT = 5;
+    private static final DateTimeFormatter MENU_TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter MENU_DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM");
+    private static final DateTimeFormatter MENU_DATETIME_FORMAT = DateTimeFormatter.ofPattern("dd MMM • HH:mm");
 
 
     private Map<String, List<String>> tagsWithTasksMap = new HashMap<>();
@@ -730,9 +733,7 @@ public class PomodoroController {
             empty.setStyle("-fx-font-style: italic; -fx-opacity: 0.6;");
             list.getChildren().add(empty);
         } else {
-            todaySessions.sort(Comparator.comparing(s ->
-                    s.get("startTime") != null ? LocalDateTime.parse(s.get("startTime").toString()) : LocalDateTime.MIN
-            ));
+            todaySessions.sort(Comparator.comparing(this::extractSessionStartTime, Comparator.nullsLast(Comparator.naturalOrder())));
 
             for (Map<String, Object> session : todaySessions) {
                 list.getChildren().add(createMiniSessionItem(session));
@@ -765,29 +766,17 @@ public class PomodoroController {
         }
 
         upcomingDeadlines = upcomingDeadlines.stream()
+                .filter(deadline -> !ApiClient.extractCompletedFlag(deadline))
                 .filter(deadline -> {
-                    Object raw = deadline.containsKey("isCompleted") ? deadline.get("isCompleted") : deadline.get("completed");
-                    if (raw instanceof Boolean completed) return !completed;
-                    return raw == null || !Boolean.parseBoolean(raw.toString());
-                })
-                .filter(deadline -> {
-                    Object raw = deadline.getOrDefault("dueDate", deadline.get("deadline"));
-                    if (raw == null) return false;
-                    String value = raw.toString();
-                    LocalDateTime dueDate = value.contains("T")
-                            ? LocalDateTime.parse(value)
-                            : LocalDateTime.parse(value, ApiClient.API_TIMESTAMP_FORMAT);
+                    LocalDateTime dueDate = extractDeadlineDueDate(deadline);
+                    if (dueDate == null) return false;
                     boolean allDay = Boolean.TRUE.equals(deadline.get("allDay"));
                     return allDay ? dueDate.toLocalDate().isEqual(todayDate) || dueDate.isAfter(nowDateTime)
                             : !dueDate.isBefore(nowDateTime);
                 })
                 .sorted(Comparator.comparing(d -> {
-                    Object raw = d.getOrDefault("dueDate", d.get("deadline"));
-                    if (raw == null) return LocalDateTime.MAX;
-                    String value = raw.toString();
-                    return value.contains("T")
-                            ? LocalDateTime.parse(value)
-                            : LocalDateTime.parse(value, ApiClient.API_TIMESTAMP_FORMAT);
+                    LocalDateTime dueDate = extractDeadlineDueDate(d);
+                    return dueDate != null ? dueDate : LocalDateTime.MAX;
                 }))
                 .limit(UPCOMING_DEADLINES_LIMIT)
                 .toList();
@@ -826,14 +815,11 @@ public class PomodoroController {
         Label lblTitle = new Label((String) session.get("title"));
         lblTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
 
-        LocalDateTime start = session.get("startTime") != null ?
-                LocalDateTime.parse(session.get("startTime").toString()) : null;
-        LocalDateTime end = session.get("endTime") != null ?
-                LocalDateTime.parse(session.get("endTime").toString()) : null;
+        LocalDateTime start = extractSessionStartTime(session);
+        LocalDateTime end = ApiClient.parseApiTimestamp(session.get("endTime"));
 
         String timeText = (start != null && end != null) ?
-                start.format(DateTimeFormatter.ofPattern("HH:mm")) + " - " +
-                        end.format(DateTimeFormatter.ofPattern("HH:mm")) : "";
+                start.format(MENU_TIME_FORMAT) + " - " + end.format(MENU_TIME_FORMAT) : "";
         Label lblTime = new Label(timeText);
         lblTime.setStyle("-fx-font-size: 13px; -fx-opacity: 0.7;");
 
@@ -875,21 +861,14 @@ public class PomodoroController {
         Label lblTitle = new Label(String.valueOf(deadline.getOrDefault("title", "Deadline")));
         lblTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
 
-        Object rawDueDate = deadline.getOrDefault("dueDate", deadline.get("deadline"));
-        LocalDateTime dueDate = null;
-        if (rawDueDate != null) {
-            String value = rawDueDate.toString();
-            dueDate = value.contains("T")
-                    ? LocalDateTime.parse(value)
-                    : LocalDateTime.parse(value, ApiClient.API_TIMESTAMP_FORMAT);
-        }
+        LocalDateTime dueDate = extractDeadlineDueDate(deadline);
 
         boolean allDay = Boolean.TRUE.equals(deadline.get("allDay"));
         String timeText = dueDate == null
                 ? ""
                 : allDay
-                ? dueDate.toLocalDate().format(DateTimeFormatter.ofPattern("dd MMM")) + " • All day"
-                : dueDate.format(DateTimeFormatter.ofPattern("dd MMM • HH:mm"));
+                ? dueDate.toLocalDate().format(MENU_DATE_FORMAT) + " • All day"
+                : dueDate.format(MENU_DATETIME_FORMAT);
         String urgency = String.valueOf(deadline.getOrDefault("urgency", "Medium"));
 
         Label lblTime = new Label(timeText + (timeText.isEmpty() ? "" : " • ") + urgency);
@@ -910,6 +889,14 @@ public class PomodoroController {
             scheduleListContainer.getChildren().add(createTodaySchedulesList());
             scheduleListContainer.getChildren().add(createUpcomingDeadlinesList());
         }
+    }
+
+    private LocalDateTime extractSessionStartTime(Map<String, Object> session) {
+        return ApiClient.parseApiTimestamp(session.get("startTime"));
+    }
+
+    private LocalDateTime extractDeadlineDueDate(Map<String, Object> deadline) {
+        return ApiClient.parseApiTimestamp(deadline.getOrDefault("dueDate", deadline.get("deadline")));
     }
 
     private void resetFullApp() {

@@ -48,7 +48,6 @@ public class CalendarTab extends VBox {
     private static final double MIN_BLOCK_HEIGHT = 30.0;
     private final Pane[] dayColumns = new Pane[7];
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-    private final DateTimeFormatter dbFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public CalendarTab(LogsController logsController) {
         this.currentWeekStart = LocalDate.now().with(DayOfWeek.MONDAY);
@@ -408,8 +407,8 @@ public class CalendarTab extends VBox {
                 String.valueOf(session.getOrDefault("title", "")),
                 String.valueOf(session.getOrDefault("description", "")),
                 (int) Duration.between(start, end).toMinutes(),
-                start.format(dbFormatter),
-                end.format(dbFormatter)
+                    ApiClient.formatApiTimestamp(start),
+                    ApiClient.formatApiTimestamp(end)
         );
 
         Object ratingObj = session.get("rating");
@@ -491,11 +490,7 @@ public class CalendarTab extends VBox {
     }
 
     private LocalDateTime parseDateTime(String value) {
-        try {
-            return value.contains("T") ? LocalDateTime.parse(value) : LocalDateTime.parse(value, dbFormatter);
-        } catch (Exception e) {
-            return null;
-        }
+        return ApiClient.parseApiTimestamp(value);
     }
 
     private String getStartTime(Map<String, Object> session) {

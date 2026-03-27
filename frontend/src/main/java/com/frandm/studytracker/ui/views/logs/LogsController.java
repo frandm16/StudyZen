@@ -59,6 +59,8 @@ public class LogsController {
 
         title.setText(sessionToEdit.getTitle());
         desc.setText(sessionToEdit.getDescription());
+        tagCombo.getItems().clear();
+        taskCombo.getItems().clear();
 
         try {
             ApiClient.getTags().forEach(t -> tagCombo.getItems().add((String) t.get("name")));
@@ -82,6 +84,7 @@ public class LogsController {
     }
 
     private void updateTaskCombo(ComboBox<String> taskCombo, String tagName) {
+        taskCombo.getItems().clear();
         try {
             ApiClient.getTasksByTag(tagName).forEach(t -> taskCombo.getItems().add((String) t.get("name")));
         } catch (Exception e) {

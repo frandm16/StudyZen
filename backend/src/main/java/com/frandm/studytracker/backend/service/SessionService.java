@@ -52,8 +52,7 @@ public class SessionService {
         return sessionRepository.save(session);
     }
 
-    public Session update(Long id, Long taskId, String title,
-                          String description, Integer rating) {
+    public Session update(Long id, String title, String description, Integer rating) {
         Session session = sessionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
         session.setTitle(title);
