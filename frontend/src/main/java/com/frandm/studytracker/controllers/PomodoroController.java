@@ -9,9 +9,13 @@ import com.frandm.studytracker.core.*;
 import com.frandm.studytracker.models.Session;
 import com.frandm.studytracker.ui.util.Animations;
 import com.frandm.studytracker.ui.util.UIManager;
+import com.frandm.studytracker.ui.views.FloatingDockView;
 import com.frandm.studytracker.ui.views.planner.PlannerController;
 import com.frandm.studytracker.ui.views.logs.LogsView;
 import com.frandm.studytracker.ui.views.StatsDashboard;
+import javafx.animation.FadeTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -47,7 +51,7 @@ public class PomodoroController {
             plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage,
             fuzzyResultsContainer, tagsListContainer, activeTaskContainer, pomoSettingsPane,
             countdownSettingsPane, settingsBox, confirmTagBox, confirmBox;
-    @FXML public HBox starsContainer, editStarsContainer, buttonsHbox;
+    @FXML public HBox starsContainer, editStarsContainer, buttonsHbox, floatingDock;
     @FXML public Label timerLabel, stateLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
             alarmVolumeValLabel, widthSliderValLabel, countdownValLabel, circleSizeValLabel,
             streakLabel, timeThisWeekLabel, timeLastMonthLabel, tasksLabel, bestDayLabel, selectedNameLabel,
@@ -57,7 +61,7 @@ public class PomodoroController {
     @FXML public ComboBox<String> editTagCombo, editTaskCombo;
     @FXML public ColorPicker tagColorInput;
     @FXML public Button startPauseBtn, skipBtn, finishBtn;
-    @FXML public ToggleButton timerModeBtn, pomoModeBtn, countdownModeBtn, menuBtn, statsBtn, plannerBtn, historyBtn;
+    @FXML public ToggleButton timerModeBtn, pomoModeBtn, countdownModeBtn;
     @FXML public ToggleSwitch countBreakTime, autoPomoToggle, autoBreakToggle;
     @FXML public Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider,
             widthSlider, countdownSlider, circleSizeSlider, notificationVolumeSlider, masterVolumeSlider,
@@ -79,14 +83,24 @@ public class PomodoroController {
     private StatsDashboard statsDashboard;
     private PlannerController plannerController;
     private LogsView logsView;
+    private FloatingDockView floatingDockView;
 
     private double SIZE_FACTOR = 0.25;
     private int currentRating = 0;
     private boolean isDarkMode = true;
+    private int lastDockDirection = 1;
     private LocalDateTime startDate;
 
     private final List<FontIcon> starNodes = new ArrayList<>();
     private final List<FontIcon> editStarNodes = new ArrayList<>();
+    private final ToggleGroup dockGroup = new ToggleGroup();
+    private final Map<ToggleButton, DockSection> dockSections = new LinkedHashMap<>();
+    private final Map<ToggleButton, VBox> dockTextGroups = new HashMap<>();
+    private final Map<ToggleButton, Label> dockSubtitleLabels = new HashMap<>();
+    private ToggleButton menuBtn;
+    private ToggleButton plannerBtn;
+    private ToggleButton statsBtn;
+    private ToggleButton historyBtn;
     private static final int UPCOMING_DEADLINES_LIMIT = 5;
     private static final DateTimeFormatter MENU_TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter MENU_DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM");
@@ -97,10 +111,18 @@ public class PomodoroController {
     private Map<String, String> tagColors = new HashMap<>();
     private String tagToDelete = null;
 
+    private enum DockSection {
+        TIMER,
+        PLANNER,
+        STATS,
+        HISTORY
+    }
+
     @FXML
     public void initialize() {
         initializeCoreSystems();
         setupViews();
+        setupDynamicDock();
         setupInitialUIState();
         setupSettingsPanel();
         setupModeSystem();
@@ -155,6 +177,139 @@ public class PomodoroController {
         stackpaneCircle.heightProperty().addListener((_, _, _) -> resizeCircle());
         SIZE_FACTOR = engine.getUiSize() * 0.005;
         resizeCircle();
+    }
+
+    private void setupDynamicDock() {
+        floatingDockView = new FloatingDockView(
+                floatingDock,
+                () -> engine,
+                this::handleDockNavigation,
+                this::toggleSettings
+        );
+    }
+
+    private void refreshDynamicDock() {
+        if (floatingDockView != null) {
+            floatingDockView.refreshState();
+        }
+    }
+
+    private void refreshDynamicDock(int direction) {
+        dockSections.forEach((button, section) -> {
+            boolean selected = button.isSelected();
+            VBox textBox = dockTextGroups.get(button);
+            Label subtitleLabel = dockSubtitleLabels.get(button);
+
+            if (subtitleLabel != null) {
+                subtitleLabel.setText(resolveDockSubtitle(section));
+            }
+
+            button.getStyleClass().remove("active");
+            if (selected) {
+                button.getStyleClass().add("active");
+            }
+
+            animateDockButton(button, textBox, selected, direction);
+        });
+    }
+
+    private void animateDockButton(ToggleButton button, VBox textBox, boolean selected, int direction) {
+        if (textBox == null) {
+            return;
+        }
+
+        ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(180), button);
+        scaleTransition.setToX(selected ? 1.02 : 1.0);
+        scaleTransition.setToY(selected ? 1.02 : 1.0);
+
+        TranslateTransition buttonShift = new TranslateTransition(Duration.millis(220), button);
+        buttonShift.setFromX(selected ? direction * 8.0 : button.getTranslateX());
+        buttonShift.setToX(0);
+        buttonShift.setInterpolator(javafx.animation.Interpolator.SPLINE(0.22, 1.0, 0.36, 1.0));
+
+        scaleTransition.play();
+        buttonShift.play();
+
+        FadeTransition fadeTransition = new FadeTransition(Duration.millis(180), textBox);
+        TranslateTransition translateTransition = new TranslateTransition(Duration.millis(180), textBox);
+        double textOffset = direction < 0 ? -10 : direction > 0 ? 10 : 0;
+
+        if (selected) {
+            textBox.setManaged(true);
+            textBox.setVisible(true);
+            fadeTransition.setFromValue(textBox.getOpacity());
+            fadeTransition.setToValue(1);
+            translateTransition.setFromX(textOffset);
+            translateTransition.setToX(0);
+        } else {
+            fadeTransition.setFromValue(textBox.getOpacity());
+            fadeTransition.setToValue(0);
+            translateTransition.setFromX(textBox.getTranslateX());
+            translateTransition.setToX(-textOffset * 0.6);
+            fadeTransition.setOnFinished(_ -> {
+                if (!button.isSelected()) {
+                    textBox.setManaged(false);
+                    textBox.setVisible(false);
+                }
+            });
+        }
+
+        fadeTransition.play();
+        translateTransition.play();
+    }
+
+    private String resolveDockSubtitle(DockSection section) {
+        return switch (section) {
+            case TIMER -> switch (engine.getCurrentState()) {
+                case WORK, SHORT_BREAK, LONG_BREAK -> engine.getCurrentMode() == PomodoroEngine.Mode.POMODORO ? "Pomodoro running" : "Timer in progress";
+                case WAITING -> "Paused at " + engine.getFormattedTime();
+                default -> engine.getCurrentMode() == PomodoroEngine.Mode.COUNTDOWN ? "Countdown ready" : "Ready to study";
+            };
+            case PLANNER -> "Today · deadlines and sessions";
+            case STATS -> "Weekly focus and trends";
+            case HISTORY -> "Archive of completed sessions";
+        };
+    }
+
+    private void handleDockNavigation(FloatingDockView.Section section, int direction) {
+        Region activePanel = getActivePanel();
+
+        switch (section) {
+            case TIMER -> {
+                if (activePanel == mainContainer) {
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.TIMER, direction);
+                    return;
+                }
+                refreshSideMenu();
+                uiManager.switchPanels(activePanel, mainContainer, direction);
+            }
+            case PLANNER -> {
+                if (activePanel == plannerContainer) {
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.PLANNER, direction);
+                    return;
+                }
+                plannerController.refresh();
+                uiManager.switchPanels(activePanel, plannerContainer, direction);
+            }
+            case STATS -> {
+                if (activePanel == statsContainer) {
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.STATS, direction);
+                    return;
+                }
+                statsDashboard.refresh();
+                uiManager.switchPanels(activePanel, statsContainer, direction);
+            }
+            case HISTORY -> {
+                if (activePanel == historyContainer) {
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.HISTORY, direction);
+                    return;
+                }
+                logsView.resetAndReload();
+                uiManager.switchPanels(activePanel, historyContainer, direction);
+            }
+        }
+
+        refreshDynamicDock();
     }
 
     private void setupSettingsPanel() {
@@ -420,6 +575,8 @@ public class PomodoroController {
     void handleNavClick(ActionEvent event) {
         ToggleButton clickedBtn = (ToggleButton) event.getSource();
         Node targetContainer = null;
+        int currentIndex = getDockIndexForActivePanel();
+        int nextIndex = getDockIndex(clickedBtn);
 
         if (clickedBtn == menuBtn) {
             targetContainer = mainContainer;
@@ -435,23 +592,46 @@ public class PomodoroController {
             clickedBtn.setSelected(true);
             return;
         }
+        lastDockDirection = Integer.compare(nextIndex, currentIndex);
+        if (lastDockDirection == 0) {
+            lastDockDirection = 1;
+        }
         Stream.of(menuBtn, plannerBtn, statsBtn, historyBtn)
                 .forEach(btn -> btn.getStyleClass().remove("active"));
         clickedBtn.getStyleClass().add("active");
 
         if (clickedBtn == menuBtn) {
             refreshSideMenu();
-            uiManager.switchPanels(getActivePanel(), mainContainer);
+            uiManager.switchPanels(getActivePanel(), mainContainer, lastDockDirection);
         } else if (clickedBtn == plannerBtn) {
             plannerController.refresh();
-            uiManager.switchPanels(getActivePanel(), plannerContainer);
+            uiManager.switchPanels(getActivePanel(), plannerContainer, lastDockDirection);
         } else if (clickedBtn == statsBtn) {
             statsDashboard.refresh();
-            uiManager.switchPanels(getActivePanel(), statsContainer);
+            uiManager.switchPanels(getActivePanel(), statsContainer, lastDockDirection);
         } else if (clickedBtn == historyBtn) {
             logsView.resetAndReload();
-            uiManager.switchPanels(getActivePanel(), historyContainer);
+            uiManager.switchPanels(getActivePanel(), historyContainer, lastDockDirection);
         }
+
+        refreshDynamicDock(lastDockDirection);
+    }
+
+    private int getDockIndexForActivePanel() {
+        Region activePanel = getActivePanel();
+        if (activePanel == mainContainer) return 0;
+        if (activePanel == plannerContainer) return 1;
+        if (activePanel == statsContainer) return 2;
+        if (activePanel == historyContainer) return 3;
+        return 0;
+    }
+
+    private int getDockIndex(ToggleButton button) {
+        if (button == menuBtn) return 0;
+        if (button == plannerBtn) return 1;
+        if (button == statsBtn) return 2;
+        if (button == historyBtn) return 3;
+        return 0;
     }
 
     @FXML
@@ -539,6 +719,8 @@ public class PomodoroController {
             case TIMER -> updateTimerUI(logical);
             case COUNTDOWN -> updateCountdownUI(logical);
         }
+
+        refreshDynamicDock();
     }
 
     private void updatePomodoroUI(PomodoroEngine.State logical) {
@@ -889,6 +1071,7 @@ public class PomodoroController {
             scheduleListContainer.getChildren().add(createTodaySchedulesList());
             scheduleListContainer.getChildren().add(createUpcomingDeadlinesList());
         }
+        refreshDynamicDock();
     }
 
     private LocalDateTime extractSessionStartTime(Map<String, Object> session) {
@@ -963,7 +1146,9 @@ public class PomodoroController {
 
     public void switchToTimer() {
         if (getActivePanel() == mainContainer) return;
-        menuBtn.fire();
+        if (floatingDockView != null) {
+            floatingDockView.triggerSection(FloatingDockView.Section.TIMER);
+        }
     }
 
     public void playScheduleSession(String tag, String task) {
