@@ -2,11 +2,11 @@ package com.frandm.studytracker.backend.controller;
 
 import com.frandm.studytracker.backend.model.Session;
 import com.frandm.studytracker.backend.service.SessionService;
+import com.frandm.studytracker.backend.util.DateTimeUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +47,6 @@ public class SessionController {
 
     @PostMapping
     public Session save(@RequestBody Map<String, Object> body) {
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return sessionService.save(
                 (String) body.get("tagName"),
                 (String) body.get("tagColor"),
@@ -55,8 +54,8 @@ public class SessionController {
                 (String) body.get("title"),
                 (String) body.get("description"),
                 (Integer) body.get("totalMinutes"),
-                LocalDateTime.parse((String) body.get("startDate"), fmt),
-                LocalDateTime.parse((String) body.get("endDate"), fmt),
+                DateTimeUtils.parseApiTimestamp((String) body.get("startDate")),
+                DateTimeUtils.parseApiTimestamp((String) body.get("endDate")),
                 (Integer) body.get("rating")
         );
     }
@@ -65,7 +64,6 @@ public class SessionController {
     public Session update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         return sessionService.update(
                 id,
-                body.get("taskId") != null ? Long.valueOf(body.get("taskId").toString()) : null,
                 (String) body.get("title"),
                 (String) body.get("description"),
                 (Integer) body.get("rating")

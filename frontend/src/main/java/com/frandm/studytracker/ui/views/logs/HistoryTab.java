@@ -27,7 +27,6 @@ public class HistoryTab extends VBox {
     private final int PAGE_SIZE = 50;
     private LocalDate lastDate = null;
     private VBox lastSessionsContainer = null;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
 
     public HistoryTab(LogsController logsController) {
         this.logsController = logsController;
@@ -70,17 +69,13 @@ public class HistoryTab extends VBox {
         refreshFilters();
     }
 
-    private static LocalDateTime parseDate(String date) {
-        if (date == null) return null;
-        try {
-            return LocalDateTime.parse(date);
-        } catch (Exception e) {
-            try {
-                return LocalDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            } catch (Exception e2) {
-                return null;
-            }
-        }
+    private static LocalDateTime parseDate(Session session) {
+        return session != null ? session.getStartDateTime() : null;
+    }
+
+    private static LocalDate extractSessionDate(Session session) {
+        LocalDateTime dateTime = parseDate(session);
+        return dateTime != null ? dateTime.toLocalDate() : null;
     }
 
     private void setupFilterListeners() {
@@ -166,8 +161,8 @@ public class HistoryTab extends VBox {
         LocalDate today = LocalDate.now();
 
         if (currentOffset == 0) {
-            boolean hasTodaySessions = !sessions.isEmpty() &&
-                    parseDate(sessions.getFirst().getStartDate()).toLocalDate().equals(today);
+            LocalDate firstSessionDate = sessions.isEmpty() ? null : extractSessionDate(sessions.getFirst());
+            boolean hasTodaySessions = today.equals(firstSessionDate);
             if (!hasTodaySessions) {
                 createNewDayBlock(today, 0, "No sessions registered for today");
                 lastDate = today;
@@ -185,10 +180,13 @@ public class HistoryTab extends VBox {
         }
 
         for (Session s : sessions) {
-            LocalDate sessionDate = parseDate(s.getStartDate()).toLocalDate();
+            LocalDate sessionDate = extractSessionDate(s);
+            if (sessionDate == null) {
+                continue;
+            }
             if (!sessionDate.equals(lastDate)) {
                 long totalMinutes = sessions.stream()
-                        .filter(se -> parseDate(se.getStartDate()).toLocalDate().equals(sessionDate))
+                        .filter(se -> sessionDate.equals(extractSessionDate(se)))
                         .mapToLong(Session::getTotalMinutes)
                         .sum();
                 createNewDayBlock(sessionDate, totalMinutes, null);

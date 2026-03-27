@@ -6,7 +6,6 @@ import javafx.application.Platform;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +15,6 @@ public class PlannerController {
     private final PlannerView view;
     private final PomodoroController pomodoroController;
     private LocalDate selectedDate = LocalDate.now();
-    private final DateTimeFormatter apiFmt = ApiClient.API_TIMESTAMP_FORMAT;
 
     public PlannerController(PomodoroController controller) {
         this.pomodoroController = controller;
@@ -76,9 +74,9 @@ public class PlannerController {
             LocalDateTime start = resolveStartDate(item, startKey);
             if (start != null) {
                 item.put("start_time", start);
-                item.put("dueDate", start.format(apiFmt));
+                item.put("dueDate", ApiClient.formatApiTimestamp(start));
             }
-            item.put("isCompleted", asBoolean(resolveCompletedValue(item)));
+            item.put("isCompleted", ApiClient.extractCompletedFlag(item));
             if (endKey != null) {
                 item.put("end_time", resolveEndDate(item, endKey));
             }
@@ -98,43 +96,26 @@ public class PlannerController {
         }
     }
 
-    private LocalDateTime parse(Object val) {
-        if (val == null) return null;
-        String s = val.toString();
-        try {
-            return s.contains("T") ? LocalDateTime.parse(s) : LocalDateTime.parse(s, apiFmt);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     private String format(LocalDate date, LocalTime time) {
-        return date.atTime(time).format(apiFmt);
+        return ApiClient.formatApiTimestamp(date.atTime(time));
     }
 
     private LocalDateTime resolveStartDate(Map<String, Object> item, String primaryKey) {
-        return firstParsed(item.get(primaryKey), item.get("dueDate"), item.get("deadline"), item.get("startTime"));
+        LocalDateTime primary = ApiClient.parseApiTimestamp(item.get(primaryKey));
+        if (primary != null) return primary;
+
+        LocalDateTime dueDate = ApiClient.parseApiTimestamp(item.get("dueDate"));
+        if (dueDate != null) return dueDate;
+
+        LocalDateTime deadline = ApiClient.parseApiTimestamp(item.get("deadline"));
+        if (deadline != null) return deadline;
+
+        return ApiClient.parseApiTimestamp(item.get("startTime"));
     }
 
     private LocalDateTime resolveEndDate(Map<String, Object> item, String primaryKey) {
-        return firstParsed(item.get(primaryKey), item.get("endTime"));
-    }
-
-    private Object resolveCompletedValue(Map<String, Object> item) {
-        return item.containsKey("isCompleted") ? item.get("isCompleted") : item.get("completed");
-    }
-
-    private LocalDateTime firstParsed(Object... candidates) {
-        for (Object candidate : candidates) {
-            LocalDateTime parsed = parse(candidate);
-            if (parsed != null) return parsed;
-        }
-        return null;
-    }
-
-    private boolean asBoolean(Object value) {
-        if (value instanceof Boolean booleanValue) return booleanValue;
-        return value != null && Boolean.parseBoolean(value.toString());
+        LocalDateTime primary = ApiClient.parseApiTimestamp(item.get(primaryKey));
+        return primary != null ? primary : ApiClient.parseApiTimestamp(item.get("endTime"));
     }
 
     public void nextDay() { move(selectedDate.plusDays(1)); }

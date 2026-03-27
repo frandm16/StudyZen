@@ -114,9 +114,7 @@ public class ApiClient {
     }
 
     public static List<Map<String, Object>> getSessionsByRange(String start, String end) throws Exception {
-        String Start = start.replace(" ", "%20");
-        String End = end.replace(" ", "%20");
-        return mapper.readValue(get("/sessions/range?start=" + Start + "&end=" + End), new TypeReference<>() {});
+        return mapper.readValue(get("/sessions/range?start=" + encodeQueryValue(start) + "&end=" + encodeQueryValue(end)), new TypeReference<>() {});
     }
 
     public static void saveSession(String tagName, String tagColor, String taskName,
@@ -141,9 +139,7 @@ public class ApiClient {
 
     // --- Scheduled sessions ---
     public static List<Map<String, Object>> getScheduledSessions(String start, String end) throws Exception {
-        String Start = start.replace(" ", "%20");
-        String End = end.replace(" ", "%20");
-        return mapper.readValue(get("/scheduled?start=" + Start + "&end=" + End), new TypeReference<>() {});
+        return mapper.readValue(get("/scheduled?start=" + encodeQueryValue(start) + "&end=" + encodeQueryValue(end)), new TypeReference<>() {});
     }
 
     public static void saveScheduledSession(String tagName, String taskName,
@@ -340,9 +336,7 @@ public class ApiClient {
 
     // --- Deadlines ---
     public static List<Map<String, Object>> getDeadlines(String start, String end) throws Exception {
-        String Start = start.replace(" ", "%20");
-        String End = end.replace(" ", "%20");
-        return mapper.readValue(get("/deadlines?start=" + Start + "&end=" + End), new TypeReference<>() {});
+        return mapper.readValue(get("/deadlines?start=" + encodeQueryValue(start) + "&end=" + encodeQueryValue(end)), new TypeReference<>() {});
     }
 
     private static Map<String, Object> createDeadline(String tagName, String tagColor, String taskName,
@@ -401,13 +395,35 @@ public class ApiClient {
         return value.format(API_TIMESTAMP_FORMAT);
     }
 
+    public static LocalDateTime parseApiTimestamp(Object value) {
+        if (value instanceof LocalDateTime dateTime) return dateTime;
+        if (value == null) return null;
+        String text = value.toString();
+        try {
+            return text.contains("T")
+                    ? LocalDateTime.parse(text)
+                    : LocalDateTime.parse(text, API_TIMESTAMP_FORMAT);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static boolean parseBooleanFlag(Object value) {
+        if (value instanceof Boolean booleanValue) return booleanValue;
+        return value != null && Boolean.parseBoolean(value.toString());
+    }
+
+    public static boolean extractCompletedFlag(Map<String, Object> item) {
+        return parseBooleanFlag(item.containsKey("isCompleted") ? item.get("isCompleted") : item.get("completed"));
+    }
+
     private static boolean isMethodNotAllowed(Exception error) {
         return error.getMessage() != null && error.getMessage().contains("HTTP 405");
     }
 
     private static void syncCompletedState(Map<String, Object> deadline, Boolean desiredCompleted) throws Exception {
         if (desiredCompleted == null) return;
-        boolean currentCompleted = extractCompleted(deadline);
+        boolean currentCompleted = extractCompletedFlag(deadline);
         if (currentCompleted == desiredCompleted) return;
         Object id = deadline.get("id");
         if (id instanceof Number number) {
@@ -415,10 +431,8 @@ public class ApiClient {
         }
     }
 
-    private static boolean extractCompleted(Map<String, Object> deadline) {
-        Object raw = deadline.containsKey("isCompleted") ? deadline.get("isCompleted") : deadline.get("completed");
-        if (raw instanceof Boolean booleanValue) return booleanValue;
-        return raw != null && Boolean.parseBoolean(raw.toString());
+    private static String encodeQueryValue(String value) {
+        return value.replace(" ", "%20");
     }
 
 }

@@ -35,7 +35,7 @@ public class DeadlineService {
 
     public Deadline update(Long id, String tagName, String tagColor, String taskName,
                            String title, String description, String urgency,
-                           LocalDateTime dueDate, Boolean allDay, Boolean isCompleted) {
+                           LocalDateTime dueDate, Boolean allDay) {
         Deadline deadline = deadlineRepository.findById(id).orElseThrow();
         updateTaskAndTag(deadline, tagName, tagColor, taskName);
         deadline.setTitle(title);
@@ -43,8 +43,6 @@ public class DeadlineService {
         deadline.setUrgency(urgency);
         deadline.setDueDate(dueDate);
         deadline.setAllDay(allDay);
-        // Completion is controlled only through the dedicated toggle flow.
-        deadline.setIsCompleted(deadline.getIsCompleted());
         return deadlineRepository.save(deadline);
     }
 
@@ -76,9 +74,7 @@ public class DeadlineService {
             deadline.setTask(task);
             deadline.setTag(task.getTag());
         } else if (tagName != null && !tagName.isEmpty()) {
-            Tag tag = tagRepository.findAll().stream()
-                    .filter(t -> t.getName().equals(tagName))
-                    .findFirst().orElse(null);
+            Tag tag = tagRepository.findByName(tagName).orElse(null);
             deadline.setTag(tag);
         }
     }

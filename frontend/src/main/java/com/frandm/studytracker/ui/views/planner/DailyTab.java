@@ -15,7 +15,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -23,16 +22,13 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.materialdesign2.MaterialDesignC;
-import org.kordamp.ikonli.materialdesign2.MaterialDesignP;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -50,8 +46,6 @@ public class DailyTab extends VBox {
     private Popup activePopup;
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
-    private static final DateTimeFormatter API_FMT = ApiClient.API_TIMESTAMP_FORMAT;
-
     public DailyTab(PomodoroController pomodoroController) {
         this.pomodoroController = pomodoroController;
         this.getStyleClass().add("daily-tab");
@@ -193,7 +187,8 @@ public class DailyTab extends VBox {
                 try {
                     ApiClient.toggleDeadlineCompleted(((Number) data.get("id")).longValue());
                     Platform.runLater(this::refreshPlannerAndMenu);
-                } catch (Exception ignored) {
+                } catch (Exception error) {
+                    error.printStackTrace();
                     completedState[0] = previousState;
                     data.put("isCompleted", previousState);
                     Platform.runLater(() -> applyDeadlineCompletedState(row, title, completedIcon, previousState));
@@ -215,7 +210,7 @@ public class DailyTab extends VBox {
 
     private void applyDeadlineCompletedState(HBox row, Label title, FontIcon completedIcon, boolean isCompleted) {
         completedIcon.setIconLiteral(isCompleted ? "mdi2c-check-circle" : "mdi2c-checkbox-blank-circle-outline");
-        title.setStyle(isCompleted ? "-fx-strikethrough: true; -fx-opacity: 0.65;" : "");
+        title.setOpacity(isCompleted ? 0.65 : 1.0);
         row.setOpacity(isCompleted ? 0.72 : 1.0);
     }
 
@@ -286,20 +281,20 @@ public class DailyTab extends VBox {
         if (end == null) end = start.plusHours(1);
 
         DatePicker dpStart = new DatePicker(start.toLocalDate());
-        TextField hs = createTimeField(String.format("%02d", start.getHour()), 23);
-        TextField ms = createTimeField(String.format("%02d", start.getMinute()), 59);
+        TextField hs = PlannerHelpers.createTimeField(String.format("%02d", start.getHour()), 23);
+        TextField ms = PlannerHelpers.createTimeField(String.format("%02d", start.getMinute()), 59);
         HBox startRow = new HBox(10, dpStart, new HBox(3, hs, new Label(":"), ms));
         startRow.setAlignment(Pos.CENTER_LEFT);
 
         DatePicker dpEnd = new DatePicker(end.toLocalDate());
-        TextField he = createTimeField(String.format("%02d", end.getHour()), 23);
-        TextField me = createTimeField(String.format("%02d", end.getMinute()), 59);
+        TextField he = PlannerHelpers.createTimeField(String.format("%02d", end.getHour()), 23);
+        TextField me = PlannerHelpers.createTimeField(String.format("%02d", end.getMinute()), 59);
         HBox endRow = new HBox(10, dpEnd, new HBox(3, he, new Label(":"), me));
         endRow.setAlignment(Pos.CENTER_LEFT);
 
         ComboBox<String> tags = new ComboBox<>();
         ComboBox<String> tasks = new ComboBox<>();
-        TagSelectionData tagData = loadTagData();
+        PlannerHelpers.TagSelectionData tagData = PlannerHelpers.loadTagData();
         Map<String, List<String>> tagMap = tagData.tagMap();
         tags.getItems().addAll(tagMap.keySet());
         tags.setMaxWidth(Double.MAX_VALUE);
@@ -310,15 +305,15 @@ public class DailyTab extends VBox {
         });
 
         String initialTask = String.valueOf(data.getOrDefault("task_name", ""));
-        preselectTask(tagMap, tags, tasks, initialTask);
+        PlannerHelpers.preselectTask(tagMap, tags, tasks, initialTask);
 
         Button save = new Button(isEdit ? "Update" : "Save");
         save.getStyleClass().add("button-primary");
         save.setMaxWidth(Double.MAX_VALUE);
         save.setOnAction(_ -> {
             if (dpStart.getValue() == null || dpEnd.getValue() == null || tasks.getValue() == null) return;
-            LocalDateTime newStart = dpStart.getValue().atTime(parseInt(hs.getText()), parseInt(ms.getText()));
-            LocalDateTime newEnd = dpEnd.getValue().atTime(parseInt(he.getText()), parseInt(me.getText()));
+            LocalDateTime newStart = dpStart.getValue().atTime(PlannerHelpers.parseInt(hs.getText()), PlannerHelpers.parseInt(ms.getText()));
+            LocalDateTime newEnd = dpEnd.getValue().atTime(PlannerHelpers.parseInt(he.getText()), PlannerHelpers.parseInt(me.getText()));
             try {
                 if (isEdit) {
                     ApiClient.updateScheduledSession(
@@ -326,19 +321,22 @@ public class DailyTab extends VBox {
                             tags.getValue(),
                             tasks.getValue(),
                             titleField.getText().trim(),
-                            newStart.format(API_FMT),
-                            newEnd.format(API_FMT)
+                            ApiClient.formatApiTimestamp(newStart),
+                            ApiClient.formatApiTimestamp(newEnd)
                     );
                 } else {
                     ApiClient.saveScheduledSession(
                             tags.getValue(),
                             tasks.getValue(),
                             titleField.getText().trim(),
-                            newStart.format(API_FMT),
-                            newEnd.format(API_FMT)
+                            ApiClient.formatApiTimestamp(newStart),
+                            ApiClient.formatApiTimestamp(newEnd)
                     );
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception error) {
+                error.printStackTrace();
+                return;
+            }
             popup.hide();
             refreshPlannerAndMenu();
         });
@@ -360,7 +358,10 @@ public class DailyTab extends VBox {
             delete.setOnAction(_ -> {
                 try {
                     ApiClient.deleteScheduledSession(((Number) data.get("id")).longValue());
-                } catch (Exception ignored) {}
+                } catch (Exception error) {
+                    error.printStackTrace();
+                    return;
+                }
                 popup.hide();
                 refreshPlannerAndMenu();
             });
@@ -388,15 +389,15 @@ public class DailyTab extends VBox {
         if (due == null) due = currentDate.atTime(0, 0);
 
         DatePicker dueDate = new DatePicker(due.toLocalDate());
-        TextField hourField = createTimeField(String.format("%02d", due.getHour()), 23);
-        TextField minuteField = createTimeField(String.format("%02d", due.getMinute()), 59);
+        TextField hourField = PlannerHelpers.createTimeField(String.format("%02d", due.getHour()), 23);
+        TextField minuteField = PlannerHelpers.createTimeField(String.format("%02d", due.getMinute()), 59);
         HBox dueRow = new HBox(10, dueDate, new HBox(3, hourField, new Label(":"), minuteField));
         dueRow.setAlignment(Pos.CENTER_LEFT);
 
         CheckBox allDay = new CheckBox("All day");
         allDay.setSelected(Boolean.TRUE.equals(data.get("allDay")));
-        toggleTimeFields(hourField, minuteField, allDay.isSelected());
-        allDay.selectedProperty().addListener((_, _, selected) -> toggleTimeFields(hourField, minuteField, selected));
+        PlannerHelpers.toggleTimeFields(hourField, minuteField, allDay.isSelected());
+        allDay.selectedProperty().addListener((_, _, selected) -> PlannerHelpers.toggleTimeFields(hourField, minuteField, selected));
 
         ComboBox<String> urgency = new ComboBox<>();
         urgency.getItems().addAll("High", "Medium", "Low");
@@ -405,7 +406,7 @@ public class DailyTab extends VBox {
 
         ComboBox<String> tags = new ComboBox<>();
         ComboBox<String> tasks = new ComboBox<>();
-        TagSelectionData tagData = loadTagData();
+        PlannerHelpers.TagSelectionData tagData = PlannerHelpers.loadTagData();
         Map<String, List<String>> tagMap = tagData.tagMap();
         tags.getItems().addAll(tagMap.keySet());
         tags.setMaxWidth(Double.MAX_VALUE);
@@ -416,15 +417,15 @@ public class DailyTab extends VBox {
         });
 
         String initialTask = String.valueOf(data.getOrDefault("task_name", data.getOrDefault("taskName", "")));
-        preselectTask(tagMap, tags, tasks, initialTask);
+        PlannerHelpers.preselectTask(tagMap, tags, tasks, initialTask);
 
         Button save = new Button(isEdit ? "Update" : "Save");
         save.getStyleClass().add("button-primary");
         save.setMaxWidth(Double.MAX_VALUE);
         save.setOnAction(_ -> {
             if (dueDate.getValue() == null || tasks.getValue() == null || urgency.getValue() == null) return;
-            int hour = allDay.isSelected() ? 0 : parseInt(hourField.getText());
-            int minute = allDay.isSelected() ? 0 : parseInt(minuteField.getText());
+            int hour = allDay.isSelected() ? 0 : PlannerHelpers.parseInt(hourField.getText());
+            int minute = allDay.isSelected() ? 0 : PlannerHelpers.parseInt(minuteField.getText());
             LocalDateTime newDue = dueDate.getValue().atTime(hour, minute);
 
             try {
@@ -437,7 +438,7 @@ public class DailyTab extends VBox {
                             titleField.getText().trim(),
                             descriptionArea.getText().trim(),
                             urgency.getValue(),
-                            newDue.format(API_FMT),
+                            ApiClient.formatApiTimestamp(newDue),
                             allDay.isSelected(),
                             isDeadlineCompleted(data)
                     );
@@ -449,7 +450,7 @@ public class DailyTab extends VBox {
                             titleField.getText().trim(),
                             descriptionArea.getText().trim(),
                             urgency.getValue(),
-                            newDue.format(API_FMT),
+                            ApiClient.formatApiTimestamp(newDue),
                             allDay.isSelected(),
                             false
                     );
@@ -480,7 +481,10 @@ public class DailyTab extends VBox {
             delete.setOnAction(_ -> {
                 try {
                     ApiClient.deleteDeadline(((Number) data.get("id")).longValue());
-                } catch (Exception ignored) {}
+                } catch (Exception error) {
+                    error.printStackTrace();
+                    return;
+                }
                 popup.hide();
                 refreshPlannerAndMenu();
             });
@@ -527,69 +531,6 @@ public class DailyTab extends VBox {
         activePopup = null;
     }
 
-    private TagSelectionData loadTagData() {
-        Map<String, List<String>> tagMap = new LinkedHashMap<>();
-        Map<String, String> tagColors = new LinkedHashMap<>();
-        try {
-            ApiClient.getTags().forEach(tag -> {
-                String tagName = String.valueOf(tag.get("name"));
-                tagColors.put(tagName, String.valueOf(tag.getOrDefault("color", "")));
-                try {
-                    List<String> taskNames = ApiClient.getTasksByTag(tagName)
-                            .stream()
-                            .map(task -> String.valueOf(task.get("name")))
-                            .collect(Collectors.toList());
-                    tagMap.put(tagName, taskNames);
-                } catch (Exception ex) {
-                    tagMap.put(tagName, new ArrayList<>());
-                }
-            });
-        } catch (Exception ignored) {}
-        return new TagSelectionData(tagMap, tagColors);
-    }
-
-    private void preselectTask(Map<String, List<String>> tagMap, ComboBox<String> tags, ComboBox<String> tasks, String taskName) {
-        tagMap.entrySet().stream()
-                .filter(entry -> entry.getValue().contains(taskName))
-                .findFirst()
-                .ifPresent(entry -> {
-                    tags.getSelectionModel().select(entry.getKey());
-                    tasks.getItems().setAll(entry.getValue());
-                    tasks.getSelectionModel().select(taskName);
-                });
-
-        if (tags.getValue() == null && !tags.getItems().isEmpty()) {
-            tags.getSelectionModel().selectFirst();
-            tasks.getItems().setAll(tagMap.getOrDefault(tags.getValue(), List.of()));
-            if (!tasks.getItems().isEmpty()) tasks.getSelectionModel().selectFirst();
-        }
-    }
-
-    private TextField createTimeField(String initial, int max) {
-        TextField field = new TextField(initial);
-        field.setPrefWidth(65);
-        field.setAlignment(Pos.CENTER);
-        field.textProperty().addListener((_, _, newValue) -> {
-            if (!newValue.matches("\\d*")) field.setText(newValue.replaceAll("\\D", ""));
-            if (field.getText().length() > 2) field.setText(field.getText().substring(0, 2));
-            if (!field.getText().isEmpty()) {
-                int value = Integer.parseInt(field.getText());
-                if (value > max) field.setText(String.valueOf(max));
-            }
-        });
-        return field;
-    }
-
-    private void toggleTimeFields(TextField hourField, TextField minuteField, boolean disabled) {
-        hourField.setDisable(disabled);
-        minuteField.setDisable(disabled);
-    }
-
-    private int parseInt(String value) {
-        if (value == null || value.isBlank()) return 0;
-        return Integer.parseInt(value);
-    }
-
     private LocalDateTime extractDeadlineDate(Map<String, Object> data) {
         return parsePreferredDate(data, "start_time", "dueDate", "deadline");
     }
@@ -615,9 +556,7 @@ public class DailyTab extends VBox {
     }
 
     private boolean isDeadlineCompleted(Map<String, Object> data) {
-        Object raw = data.containsKey("isCompleted") ? data.get("isCompleted") : data.get("completed");
-        if (raw instanceof Boolean completed) return completed;
-        return raw != null && Boolean.parseBoolean(raw.toString());
+        return ApiClient.extractCompletedFlag(data);
     }
 
     private void refreshPlannerAndMenu() {
@@ -649,15 +588,7 @@ public class DailyTab extends VBox {
     }
 
     private LocalDateTime parse(Object val) {
-        if (val instanceof LocalDateTime) return (LocalDateTime) val;
-        if (val == null) return null;
-        String str = val.toString();
-        try {
-            return str.contains("T") ? LocalDateTime.parse(str) : LocalDateTime.parse(str, API_FMT);
-        } catch (DateTimeParseException e) {
-            return null;
-        }
+        return ApiClient.parseApiTimestamp(val);
     }
 
-    private record TagSelectionData(Map<String, List<String>> tagMap, Map<String, String> tagColors) {}
 }

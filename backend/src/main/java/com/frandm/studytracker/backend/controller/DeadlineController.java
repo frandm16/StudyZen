@@ -2,9 +2,9 @@ package com.frandm.studytracker.backend.controller;
 
 import com.frandm.studytracker.backend.model.Deadline;
 import com.frandm.studytracker.backend.service.DeadlineService;
+import com.frandm.studytracker.backend.util.DateTimeUtils;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +14,6 @@ import java.util.Map;
 public class DeadlineController {
 
     private final DeadlineService deadlineService;
-    private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public DeadlineController(DeadlineService deadlineService) {
         this.deadlineService = deadlineService;
@@ -29,8 +28,8 @@ public class DeadlineController {
             return deadlineService.getAll();
         }
 
-        LocalDateTime startDt = start.contains("T") ? LocalDateTime.parse(start) : LocalDateTime.parse(start, fmt);
-        LocalDateTime endDt = end.contains("T") ? LocalDateTime.parse(end) : LocalDateTime.parse(end, fmt);
+        LocalDateTime startDt = DateTimeUtils.parseFlexibleTimestamp(start);
+        LocalDateTime endDt = DateTimeUtils.parseFlexibleTimestamp(end);
 
         return deadlineService.getByDateRange(startDt, endDt);
     }
@@ -49,7 +48,7 @@ public class DeadlineController {
                 (String) body.get("title"),
                 (String) body.get("description"),
                 (String) body.get("urgency"),
-                LocalDateTime.parse((String) body.get("dueDate"), fmt),
+                DateTimeUtils.parseApiTimestamp((String) body.get("dueDate")),
                 (Boolean) body.get("allDay"),
                 (Boolean) body.get("isCompleted")
         );
@@ -65,9 +64,8 @@ public class DeadlineController {
                 (String) body.get("title"),
                 (String) body.get("description"),
                 (String) body.get("urgency"),
-                LocalDateTime.parse((String) body.get("dueDate"), fmt),
-                (Boolean) body.get("allDay"),
-                null
+                DateTimeUtils.parseApiTimestamp((String) body.get("dueDate")),
+                (Boolean) body.get("allDay")
         );
     }
 
