@@ -11,11 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-final class PlannerHelpers {
+public class PlannerHelpers {
 
-    private PlannerHelpers() {}
 
-    static TagSelectionData loadTagData() {
+    public static TagSelectionData loadTagData() {
         Map<String, List<String>> tagMap = new LinkedHashMap<>();
         Map<String, String> tagColors = new LinkedHashMap<>();
 
@@ -38,7 +37,7 @@ final class PlannerHelpers {
         return new TagSelectionData(tagMap, tagColors);
     }
 
-    static void preselectTask(Map<String, List<String>> tagMap, ComboBox<String> tags, ComboBox<String> tasks, String taskName) {
+    public static void preselectTask(Map<String, List<String>> tagMap, ComboBox<String> tags, ComboBox<String> tasks, String taskName) {
         tagMap.entrySet().stream()
                 .filter(entry -> entry.getValue().contains(taskName))
                 .findFirst()
@@ -57,7 +56,7 @@ final class PlannerHelpers {
         }
     }
 
-    static TextField createTimeField(String initial, int max) {
+    public static TextField createTimeField(String initial, int max) {
         TextField field = new TextField(initial);
         field.setPrefWidth(65);
         field.setAlignment(Pos.CENTER);
@@ -78,17 +77,17 @@ final class PlannerHelpers {
         return field;
     }
 
-    static void toggleTimeFields(TextField hourField, TextField minuteField, boolean disabled) {
+    public static void toggleTimeFields(TextField hourField, TextField minuteField, boolean disabled) {
         hourField.setDisable(disabled);
         minuteField.setDisable(disabled);
     }
 
-    static int parseInt(String value) {
+    public static int parseInt(String value) {
         if (value == null || value.isBlank()) {
             return 0;
         }
         return Integer.parseInt(value);
     }
 
-    record TagSelectionData(Map<String, List<String>> tagMap, Map<String, String> tagColors) {}
+    public record TagSelectionData(Map<String, List<String>> tagMap, Map<String, String> tagColors) {}
 }
