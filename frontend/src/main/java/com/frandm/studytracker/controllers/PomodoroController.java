@@ -26,8 +26,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Arc;
-import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import java.time.LocalDate;
@@ -44,9 +42,10 @@ public class PomodoroController {
             confirmTagOverlay;
     @FXML public VBox timerTextContainer, notificationContainer, scheduleListContainer,
             plannerContainer, historyContainer, statsPlaceholder, streakVBox, streakImage,
-            fuzzyResultsContainer, tagsListContainer, activeTaskContainer, pomoSettingsPane,
-            countdownSettingsPane, settingsBox, confirmTagBox, confirmBox, themeButtonsContainer;
-    @FXML public HBox starsContainer, editStarsContainer, buttonsHbox, floatingDock;
+            fuzzyResultsContainer, tagsListContainer, pomoSettingsPane,
+            countdownSettingsPane, settingsBox, confirmTagBox, confirmBox, themeButtonsContainer,
+            mainVbox;
+    @FXML public HBox starsContainer, editStarsContainer, buttonsHbox, floatingDock, activeTaskContainer;
     @FXML public Label timerLabel, stateLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
             alarmVolumeValLabel, widthSliderValLabel, countdownValLabel, circleSizeValLabel,
             streakLabel, timeThisWeekLabel, timeLastMonthLabel, tasksLabel, bestDayLabel, selectedNameLabel,
@@ -61,8 +60,6 @@ public class PomodoroController {
     @FXML public Slider workSlider, shortSlider, longSlider, intervalSlider, alarmVolumeSlider,
             widthSlider, countdownSlider, circleSizeSlider, notificationVolumeSlider, masterVolumeSlider,
             backgroundMusicVolumeSlider;
-    @FXML public Circle circleMain;
-    @FXML public Arc progressArc;
     @FXML public AreaChart<String, Number> weeklyLineChart;
     @FXML public CategoryAxis weeksXAxis;
     @FXML public PieChart tagPieChart;
@@ -73,6 +70,9 @@ public class PomodoroController {
     private final PomodoroEngine engine = new PomodoroEngine();
     private final SetupManager setupManager = new SetupManager(this);
     private final UIManager uiManager = new UIManager();
+    public Label ModeSubnameLabel;
+    public Label ModeNameLabel;
+    public FontIcon timerIcon;
 
 
     private StatsDashboard statsDashboard;
@@ -80,7 +80,7 @@ public class PomodoroController {
     private LogsView logsView;
     private FloatingDockView floatingDockView;
 
-    private double SIZE_FACTOR = 0.25;
+    private double SIZE_FACTOR = 0.05;
     private int currentRating = 0;
     private LocalDateTime startDate;
 
@@ -142,6 +142,7 @@ public class PomodoroController {
                 tasksLabel, timeLastMonthLabel, weeklyLineChart,
                 tagPieChart, statsPlaceholder
         );
+        statsDashboard.refresh();
     }
 
     private void setupInitialUIState() {
@@ -149,12 +150,12 @@ public class PomodoroController {
         summaryPane.setManaged(false);
         setupStars();
         refreshSideMenu();
-        updateActiveTaskDisplay("No tag selected", null);
+        updateActiveTaskDisplay("add tag", null);
 
-        stackpaneCircle.widthProperty().addListener((_, _, _) -> resizeCircle());
-        stackpaneCircle.heightProperty().addListener((_, _, _) -> resizeCircle());
-        SIZE_FACTOR = engine.getUiSize() * 0.005;
-        resizeCircle();
+        stackpaneCircle.widthProperty().addListener((_, _, _) -> resizeUI());
+        stackpaneCircle.heightProperty().addListener((_, _, _) -> resizeUI());
+        SIZE_FACTOR = engine.getUiSize() * 0.05;
+        resizeUI();
     }
 
     private void setupDynamicDock() {
@@ -178,7 +179,7 @@ public class PomodoroController {
         switch (section) {
             case TIMER -> {
                 if (activePanel == mainContainer) {
-                    floatingDockView.setSelectedSection(FloatingDockView.Section.TIMER, direction);
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.TIMER);
                     return;
                 }
                 refreshSideMenu();
@@ -186,7 +187,7 @@ public class PomodoroController {
             }
             case PLANNER -> {
                 if (activePanel == plannerContainer) {
-                    floatingDockView.setSelectedSection(FloatingDockView.Section.PLANNER, direction);
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.PLANNER);
                     return;
                 }
                 //plannerController.refresh();
@@ -194,18 +195,18 @@ public class PomodoroController {
             }
             case STATS -> {
                 if (activePanel == statsContainer) {
-                    floatingDockView.setSelectedSection(FloatingDockView.Section.STATS, direction);
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.STATS);
                     return;
                 }
-                statsDashboard.refresh();
+                //statsDashboard.refresh();
                 uiManager.switchPanels(activePanel, statsContainer, direction);
             }
             case HISTORY -> {
                 if (activePanel == historyContainer) {
-                    floatingDockView.setSelectedSection(FloatingDockView.Section.HISTORY, direction);
+                    floatingDockView.setSelectedSection(FloatingDockView.Section.HISTORY);
                     return;
                 }
-                logsView.resetAndReload();
+                //logsView.resetAndReload();
                 uiManager.switchPanels(activePanel, historyContainer, direction);
             }
         }
@@ -231,8 +232,8 @@ public class PomodoroController {
         setupSlider(countdownSlider, countdownValLabel, engine.getCountdownMins(), engine::setCountdownMins, " min");
         setupSlider(circleSizeSlider, circleSizeValLabel, engine.getUiSize(), (newVal) -> {
             engine.setUiSize(newVal);
-            SIZE_FACTOR = newVal * 0.005;
-            resizeCircle();
+            SIZE_FACTOR = newVal * 0.05;
+            resizeUI();
         }, " %");
         SoundManager.setEngine(engine);
 
@@ -292,7 +293,6 @@ public class PomodoroController {
     private void setupEngineCallbacks() {
         engine.setOnTick(() -> Platform.runLater(() -> {
             timerLabel.setText(engine.getFormattedTime());
-            updateProgressCircle();
         }));
 
         engine.setOnStateChange(() -> Platform.runLater(() -> {
@@ -311,31 +311,25 @@ public class PomodoroController {
 
 
 
-    private void resizeCircle() {
-        double width = stackpaneCircle.getWidth();
-        double height = stackpaneCircle.getHeight();
+    private void resizeUI() {
+        double width = mainVbox.getWidth();
+        double height = mainVbox.getHeight();
         if (width <= 0 || height <= 0) return;
 
         double size = Math.min(width, height);
-        double radius = size * SIZE_FACTOR;//controla el tamaño del circulo(y del texto)
+        double scaleFactor = size * SIZE_FACTOR;
 
-        if (radius > 50) {
-            circleMain.setRadius(radius);
+        //mainVbox.setScaleX(scaleFactor);
+        //mainVbox.setScaleY(scaleFactor);
 
-            progressArc.setRadiusX(radius);
-            progressArc.setRadiusY(radius);
+        double scaleMain = scaleFactor / 500.0;
+        double scaleButtons = scaleMain / (scaleFactor / 400.0);
+        mainVbox.setScaleX(scaleMain);
+        mainVbox.setScaleY(scaleMain);
+        buttonsHbox.setScaleX(scaleButtons);
+        buttonsHbox.setScaleY(scaleButtons);
 
-            progressArc.setCenterX(width/2);//NO TOCAR
-            progressArc.setCenterY(radius);
 
-            double scaleFactor = radius / 200.0;//controla el tamaño del texto
-            double scaleButtons = radius / 300.0;
-            timerTextContainer.setScaleX(scaleFactor);
-            timerTextContainer.setScaleY(scaleFactor);
-
-            buttonsHbox.setScaleX(scaleButtons);
-            buttonsHbox.setScaleY(scaleButtons);
-        }
     }
 
     //region data
@@ -446,6 +440,8 @@ public class PomodoroController {
                     ApiClient.formatApiTimestamp(LocalDateTime.now()),
                     currentRating
             );
+            statsDashboard.refresh();
+            logsView.resetAndReload();
         } catch (Exception e) {
             System.err.println("Error saving session: " + e.getMessage());
             NotificationManager.show("Error", "Session could not be saved", NotificationManager.NotificationType.ERROR);
@@ -505,6 +501,7 @@ public class PomodoroController {
 
             tagNameInput.clear();
             refreshDatabaseData();
+            logsView.resetAndReload();
 
             setupManager.renderTagsList(tagsListContainer, tagColors, () ->
                     setupManager.updateFuzzyResults(fuzzySearchInput.getText(), fuzzyResultsContainer, tagsWithTasksMap, tagColors, this::onTaskSelected)
@@ -546,69 +543,61 @@ public class PomodoroController {
         finishBtn.setManaged(!isMenu);
 
         switch (mode) {
-            case POMODORO -> updatePomodoroUI(logical);
-            case TIMER -> updateTimerUI(logical);
-            case COUNTDOWN -> updateCountdownUI(logical);
+            case POMODORO -> {
+                timerIcon.setIconLiteral("mdi2t-timer-sand");
+                updatePomodoroUI(logical);
+            }
+            case TIMER -> {
+                timerIcon.setIconLiteral("mdi2t-timer-outline");
+                updateTimerUI(logical);
+            }
+            case COUNTDOWN -> {
+                timerIcon.setIconLiteral("mdi2a-alarm");
+                updateCountdownUI(logical);
+            }
         }
 
         refreshDynamicDock();
     }
 
     private void updatePomodoroUI(PomodoroEngine.State logical) {
+        String text = (logical == PomodoroEngine.State.MENU) ? "Pomodoro" : "Pomodoro - #" + (engine.getSessionCounter() + 1);
         switch (logical) {
-            case WORK, MENU -> {
-                uiManager.animateCircleColor(circleMain, "-color-work");
-                String text = (logical == PomodoroEngine.State.MENU) ? "Pomodoro" : "Pomodoro - #" + (engine.getSessionCounter() + 1);
-                applyStyle(text, "-color-work-secundary", true);
+            case MENU -> {
+                applyStyle(text, "Ready to play");
+            }
+            case WORK -> {
+                applyStyle(text, "Working");
             }
             case SHORT_BREAK -> {
-                uiManager.animateCircleColor(circleMain, "-color-break");
-                applyStyle("Short Break", "-color-break-secundary", true);
+                applyStyle("Pomodoro","Short Break");
             }
             case LONG_BREAK -> {
-                uiManager.animateCircleColor(circleMain, "-color-long-break");
-                applyStyle("Long Break", "-color-long-break-secundary", true);
+                applyStyle("Pomodoro","Long Break");
             }
         }
     }
 
     private void updateTimerUI(PomodoroEngine.State logical) {
-        uiManager.animateCircleColor(circleMain, "-color-work");
         switch (logical) {
             case MENU -> {
-                applyStyle("Timer", "-color-work-secundary", true);
+                applyStyle("Timer", "Ready to play");
             }
             case WORK -> {
-                applyStyle("Timer", "-color-work-secundary", false);
+                applyStyle("Timer", "Working");
             }
         }
     }
 
     private void updateCountdownUI(PomodoroEngine.State logical) {
-        uiManager.animateCircleColor(circleMain, "-color-work");
         switch (logical) {
             case MENU -> {
-                applyStyle("Countdown", "-color-work-secundary", true);
+                applyStyle("Countdown", "Ready to play");
             }
             case WORK -> {
-                applyStyle("Countdown", "-color-work-secundary", false);
+                applyStyle("Countdown", "Working");
             }
         }
-    }
-
-    private void updateProgressCircle() {
-        double remaining = engine.getSecondsRemaining();
-        double total = engine.getTotalSecondsActive();
-        double angle;
-        if (engine.getCurrentMode() == PomodoroEngine.Mode.TIMER) {
-            angle = 0;
-        } else {
-            double elapsed = total - remaining;
-            double ratio = (total > 0) ? (elapsed/total) : 0;
-            angle = ratio * -360;
-        }
-
-        Platform.runLater(() -> progressArc.setLength(angle));
     }
 
     @FXML
@@ -903,8 +892,8 @@ public class PomodoroController {
     public void refreshSideMenu() {
         if (scheduleListContainer != null) {
             scheduleListContainer.getChildren().clear();
-            scheduleListContainer.getChildren().add(createTodaySchedulesList());
             scheduleListContainer.getChildren().add(createUpcomingDeadlinesList());
+            scheduleListContainer.getChildren().add(createTodaySchedulesList());
         }
         refreshDynamicDock();
     }
@@ -924,9 +913,8 @@ public class PomodoroController {
         setupManager.resetSelection();
         setupManager.setFilterTag(null);
         unselectTaskLabel();
-        updateActiveTaskDisplay("No tag selected", null);
+        updateActiveTaskDisplay("add tag", null);
         updateUIFromEngine();
-        updateProgressCircle();
     }
 
     private void setupStars() {
@@ -1037,13 +1025,9 @@ public class PomodoroController {
         }
     }
 
-    private void applyStyle(String labelText, String colorVar, boolean opacity) {
-        stateLabel.setText(labelText);
-        stateLabel.setStyle("-fx-text-fill: " + colorVar + ";");
-        stateLabel.setVisible(opacity);
-        stateLabel.setManaged(opacity);
-        progressArc.setStyle("-fx-stroke: " + colorVar + ";");
-        timerLabel.setStyle("-fx-text-fill: " + colorVar + ";");
+    private void applyStyle(String labelName, String labelSubname) {
+        ModeNameLabel.setText(labelName);
+        ModeSubnameLabel.setText(labelSubname);
     }
 
     public void openEditSession(Session s) {

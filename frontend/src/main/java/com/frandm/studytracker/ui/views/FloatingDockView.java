@@ -27,6 +27,9 @@ import java.util.function.Supplier;
 
 public class FloatingDockView {
 
+    public static final int TRANSITION_TIME = 200;
+    public static final int DOCK_SECTION_WIDTH = 120;
+
     public enum Section {
         TIMER,
         PLANNER,
@@ -94,7 +97,7 @@ public class FloatingDockView {
 
         sectionButtons.get(Section.TIMER).setSelected(true);
         currentSection = Section.TIMER;
-        refreshState(0);
+        refreshState();
         playIntro();
     }
 
@@ -111,13 +114,15 @@ public class FloatingDockView {
         VBox textBox = new VBox(titleLabel, subtitleLabel);
         textBox.getStyleClass().add("dock-copy");
         textBox.setAlignment(Pos.CENTER_LEFT);
-        textBox.setManaged(false);
-        textBox.setVisible(false);
+        textBox.setManaged(true);
+        textBox.setVisible(true);
+        textBox.setOpacity(0.0);
         textBox.setMinWidth(0);
         textBox.setPrefWidth(0);
         textBox.setMaxWidth(0);
+        textBox.setPadding(new javafx.geometry.Insets(0, 0, 0, 0));
 
-        HBox content = new HBox(12, icon, textBox);
+        HBox content = new HBox(0, icon, textBox);
         content.setAlignment(Pos.CENTER_LEFT);
 
         ToggleButton button = new ToggleButton();
@@ -130,7 +135,6 @@ public class FloatingDockView {
         button.setGraphic(content);
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.getStyleClass().add("dock-button");
-        button.setTooltip(new Tooltip(title));
         button.setOnAction(_ -> handleSectionClick(section));
 
         sectionButtons.put(section, button);
@@ -148,14 +152,10 @@ public class FloatingDockView {
         currentSection = section;
 
         onNavigate.accept(section, lastDirection);
-        refreshState(lastDirection);
+        refreshState();
     }
 
     public void refreshState() {
-        refreshState(lastDirection);
-    }
-
-    public void refreshState(int direction) {
         PomodoroEngine engine = engineSupplier.get();
 
         ToggleButton oldButton = (previousSection != null) ? sectionButtons.get(previousSection) : null;
@@ -169,43 +169,36 @@ public class FloatingDockView {
         }
 
         if (oldButton != null && oldButton != newButton) {
-            animateAccordion(oldButton, oldText, false, () -> {
-                animateAccordion(newButton, newText, true, null);
-                previousSection = null;
-            });
-        } else {
-            animateAccordion(newButton, newText, true, null);
+            animateAccordion(oldButton, oldText, false);
         }
+        animateAccordion(newButton, newText, true);
     }
 
-    private void animateAccordion(ToggleButton button, VBox textBox, boolean open, Runnable onFinished) {
+    private void animateAccordion(ToggleButton button, VBox textBox, boolean open) {
         if (open) {
             button.getStyleClass().add("active");
             button.setSelected(true);
-            textBox.setVisible(true);
-            textBox.setManaged(true);
         } else {
             button.getStyleClass().remove("active");
         }
 
-        double targetWidth = open ? 120 : 0;
+        double targetWidth = open ? DOCK_SECTION_WIDTH : 0;
         double targetOpacity = open ? 1 : 0;
 
         Timeline timeline = new Timeline();
         KeyFrame kf = new KeyFrame(
-                Duration.millis(open ? 250 : 200),
+                Duration.millis(TRANSITION_TIME),
                 new KeyValue(textBox.maxWidthProperty(), targetWidth, Interpolator.EASE_BOTH),
                 new KeyValue(textBox.prefWidthProperty(), targetWidth, Interpolator.EASE_BOTH),
                 new KeyValue(textBox.opacityProperty(), targetOpacity, Interpolator.EASE_BOTH)
         );
+
         timeline.getKeyFrames().add(kf);
 
-        timeline.setOnFinished(_ -> {
-            if (!open) {
-                textBox.setVisible(false);
-                textBox.setManaged(false);
-            }
-            if (onFinished != null) onFinished.run();
+        timeline.currentTimeProperty().addListener((_, _, _) -> {
+            double progress = timeline.getCurrentTime().toMillis() / TRANSITION_TIME;
+            if (!open) progress = 1 - progress;
+            HBox.setMargin(textBox, new javafx.geometry.Insets(0, 0, 0, 12 * progress));
         });
 
         timeline.play();
@@ -218,13 +211,13 @@ public class FloatingDockView {
         }
     }
 
-    public void setSelectedSection(Section section, int direction) {
+    public void setSelectedSection(Section section) {
         ToggleButton button = sectionButtons.get(section);
         if (button != null) {
             previousSection = currentSection;
             currentSection = section;
             button.setSelected(true);
-            refreshState(direction);
+            refreshState();
         }
     }
 

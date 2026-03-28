@@ -6,16 +6,18 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.CacheHint;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 public class UIManager {
 
-    private static final Duration SLIDE_DURATION = Duration.millis(300);
-    private static final Duration FADE_DURATION = Duration.millis(250);
+    private static final Duration SLIDE_DURATION = Duration.millis(100);
+    private static final Duration FADE_DURATION = Duration.millis(100);
 
     public void switchPanels(Region toHide, Region toShow, int direction) {
         if (toHide == null || toShow == null || toHide == toShow) return;
@@ -73,39 +75,48 @@ public class UIManager {
         });
     }
 
-    public void animateCircleColor(Circle circle, String cssVar) {
-        Paint currentFill = circle.getFill();
-        Color startColor = (currentFill instanceof Color) ? (Color) currentFill : Color.TRANSPARENT;
-        circle.setStyle("-fx-fill: " + cssVar + ";");
-        circle.applyCss();
-        Color targetColor = (circle.getFill() instanceof Color) ? (Color) circle.getFill() : startColor;
-        SimpleObjectProperty<Paint> fillProp = new SimpleObjectProperty<>(startColor);
-        fillProp.addListener((o, ov, nv) -> circle.setFill(nv));
-        new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(fillProp, startColor)), new KeyFrame(Duration.millis(200), new KeyValue(fillProp, targetColor))).play();
-    }
-
-    public void updateActiveBadge(VBox container, String tag, String task, String color, PomodoroController controller) {
+    public void updateActiveBadge(HBox container, String tag, String task, String color, PomodoroController controller) {
         container.getChildren().clear();
-        Button tagBtn = new Button(tag);
-        tagBtn.setOnAction(e -> controller.toggleSetup());
-        tagBtn.setStyle(
-                "-fx-background-color: transparent; " +
-                        "-fx-border-color: " + color + "; " +
-                        "-fx-border-radius: 12; " +
-                        "-fx-padding: 2 10; " +
-                        "-fx-text-fill: " + color + "; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-font-size: 18px;" +
-                        "-fx-cursor: hand;"
-        );
 
-        if (task != null) {
-            Button taskBtn = new Button(task);
-            taskBtn.setOnAction(e -> controller.toggleSetup());
-            taskBtn.getStyleClass().add("task-badge");
-            container.getChildren().addAll(tagBtn, taskBtn);
+        HBox tagBox = new HBox(5);
+        tagBox.getStyleClass().add("selected-tag-box");
+
+        Label tagLabel = new Label(tag);
+        tagLabel.getStyleClass().add("selected-tag-label");
+
+        if(task != null) {
+            Circle colorCircle = new Circle(4);
+            colorCircle.setStyle("-fx-fill: " + color + ";");
+            colorCircle.getStyleClass().add("selected-tag-circle-color");
+            tagBox.getChildren().addAll(colorCircle, tagLabel);
+
+            HBox taskBox = new HBox(5);
+            taskBox.getStyleClass().add("selected-tag-box");
+
+            Label taskLabel = new Label(task);
+            taskLabel.getStyleClass().add("selected-tag-label");
+
+            taskBox.getChildren().addAll(taskLabel);
+
+            tagBox.setOnMouseClicked(_ -> controller.toggleSetup());
+            taskBox.setOnMouseClicked(_ -> controller.toggleSetup());
+
+            container.getChildren().addAll(taskBox, tagBox);
         } else {
-            container.getChildren().add(tagBtn);
+            FontIcon taskIcon = new FontIcon("mdi2t-tag-outline");
+            taskIcon.getStyleClass().add("selected-tag-icon");
+            tagBox.getChildren().addAll(taskIcon, tagLabel);
+
+            tagBox.setOnMouseClicked(_ -> controller.toggleSetup());
+
+            container.getChildren().addAll(tagBox);
         }
+
+
+
+
+
+
+
     }
 }
