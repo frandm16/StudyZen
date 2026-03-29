@@ -29,7 +29,12 @@ public class ApiClient {
                 .uri(URI.create(BASE_URL + path))
                 .GET()
                 .build();
-        return http.send(req, HttpResponse.BodyHandlers.ofString()).body();
+        HttpResponse<String> response = http.send(req, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() >= 400) {
+            throw new RuntimeException("GET " + path + " failed: HTTP " + response.statusCode() + " - " + response.body());
+        }
+        return response.body();
     }
 
     private static String post(String path, Object body) throws Exception {
@@ -433,6 +438,48 @@ public class ApiClient {
 
     private static String encodeQueryValue(String value) {
         return value.replace(" ", "%20");
+    }
+
+    // --- Notes ---
+
+    public static String getNoteByDate(LocalDate date) throws Exception {
+        try {
+            String json = get("/notes?date=" + date);
+            Map<String, Object> result = mapper.readValue(json, new TypeReference<>() {});
+            return (result != null && result.get("content") != null) ? result.get("content").toString() : "";
+        } catch (Exception e) {
+            System.err.println("Error fetching note: " + e.getMessage());
+            return "";
+        }
+    }
+
+    public static void saveNote(LocalDate date, String content) throws Exception {
+        put("/notes?date=" + date, Map.of("content", content));
+    }
+
+
+    // --- Todos ---
+
+    public static List<Map<String, Object>> getTodosByDate(LocalDate date) throws Exception {
+        return mapper.readValue(
+                get("/todos?date=" + date),
+                new TypeReference<>() {}
+        );
+    }
+
+    public static Map<String, Object> createTodo(LocalDate date, String text) throws Exception {
+        return mapper.readValue(
+                post("/todos", Map.of("date", date.toString(), "text", text)),
+                new TypeReference<>() {}
+        );
+    }
+
+    public static void updateTodoCompleted(long id, boolean completed) throws Exception {
+        put("/todos/" + id, Map.of("completed", completed));
+    }
+
+    public static void deleteTodo(long id) throws Exception {
+        delete("/todos/" + id);
     }
 
 }

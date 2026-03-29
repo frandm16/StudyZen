@@ -41,23 +41,23 @@ public class DailyTab extends VBox {
     private final VBox dayEventsContainer = new VBox(10);
     private final PomodoroController pomodoroController;
     private final Label lblDeadlinesHeader = new Label("Deadlines");
+    private final NotesAndTodosPanel notesPanel;       // ← nuevo panel lateral
     private LocalDate currentDate = LocalDate.now();
-    private Runnable refreshAction = () -> {
-    };
+    private Runnable refreshAction = () -> {};
     private Popup activePopup;
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     public DailyTab(PomodoroController pomodoroController) {
         this.pomodoroController = pomodoroController;
+        this.notesPanel = new NotesAndTodosPanel(pomodoroController);
         this.getStyleClass().add("daily-tab");
         VBox.setVgrow(this, Priority.ALWAYS);
         initLayout();
     }
 
     public void setRefreshAction(Runnable refreshAction) {
-        this.refreshAction = refreshAction != null ? refreshAction : () -> {
-        };
+        this.refreshAction = refreshAction != null ? refreshAction : () -> {};
     }
 
     public void openCreateScheduledSession(double screenX, double screenY) {
@@ -71,7 +71,6 @@ public class DailyTab extends VBox {
     private void initLayout() {
         deadlinesContainer.getStyleClass().add("daily-container");
         dayEventsContainer.getStyleClass().add("daily-container");
-
         lblDeadlinesHeader.getStyleClass().add("section-header");
 
         VBox content = new VBox(20);
@@ -87,29 +86,40 @@ public class DailyTab extends VBox {
         scroll.getStyleClass().addAll(Styles.FLAT, "planner-scroll-pane");
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
-        getChildren().add(scroll);
+        // Panel lateral derecho: notas + todos
+        notesPanel.getStyleClass().add("daily-notes-sidebar");
+        notesPanel.setPrefWidth(270);
+        notesPanel.setMinWidth(220);
+        notesPanel.setMaxWidth(310);
+
+        HBox mainRow = new HBox(scroll, notesPanel);
+        HBox.setHgrow(scroll, Priority.ALWAYS);
+        VBox.setVgrow(mainRow, Priority.ALWAYS);
+
+        getChildren().add(mainRow);
     }
 
     public void updateHeaderDate(LocalDate date) {
         this.currentDate = date;
+        notesPanel.loadForDate(date);   // ← carga notas y todos del día seleccionado
     }
 
     public void refreshData(List<Map<String, Object>> scheduled, List<Map<String, Object>> deadlines) {
         List<Map<String, Object>> sortedDeadlines = deadlines == null ? List.of() : deadlines.stream()
-                .sorted(Comparator
-                        .comparing((Map<String, Object> item) -> !Boolean.TRUE.equals(item.get("allDay")))
-                        .thenComparing(item -> {
-                            LocalDateTime due = extractDeadlineDate(item);
-                            return due != null ? due : LocalDateTime.MAX;
-                        }))
-                .collect(Collectors.toList());
+            .sorted(Comparator
+                    .comparing((Map<String, Object> item) -> !Boolean.TRUE.equals(item.get("allDay")))
+                    .thenComparing(item -> {
+                        LocalDateTime due = extractDeadlineDate(item);
+                        return due != null ? due : LocalDateTime.MAX;
+                    }))
+            .collect(Collectors.toList());
 
         List<Map<String, Object>> sortedScheduled = scheduled == null ? List.of() : scheduled.stream()
-                .sorted(Comparator.comparing(item -> {
-                    LocalDateTime start = extractScheduledStart(item);
-                    return start != null ? start : LocalDateTime.MAX;
-                }))
-                .collect(Collectors.toList());
+            .sorted(Comparator.comparing(item -> {
+                LocalDateTime start = extractScheduledStart(item);
+                return start != null ? start : LocalDateTime.MAX;
+            }))
+            .collect(Collectors.toList());
 
         fill(deadlinesContainer, sortedDeadlines, "No deadlines for this day.", this::createDeadlineRow);
         fill(dayEventsContainer, sortedScheduled, "No events scheduled.", this::createEventRow);
@@ -133,7 +143,6 @@ public class DailyTab extends VBox {
             container.getChildren().add(empty);
             return;
         }
-
         for (Map<String, Object> item : data) {
             container.getChildren().add(mapper.apply(item));
         }
