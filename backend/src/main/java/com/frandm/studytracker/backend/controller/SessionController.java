@@ -22,14 +22,14 @@ public class SessionController {
     }
 
     @GetMapping
-    public Page<Session> list(
+    public List<Session> list(
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) String task,
             @RequestParam(required = false) String start,
             @RequestParam(required = false) String end,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
-        return sessionService.getFiltered(tag, task, start, end, page, size);
+        return sessionService.getFiltered(tag, task, start, end, page, size).getContent();
     }
 
     @GetMapping("/{id}")
