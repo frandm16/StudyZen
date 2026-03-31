@@ -1,6 +1,7 @@
 package com.frandm.studytracker.ui.views.logs;
 
 import com.frandm.studytracker.client.ApiClient;
+import com.frandm.studytracker.core.Logger;
 import com.frandm.studytracker.models.Session;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -451,18 +452,9 @@ public class CalendarTab extends VBox {
             );
         } catch (Exception e) {
             System.err.println("[CalendarTab] Error loading sessions: " + e.getMessage());
-            e.printStackTrace();
+            Logger.error(e);
             weekSessions = new ArrayList<>();
         }
-    }
-
-    public void setCurrentWeekStart(LocalDate date) {
-        this.currentWeekStart = date.with(DayOfWeek.MONDAY);
-    }
-
-    public String getHeaderTitle() {
-        String m = currentWeekStart.getMonth().getDisplayName(TextStyle.FULL, Locale.getDefault());
-        return m.substring(0, 1).toUpperCase() + m.substring(1) + " " + currentWeekStart.getYear();
     }
 
     private LocalDateTime parseDateValue(Object value) {

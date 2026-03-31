@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import com.frandm.studytracker.core.TagEventBus;
+import com.frandm.studytracker.core.Logger;
 
 import java.util.Random;
 
@@ -122,40 +123,15 @@ public class ApiClient {
         return result;
     }
 
-    public static List<Map<String, Object>> getFavoriteTags() throws Exception {
-        return mapper.readValue(get("/tags/favorites"), new TypeReference<>() {});
-    }
 
-    public static Map<String, Object> getTag(long id) throws Exception {
-        return mapper.readValue(get("/tags/" + id), new TypeReference<>() {});
-    }
-
-    public static Map<String, Object> createTag(String name, String color) throws Exception {
+    public static void createTag(String name, String color) throws Exception {
         Map<String, Object> result = mapper.readValue(post("/tags", Map.of("name", name, "color", color)), new TypeReference<>() {});
         invalidateTagsCache();
         Long id = result.get("id") != null ? ((Number) result.get("id")).longValue() : null;
         TagEventBus.getInstance().publish(TagEventBus.Type.CREATED, id, name);
-        return result;
     }
 
-    public static Map<String, Object> updateTag(long id, String name, String color) throws Exception {
-        Map<String, Object> result = mapper.readValue(put("/tags/" + id, Map.of("name", name, "color", color)), new TypeReference<>() {});
-        invalidateTagsCache();
-        TagEventBus.getInstance().publish(TagEventBus.Type.UPDATED, id, name);
-        return result;
-    }
-
-    public static Map<String, Object> patchTag(long id, String name, String color) throws Exception {
-        Map<String, Object> body = new LinkedHashMap<>();
-        if (name != null) body.put("name", name);
-        if (color != null) body.put("color", color);
-        Map<String, Object> result = mapper.readValue(patch("/tags/" + id, body), new TypeReference<>() {});
-        invalidateTagsCache();
-        TagEventBus.getInstance().publish(TagEventBus.Type.UPDATED, id, name);
-        return result;
-    }
-
-    public static Map<String, Object> patchTag(long id, Map<String, Object> body) throws Exception {
+    public static void patchTag(long id, Map<String, Object> body) throws Exception {
         Map<String, Object> result = mapper.readValue(patch("/tags/" + id, body), new TypeReference<>() {});
         invalidateTagsCache();
         String name = body.containsKey("name") ? (String) body.get("name") : null;
@@ -166,7 +142,6 @@ public class ApiClient {
         } else {
             TagEventBus.getInstance().publish(TagEventBus.Type.UPDATED, id, name);
         }
-        return result;
     }
 
     public static void deleteTag(long id) throws Exception {
@@ -395,7 +370,7 @@ public class ApiClient {
             }
             System.out.println("[generateRandomPomodoros] Done ✓ 365/365 días (100%)");
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(e);
         }
     }
 
@@ -446,7 +421,7 @@ public class ApiClient {
             }
             System.out.println("[generateRandomSchedule] Done ✓");
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(e);
         }
     }
 
@@ -488,7 +463,7 @@ public class ApiClient {
                 );
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(e);
         }
     }
 
@@ -542,7 +517,7 @@ public class ApiClient {
             }
             System.out.println("[generateRandomNotes] Done ✓");
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(e);
         }
     }
 
@@ -601,7 +576,7 @@ public class ApiClient {
             }
             System.out.println("[generateRandomTodos] Done ✓");
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error(e);
         }
     }
 

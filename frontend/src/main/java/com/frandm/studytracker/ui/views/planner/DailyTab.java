@@ -3,6 +3,7 @@ package com.frandm.studytracker.ui.views.planner;
 import atlantafx.base.theme.Styles;
 import com.frandm.studytracker.client.ApiClient;
 import com.frandm.studytracker.core.NotificationManager;
+import com.frandm.studytracker.core.Logger;
 import com.frandm.studytracker.controllers.PomodoroController;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -278,7 +279,7 @@ public class DailyTab extends VBox {
                         closeOverlay();
                     });
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.error(e);
                 }
             }, "todo-save-thread").start();
         });
@@ -296,7 +297,7 @@ public class DailyTab extends VBox {
                 try {
                     ApiClient.deleteTodo(id);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Logger.error(e);
                 }
             }, "todo-delete-thread").start();
         });
@@ -351,7 +352,7 @@ public class DailyTab extends VBox {
         LocalDate dateToSave = currentDate;
         new Thread(() -> {
             try { ApiClient.saveNote(dateToSave, content); }
-            catch (Exception e) { e.printStackTrace(); }
+            catch (Exception e) { Logger.error(e); }
             finally { savingNote = false; }
         }, "note-save-thread").start();
     }
@@ -376,7 +377,7 @@ public class DailyTab extends VBox {
                     updateTodoHeaderCount();
                     closeOverlay();
                 });
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) { Logger.error(e); }
         }, "todo-create-thread").start();
     }
 
@@ -429,7 +430,7 @@ public class DailyTab extends VBox {
                 try {
                     ApiClient.updateTodoCompleted(id, nextState);
                 } catch (Exception e1) {
-                    e1.printStackTrace();
+                    Logger.error(e1);
                     Platform.runLater(() -> {
                         row.getProperties().put("todoCompleted", previousState);
                         data.put("completed", previousState);
@@ -508,7 +509,7 @@ public class DailyTab extends VBox {
                     ensureTodoPlaceholder();
                     updateTodoHeaderCount();
                 });
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) { Logger.error(e); }
         }, "daily-data-loader").start();
     }
 
@@ -649,7 +650,7 @@ public class DailyTab extends VBox {
                     ApiClient.patchDeadline(((Number) data.get("id")).longValue(), null, null, null, null, false, nextState);
                     Platform.runLater(this::refreshPlannerAndMenu);
                 } catch (Exception error) {
-                    error.printStackTrace();
+                    Logger.error(error);
                     completedState[0] = previousState;
                     data.put("isCompleted", previousState);
                     Platform.runLater(() -> applyDeadlineCompletedState(row, completedIcon, info, badges, previousState));
@@ -798,7 +799,7 @@ public class DailyTab extends VBox {
                     );
                 }
             } catch (Exception error) {
-                error.printStackTrace();
+                Logger.error(error);
                 return;
             }
             popup.hide();
@@ -823,7 +824,7 @@ public class DailyTab extends VBox {
                 try {
                     ApiClient.deleteScheduledSession(((Number) data.get("id")).longValue());
                 } catch (Exception error) {
-                    error.printStackTrace();
+                    Logger.error(error);
                     return;
                 }
                 popup.hide();
@@ -922,7 +923,7 @@ public class DailyTab extends VBox {
                 popup.hide();
                 refreshPlannerAndMenu();
             } catch (Exception error) {
-                error.printStackTrace();
+                Logger.error(error);
             }
         });
 
@@ -946,7 +947,7 @@ public class DailyTab extends VBox {
                 try {
                     ApiClient.deleteDeadline(((Number) data.get("id")).longValue());
                 } catch (Exception error) {
-                    error.printStackTrace();
+                    Logger.error(error);
                     return;
                 }
                 popup.hide();

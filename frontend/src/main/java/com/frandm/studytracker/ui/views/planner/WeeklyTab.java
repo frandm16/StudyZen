@@ -2,6 +2,7 @@ package com.frandm.studytracker.ui.views.planner;
 
 import com.frandm.studytracker.client.ApiClient;
 import com.frandm.studytracker.core.TagEventBus;
+import com.frandm.studytracker.core.Logger;
 import com.frandm.studytracker.controllers.PomodoroController;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -697,7 +698,7 @@ public class WeeklyTab extends VBox {
                     );
                 }
             } catch (Exception error) {
-                error.printStackTrace();
+                Logger.error(error);
                 return;
             }
 
@@ -725,7 +726,7 @@ public class WeeklyTab extends VBox {
                 try {
                     ApiClient.deleteScheduledSession((int) s.get("id"));
                 } catch (Exception error) {
-                    error.printStackTrace();
+                    Logger.error(error);
                     return;
                 }
 
@@ -841,7 +842,7 @@ public class WeeklyTab extends VBox {
                 popup.hide();
                 refreshPlannerAndMenu();
             } catch (Exception error) {
-                error.printStackTrace();
+                Logger.error(error);
             }
         });
 
@@ -865,7 +866,7 @@ public class WeeklyTab extends VBox {
                 try {
                     ApiClient.deleteDeadline(((Number) deadline.get("id")).longValue());
                 } catch (Exception error) {
-                    error.printStackTrace();
+                    Logger.error(error);
                     return;
                 }
 
