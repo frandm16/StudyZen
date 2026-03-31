@@ -21,7 +21,6 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,10 +92,10 @@ public class FloatingDockView {
         textGroups.clear();
         subtitleLabels.clear();
 
-        createSectionButton(Section.TIMER, "Focus", "", "mdi2t-timer-outline");
-        createSectionButton(Section.PLANNER, "Planner", "", "mdi2c-calendar-check");
-        createSectionButton(Section.STATS, "Stats", "", "mdi2c-chart-bar");
-        createSectionButton(Section.HISTORY, "Logs", "", "mdi2h-history");
+        createSectionButton(Section.TIMER, "Focus", "mdi2t-timer-outline");
+        createSectionButton(Section.PLANNER, "Planner", "mdi2c-calendar-check");
+        createSectionButton(Section.STATS, "Stats", "mdi2c-chart-bar");
+        createSectionButton(Section.HISTORY, "Logs", "mdi2h-history");
 
         Separator separator = new Separator(Orientation.VERTICAL);
         separator.setPrefHeight(24);
@@ -164,14 +163,14 @@ public class FloatingDockView {
         }
     }
 
-    private void createSectionButton(Section section, String title, String subtitle, String iconLiteral) {
+    private void createSectionButton(Section section, String title, String iconLiteral) {
         FontIcon icon = new FontIcon(iconLiteral);
         icon.getStyleClass().add("dock-icon");
 
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("dock-title");
 
-        Label subtitleLabel = new Label(subtitle);
+        Label subtitleLabel = new Label("");
         subtitleLabel.getStyleClass().add("dock-subtitle");
 
         VBox textBox = new VBox(titleLabel, subtitleLabel);
@@ -375,10 +374,6 @@ public class FloatingDockView {
 
     public void setOnTabChanged(Consumer<String> listener) {
         this.onTabChanged = listener;
-    }
-
-    public int getDirection() {
-        return lastDirection;
     }
 
     private int indexOf(Section section) {

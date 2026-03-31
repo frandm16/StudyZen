@@ -15,12 +15,11 @@ import java.util.List;
 public class PlannerView extends VBox {
 
     private final Label lblTitle = new Label();
-    private final StackPane contentArea = new StackPane();
     private final PlannerController plannerController;
     private final DailyTab dailyTab;
     private final WeeklyTab weeklyTab;
 
-    private FloatingDockView tabBar;
+    private final FloatingDockView tabBar;
 
     public PlannerView(PomodoroController controller, PlannerController plannerController, DailyTab daily, WeeklyTab weekly) {
         this.plannerController = plannerController;
@@ -47,6 +46,7 @@ public class PlannerView extends VBox {
 
         HBox header = createNavigationHeader(controller);
 
+        StackPane contentArea = new StackPane();
         VBox.setVgrow(contentArea, Priority.ALWAYS);
         contentArea.getChildren().addAll(dailyTab, weeklyTab);
 
@@ -64,8 +64,8 @@ public class PlannerView extends VBox {
         Button btnPrev = new Button();
         Button btnNext = new Button();
 
-        controller.updateIcon(btnPrev, "calendar-icon", "mdi2c-chevron-left", "Anterior");
-        controller.updateIcon(btnNext, "calendar-icon", "mdi2c-chevron-right", "Siguiente");
+        controller.updateIcon(btnPrev, "calendar-icon", "mdi2c-chevron-left", "Previous");
+        controller.updateIcon(btnNext, "calendar-icon", "mdi2c-chevron-right", "Next");
 
         btnToday.getStyleClass().add("calendar-button-today");
         btnPrev.getStyleClass().add("calendar-button-icon");
@@ -111,7 +111,7 @@ public class PlannerView extends VBox {
             double x = bounds != null ? bounds.getMinX() : 200;
             double y = bounds != null ? bounds.getMaxY() + 8 : 200;
             if (isDaily()) {
-                plannerController.getDailyTab().openCreateScheduledSession(x, y);
+                plannerController.getDailyTab().openCreateScheduledSession();
             } else {
                 plannerController.getWeeklyTab().openCreateScheduledSession(x, y);
             }
@@ -122,7 +122,7 @@ public class PlannerView extends VBox {
             double x = bounds != null ? bounds.getMinX() : 220;
             double y = bounds != null ? bounds.getMaxY() + 8 : 220;
             if (isDaily()) {
-                plannerController.getDailyTab().openCreateDeadline(x, y);
+                plannerController.getDailyTab().openCreateDeadline();
             } else {
                 plannerController.getWeeklyTab().openCreateDeadline(x, y);
             }

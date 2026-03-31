@@ -51,13 +51,13 @@ public class App extends Application {
             finalStage.setScene(new Scene(root));
         }
 
-        finalStage.setOnCloseRequest(event -> {
+        finalStage.setOnCloseRequest(_ -> {
             Platform.exit();
             System.exit(0);
         });
 
         if (controller != null && controller.closeBtn != null) {
-            controller.closeBtn.setOnAction(e -> {
+            controller.closeBtn.setOnAction(_ -> {
                 Platform.exit();
                 System.exit(0);
             });
@@ -77,7 +77,7 @@ public class App extends Application {
         finalStage.setResizable(true);
 
         if (controller != null && controller.titleBar != null) {
-            finalStage.fullScreenProperty().addListener((obs, wasFullScreen, isFullScreen) -> {
+            finalStage.fullScreenProperty().addListener((_, _, isFullScreen) -> {
                 controller.titleBar.setVisible(!isFullScreen);
                 controller.titleBar.setManaged(!isFullScreen);
             });
@@ -116,7 +116,7 @@ public class App extends Application {
         });
     }
 
-    public static void main(String[] args) {
+    public static void main() {
         launch();
     }
 }
