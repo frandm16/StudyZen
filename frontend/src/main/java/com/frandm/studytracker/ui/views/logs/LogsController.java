@@ -51,7 +51,7 @@ public class LogsController {
     public void requestEdit(Session s) {
         this.sessionToEdit = s;
         this.editRating = s.getRating();
-        mainController.openEditSession(s);
+        mainController.openEditSession();
     }
 
     public void populateEditForm(TextField title, TextArea desc, ComboBox<String> tagCombo, ComboBox<String> taskCombo, List<FontIcon> starNodes) {

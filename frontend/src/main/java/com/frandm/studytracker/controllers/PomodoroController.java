@@ -6,7 +6,6 @@ import atlantafx.base.theme.PrimerDark;
 import atlantafx.base.theme.PrimerLight;
 import com.frandm.studytracker.client.ApiClient;
 import com.frandm.studytracker.core.*;
-import com.frandm.studytracker.models.Session;
 import com.frandm.studytracker.ui.util.Animations;
 import com.frandm.studytracker.ui.util.UIManager;
 import com.frandm.studytracker.ui.views.FloatingDockView;
@@ -15,8 +14,8 @@ import com.frandm.studytracker.ui.views.logs.LogsView;
 import com.frandm.studytracker.ui.views.planner.PlannerController;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -24,18 +23,13 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
-import xss.it.nfx.NfxStage;
-
 import java.io.File;
-import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -44,7 +38,6 @@ import java.util.*;
 public class PomodoroController {
 
     public static final String PROJECT_VERSION = "v1.3.0";
-    //region FXML - Componentes de Interfaz
     @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane;
     @FXML public StackPane rootPane, setupBox, editSessionBox, summaryBox, stackpaneCircle,
             confirmOverlay, confirmTagOverlay, plannerOverlayLayer;
@@ -74,6 +67,13 @@ public class PomodoroController {
     @FXML public Slider notifDurationSlider;
     @FXML public Label notifDurationLabel, appVersionLabel;
     @FXML public FontIcon musicToggleIcon;
+
+    @FXML public ComboBox<String> alarmPresetComboBox;
+    @FXML public TextField customAlarmSoundField;
+    @FXML public TextField successSoundField;
+    @FXML public TextField errorSoundField;
+    @FXML public TextField warningSoundField;
+    @FXML public TextField infoSoundField;
     //endregion
 
     private final PomodoroEngine engine = new PomodoroEngine();
@@ -99,7 +99,6 @@ public class PomodoroController {
     private PlannerController plannerController;
     private LogsView logsView;
     private FloatingDockView floatingDockView;
-    private MediaPlayer backgroundVideoPlayer;
 
     private double SIZE_FACTOR = 0.05;
     private int currentRating = 0;
@@ -140,9 +139,7 @@ public class PomodoroController {
     }
 
     private void subscribeToTagEvents() {
-        TagEventBus.getInstance().subscribe(_ -> {
-            refreshTagsAndTasksAsync();
-        });
+        TagEventBus.getInstance().subscribe(_ -> refreshTagsAndTasksAsync());
     }
 
     //region initialize
@@ -260,8 +257,6 @@ public class PomodoroController {
                     floatingDockView.setSelectedSection(FloatingDockView.Section.STATS);
                     return;
                 }
-                if (statsDashboard != null) {
-                }
                 uiManager.switchPanels(activePanel, statsContainer, direction);
             }
             case HISTORY -> {
@@ -309,6 +304,7 @@ public class PomodoroController {
 
         setupSlider(notifDurationSlider, notifDurationLabel, engine.getNotificationDuration(), engine::setNotificationDuration, "s");
         SoundManager.setEngine(engine);
+        loadSoundSettingsToUI();
 
         autoBreakToggle.setSelected(engine.isAutoStartBreaks());
         autoPomoToggle.setSelected(engine.isAutoStartPomo());
@@ -368,9 +364,7 @@ public class PomodoroController {
     }
 
     private void setupEngineCallbacks() {
-        engine.setOnTick(() -> Platform.runLater(() -> {
-            timerLabel.setText(engine.getFormattedTime());
-        }));
+        engine.setOnTick(() -> Platform.runLater(() -> timerLabel.setText(engine.getFormattedTime())));
 
         engine.setOnStateChange(() -> Platform.runLater(() -> {
             updateUIFromEngine();
@@ -378,7 +372,7 @@ public class PomodoroController {
         }));
 
         engine.setOnTimerFinished(() -> Platform.runLater(() -> {
-            SoundManager.play(SoundManager.SoundType.ALARM);
+            SoundManager.playAlarmSound();
             if (engine.getCurrentMode() == PomodoroEngine.Mode.COUNTDOWN) {
                 handleFinish();
             }
@@ -609,12 +603,13 @@ public class PomodoroController {
 
     @FXML
     private void handlePreviewAlarm() {
-        SoundManager.play(SoundManager.SoundType.ALARM);
+        SoundManager.playAlarmSound();
     }
 
     @FXML
     private void handlePreviewNotification() {
-        SoundManager.play(SoundManager.SoundType.NOTIFICATION);
+        // Reproducir sonido de notificación de ejemplo (tipo INFO)
+        SoundManager.playNotificationSound(NotificationManager.NotificationType.INFO);
     }
 
     @FXML
@@ -655,6 +650,20 @@ public class PomodoroController {
 
         engine.setCurrentTheme("primer-dark");
         applyTheme();
+
+        SoundManager.setSelectedAlarmPreset(SoundManager.AlarmSound.BIRDS);
+        SoundManager.setCustomAlarmSound("");
+        SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.SUCCESS, "");
+        SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.ERROR, "");
+        SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.WARNING, "");
+        SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.INFO, "");
+
+        if (alarmPresetComboBox != null) alarmPresetComboBox.getSelectionModel().select(0);
+        if (customAlarmSoundField != null) customAlarmSoundField.clear();
+        if (successSoundField != null) successSoundField.clear();
+        if (errorSoundField != null) errorSoundField.clear();
+        if (warningSoundField != null) warningSoundField.clear();
+        if (infoSoundField != null) infoSoundField.clear();
 
         updateEngineSettings();
         SoundManager.updateMusicVolume();
@@ -712,7 +721,7 @@ public class PomodoroController {
         VBox card = new VBox(18);
         card.getStyleClass().addAll("planner-overlay-card", "background-selector-card");
         card.setMaxWidth(520);
-        card.setOnMouseClicked(event -> event.consume());
+        card.setOnMouseClicked(Event::consume);
 
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
@@ -831,40 +840,24 @@ public class PomodoroController {
     private void updatePomodoroUI(PomodoroEngine.State logical) {
         String text = (logical == PomodoroEngine.State.MENU) ? "Pomodoro" : "Pomodoro - #" + (engine.getSessionCounter() + 1);
         switch (logical) {
-            case MENU -> {
-                applyStyle(text, "Ready to play");
-            }
-            case WORK -> {
-                applyStyle(text, "Working");
-            }
-            case SHORT_BREAK -> {
-                applyStyle("Pomodoro","Short Break");
-            }
-            case LONG_BREAK -> {
-                applyStyle("Pomodoro","Long Break");
-            }
+            case MENU -> applyStyle(text, "Ready to play");
+            case WORK -> applyStyle(text, "Working");
+            case SHORT_BREAK -> applyStyle("Pomodoro","Short Break");
+            case LONG_BREAK -> applyStyle("Pomodoro","Long Break");
         }
     }
 
     private void updateTimerUI(PomodoroEngine.State logical) {
         switch (logical) {
-            case MENU -> {
-                applyStyle("Timer", "Ready to play");
-            }
-            case WORK -> {
-                applyStyle("Timer", "Working");
-            }
+            case MENU -> applyStyle("Timer", "Ready to play");
+            case WORK -> applyStyle("Timer", "Working");
         }
     }
 
     private void updateCountdownUI(PomodoroEngine.State logical) {
         switch (logical) {
-            case MENU -> {
-                applyStyle("Countdown", "Ready to play");
-            }
-            case WORK -> {
-                applyStyle("Countdown", "Working");
-            }
+            case MENU -> applyStyle("Countdown", "Ready to play");
+            case WORK -> applyStyle("Countdown", "Working");
         }
     }
 
@@ -888,9 +881,10 @@ public class PomodoroController {
                 "primer-cappuccino", "primer-sunset", "primer-midnight", "primer-custom"
         );
 
-        switch (engine.getCurrentTheme()) {
-            case "primer-light" -> Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
-            default -> Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
+        if (engine.getCurrentTheme().equals("primer-light")) {
+            Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
+        } else {
+            Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
         }
 
         rootPane.getStyleClass().add(engine.getCurrentTheme());
@@ -1388,7 +1382,7 @@ public class PomodoroController {
         ModeSubnameLabel.setText(labelSubname);
     }
 
-    public void openEditSession(Session s) {
+    public void openEditSession() {
         logsView.getLogsController().populateEditForm(
                 editTitleField, editDescArea, editTagCombo, editTaskCombo, editStarNodes
         );
@@ -1459,6 +1453,163 @@ public class PomodoroController {
     public String getCurrentTheme() { return engine.getCurrentTheme();}
 
     private record BackgroundOption(String label, String source) {}
+
+    //endregion
+
+    //region Sound Settings Handlers
+    @FXML
+    private void handleBrowseAlarmSound() {
+        File file = chooseMp3File("Select Alarm Sound");
+        if (file != null) {
+            customAlarmSoundField.setText(file.getAbsolutePath());
+            engine.setCustomAlarmSoundPath(file.getAbsolutePath());
+            SoundManager.setCustomAlarmSound(file.getAbsolutePath());
+            alarmPresetComboBox.getSelectionModel().clearSelection();
+        }
+    }
+
+    @FXML
+    private void handleResetAlarmSound() {
+        customAlarmSoundField.clear();
+        engine.setCustomAlarmSoundPath("");
+        SoundManager.setCustomAlarmSound("");
+        alarmPresetComboBox.getSelectionModel().select(0);
+    }
+
+    @FXML
+    private void handleBrowseSuccessSound() {
+        File file = chooseMp3File("Select Success Notification Sound");
+        if (file != null) {
+            successSoundField.setText(file.getAbsolutePath());
+            engine.setNotificationSoundSuccess(file.getAbsolutePath());
+            SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.SUCCESS, file.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void handleResetSuccessSound() {
+        successSoundField.clear();
+        engine.setNotificationSoundSuccess("");
+        SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.SUCCESS, "");
+    }
+
+    @FXML
+    private void handleBrowseErrorSound() {
+        File file = chooseMp3File("Select Error Notification Sound");
+        if (file != null) {
+            errorSoundField.setText(file.getAbsolutePath());
+            engine.setNotificationSoundError(file.getAbsolutePath());
+            SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.ERROR, file.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void handleResetErrorSound() {
+        errorSoundField.clear();
+        engine.setNotificationSoundError("");
+        SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.ERROR, "");
+    }
+
+    @FXML
+    private void handleBrowseWarningSound() {
+        File file = chooseMp3File("Select Warning Notification Sound");
+        if (file != null) {
+            warningSoundField.setText(file.getAbsolutePath());
+            engine.setNotificationSoundWarning(file.getAbsolutePath());
+            SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.WARNING, file.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void handleResetWarningSound() {
+        warningSoundField.clear();
+        engine.setNotificationSoundWarning("");
+        SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.WARNING, "");
+    }
+
+    @FXML
+    private void handleBrowseInfoSound() {
+        File file = chooseMp3File("Select Info Notification Sound");
+        if (file != null) {
+            infoSoundField.setText(file.getAbsolutePath());
+            engine.setNotificationSoundInfo(file.getAbsolutePath());
+            SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.INFO, file.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void handleResetInfoSound() {
+        infoSoundField.clear();
+        engine.setNotificationSoundInfo("");
+        SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.INFO, "");
+    }
+
+    private File chooseMp3File(String title) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(title);
+        fileChooser.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter("MP3 Files", "*.mp3")
+        );
+        return fileChooser.showOpenDialog(rootPane.getScene().getWindow());
+    }
+
+    private void setupAlarmPresetComboBox() {
+        if (alarmPresetComboBox == null) return;
+
+        alarmPresetComboBox.getItems().clear();
+        for (SoundManager.AlarmSound alarm : SoundManager.AlarmSound.values()) {
+            alarmPresetComboBox.getItems().add(alarm.getDisplayName());
+        }
+
+        String currentPreset = engine.getSelectedAlarmPreset();
+        for (int i = 0; i < SoundManager.AlarmSound.values().length; i++) {
+            if (SoundManager.AlarmSound.values()[i].name().equals(currentPreset)) {
+                alarmPresetComboBox.getSelectionModel().select(i);
+                break;
+            }
+        }
+
+        alarmPresetComboBox.getSelectionModel().selectedItemProperty().addListener((_, _, newVal) -> {
+            if (newVal != null) {
+                for (SoundManager.AlarmSound alarm : SoundManager.AlarmSound.values()) {
+                    if (alarm.getDisplayName().equals(newVal)) {
+                        engine.setSelectedAlarmPreset(alarm.name());
+                        SoundManager.setSelectedAlarmPreset(alarm);
+                        customAlarmSoundField.clear();
+                        engine.setCustomAlarmSoundPath("");
+                        SoundManager.setCustomAlarmSound("");
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    private void loadSoundSettingsToUI() {
+        if (successSoundField != null && !engine.getNotificationSoundSuccess().isEmpty()) {
+            successSoundField.setText(engine.getNotificationSoundSuccess());
+            SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.SUCCESS, engine.getNotificationSoundSuccess());
+        }
+        if (errorSoundField != null && !engine.getNotificationSoundError().isEmpty()) {
+            errorSoundField.setText(engine.getNotificationSoundError());
+            SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.ERROR, engine.getNotificationSoundError());
+        }
+        if (warningSoundField != null && !engine.getNotificationSoundWarning().isEmpty()) {
+            warningSoundField.setText(engine.getNotificationSoundWarning());
+            SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.WARNING, engine.getNotificationSoundWarning());
+        }
+        if (infoSoundField != null && !engine.getNotificationSoundInfo().isEmpty()) {
+            infoSoundField.setText(engine.getNotificationSoundInfo());
+            SoundManager.setCustomNotificationSound(NotificationManager.NotificationType.INFO, engine.getNotificationSoundInfo());
+        }
+
+        if (customAlarmSoundField != null && !engine.getCustomAlarmSoundPath().isEmpty()) {
+            customAlarmSoundField.setText(engine.getCustomAlarmSoundPath());
+            SoundManager.setCustomAlarmSound(engine.getCustomAlarmSoundPath());
+        }
+
+        setupAlarmPresetComboBox();
+    }
 
     //endregion
 

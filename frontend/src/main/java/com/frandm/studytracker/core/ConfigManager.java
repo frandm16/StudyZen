@@ -45,6 +45,12 @@ public class ConfigManager {
         props.setProperty("notificationDuration", String.valueOf(engine.getNotificationDuration()));
         props.setProperty("enableToastNotifications", String.valueOf(engine.isEnableToastNotifications()));
 
+        props.setProperty("notificationSoundSuccess", engine.getNotificationSoundSuccess());
+        props.setProperty("notificationSoundError", engine.getNotificationSoundError());
+        props.setProperty("notificationSoundWarning", engine.getNotificationSoundWarning());
+        props.setProperty("notificationSoundInfo", engine.getNotificationSoundInfo());
+        props.setProperty("customAlarmSoundPath", engine.getCustomAlarmSoundPath());
+        props.setProperty("selectedAlarmPreset", engine.getSelectedAlarmPreset());
 
         File configFile = getConfigFile();
 
@@ -87,6 +93,15 @@ public class ConfigManager {
                     Boolean.parseBoolean(props.getProperty("enableToastNotifications", String.valueOf(engine.isEnableToastNotifications())))
             );
             engine.setBackgroundVideoSource(props.getProperty("backgroundVideoSource", engine.getBackgroundVideoSource()));
+
+            engine.updateSoundSettings(
+                props.getProperty("notificationSoundSuccess", engine.getNotificationSoundSuccess()),
+                props.getProperty("notificationSoundError", engine.getNotificationSoundError()),
+                props.getProperty("notificationSoundWarning", engine.getNotificationSoundWarning()),
+                props.getProperty("notificationSoundInfo", engine.getNotificationSoundInfo()),
+                props.getProperty("customAlarmSoundPath", engine.getCustomAlarmSoundPath()),
+                props.getProperty("selectedAlarmPreset", engine.getSelectedAlarmPreset())
+            );
         } catch (IOException | NumberFormatException e) {
             System.err.println("Error ConfigManager.load: " + e.getMessage());
         }

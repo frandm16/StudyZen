@@ -112,7 +112,7 @@ public class NotificationManager {
         container.getChildren().addFirst(toastRoot);
         updateContainerTransparency();
 
-        SoundManager.play(SoundManager.SoundType.NOTIFICATION);
+        SoundManager.playNotificationSound(type);
 
 
         slideIn.play();

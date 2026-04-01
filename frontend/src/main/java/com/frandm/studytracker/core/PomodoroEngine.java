@@ -45,6 +45,13 @@ public class PomodoroEngine {
     private int notificationDuration = 4;
     private boolean enableToastNotifications = true;
 
+    private String notificationSoundSuccess = "";
+    private String notificationSoundError = "";
+    private String notificationSoundWarning = "";
+    private String notificationSoundInfo = "";
+    private String customAlarmSoundPath = "";
+    private String selectedAlarmPreset = "BIRDS";
+
     private Runnable onTick;
     private Runnable onStateChange;
     private Runnable onTimerFinished;
@@ -129,6 +136,17 @@ public class PomodoroEngine {
         }
     }
 
+    public void updateSoundSettings(String notificationSoundSuccess, String notificationSoundError,
+                                     String notificationSoundWarning, String notificationSoundInfo,
+                                     String customAlarmSoundPath, String selectedAlarmPreset) {
+        this.notificationSoundSuccess = notificationSoundSuccess;
+        this.notificationSoundError = notificationSoundError;
+        this.notificationSoundWarning = notificationSoundWarning;
+        this.notificationSoundInfo = notificationSoundInfo;
+        this.customAlarmSoundPath = customAlarmSoundPath;
+        this.selectedAlarmPreset = selectedAlarmPreset;
+    }
+
     public void fullReset() {
         this.secondsElapsed = 0;
         this.sessionCounter = 0;
@@ -205,6 +223,13 @@ public class PomodoroEngine {
         this.uiSize = 55;
         this.CountdownMins = 10;
         this.currentTheme = "primer-dark";
+
+        this.notificationSoundSuccess = "";
+        this.notificationSoundError = "";
+        this.notificationSoundWarning = "";
+        this.notificationSoundInfo = "";
+        this.customAlarmSoundPath = "";
+        this.selectedAlarmPreset = "BIRDS";
     }
     //endregion
 
@@ -251,6 +276,13 @@ public class PomodoroEngine {
     public void setBackgroundMusicVolume(int backgroundMusicVolume) {this.backgroundMusicVolume = backgroundMusicVolume;}
     public void setBackgroundVideoSource(String backgroundVideoSource) { this.backgroundVideoSource = backgroundVideoSource; }
     public void setNotificationDuration(int v) { this.notificationDuration = v; }
+
+    public void setNotificationSoundSuccess(String path) { this.notificationSoundSuccess = path; }
+    public void setNotificationSoundError(String path) { this.notificationSoundError = path; }
+    public void setNotificationSoundWarning(String path) { this.notificationSoundWarning = path; }
+    public void setNotificationSoundInfo(String path) { this.notificationSoundInfo = path; }
+    public void setCustomAlarmSoundPath(String path) { this.customAlarmSoundPath = path; }
+    public void setSelectedAlarmPreset(String preset) { this.selectedAlarmPreset = preset; }
     //endregion
 
     //region Getters
@@ -292,5 +324,12 @@ public class PomodoroEngine {
 
     public int getNotificationDuration() { return notificationDuration; }
     public boolean isEnableToastNotifications() { return enableToastNotifications; }
+
+    public String getNotificationSoundSuccess() { return notificationSoundSuccess; }
+    public String getNotificationSoundError() { return notificationSoundError; }
+    public String getNotificationSoundWarning() { return notificationSoundWarning; }
+    public String getNotificationSoundInfo() { return notificationSoundInfo; }
+    public String getCustomAlarmSoundPath() { return customAlarmSoundPath; }
+    public String getSelectedAlarmPreset() { return selectedAlarmPreset; }
     //endregion
 }

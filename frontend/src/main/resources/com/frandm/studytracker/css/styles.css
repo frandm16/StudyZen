@@ -330,6 +330,67 @@
     -fx-text-fill: -color-danger-hover;
 }
 
+.settings-sub-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -text-muted;
+    -fx-min-width: 80;
+}
+
+.settings-browse-btn {
+    -fx-background-color: -color-accent;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-padding: 6 12;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.settings-browse-btn:hover {
+    -fx-background-color: -color-accent-light;
+}
+
+.settings-reset-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 6 12;
+    -fx-border-color: -color-border-subtle;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.settings-reset-btn:hover {
+    -fx-background-color: -color-hover;
+    -fx-text-fill: -text-main;
+}
+
+.settings-titled-pane {
+    -fx-background-color: -bg-panels;
+}
+
+.settings-titled-pane > .title {
+    -fx-background-color: transparent;
+}
+
+.settings-titled-pane > .title > .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.settings-titled-pane > .title > .arrow-button > .arrow {
+    -fx-background-color: -text-muted;
+}
+
+.settings-titled-pane > .title > .text {
+    -fx-fill: -text-muted;
+    -fx-font-size: 12px;
+}
+
+.settings-titled-pane > .content {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
 /* endregion */
 /* region --- dashboard --- */
 .dashboard-scroll {

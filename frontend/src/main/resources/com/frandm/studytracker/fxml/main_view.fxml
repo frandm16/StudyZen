@@ -434,6 +434,24 @@
                                     <Slider fx:id="alarmVolumeSlider" HBox.hgrow="ALWAYS"/>
                                     <Label fx:id="alarmVolumeValLabel" text="100%" styleClass="val-label" minWidth="45"/>
                                 </HBox>
+                                <TitledPane text="Alarm Sound" styleClass="settings-titled-pane" expanded="false">
+                                    <VBox spacing="8">
+                                        <HBox alignment="CENTER_LEFT" spacing="12">
+                                            <Label text="Preset:" styleClass="settings-sub-label"/>
+                                            <ComboBox fx:id="alarmPresetComboBox" HBox.hgrow="ALWAYS"
+                                                      maxWidth="Infinity"/>
+                                        </HBox>
+                                        <HBox alignment="CENTER_LEFT" spacing="12">
+                                            <Label text="Custom:" styleClass="settings-sub-label"/>
+                                            <TextField fx:id="customAlarmSoundField" editable="false"
+                                                       HBox.hgrow="ALWAYS" promptText="Select MP3 file..."/>
+                                            <Button onAction="#handleBrowseAlarmSound" text="Browse"
+                                                    styleClass="settings-browse-btn"/>
+                                            <Button onAction="#handleResetAlarmSound" text="Reset"
+                                                    styleClass="settings-reset-btn"/>
+                                        </HBox>
+                                    </VBox>
+                                </TitledPane>
                             </VBox>
 
                             <VBox spacing="14" styleClass="settings-card">
@@ -451,6 +469,46 @@
                                     <Slider fx:id="notificationVolumeSlider" HBox.hgrow="ALWAYS"/>
                                     <Label fx:id="notificationVolumeLabel" text="100%" styleClass="val-label" minWidth="45"/>
                                 </HBox>
+                                <TitledPane text="Notification Sound" styleClass="settings-titled-pane" expanded="false">
+                                    <VBox spacing="8" >
+                                        <HBox alignment="CENTER_LEFT" spacing="12">
+                                            <Label text="Success:" styleClass="settings-sub-label"/>
+                                            <TextField fx:id="successSoundField" editable="false" HBox.hgrow="ALWAYS"
+                                                       promptText="Default"/>
+                                            <Button onAction="#handleBrowseSuccessSound" text="Browse"
+                                                    styleClass="settings-browse-btn"/>
+                                            <Button onAction="#handleResetSuccessSound" text="Reset"
+                                                    styleClass="settings-reset-btn"/>
+                                        </HBox>
+                                        <HBox alignment="CENTER_LEFT" spacing="12">
+                                            <Label text="Error:" styleClass="settings-sub-label"/>
+                                            <TextField fx:id="errorSoundField" editable="false" HBox.hgrow="ALWAYS"
+                                                       promptText="Default"/>
+                                            <Button onAction="#handleBrowseErrorSound" text="Browse"
+                                                    styleClass="settings-browse-btn"/>
+                                            <Button onAction="#handleResetErrorSound" text="Reset"
+                                                    styleClass="settings-reset-btn"/>
+                                        </HBox>
+                                        <HBox alignment="CENTER_LEFT" spacing="12">
+                                            <Label text="Warning:" styleClass="settings-sub-label"/>
+                                            <TextField fx:id="warningSoundField" editable="false" HBox.hgrow="ALWAYS"
+                                                       promptText="Default"/>
+                                            <Button onAction="#handleBrowseWarningSound" text="Browse"
+                                                    styleClass="settings-browse-btn"/>
+                                            <Button onAction="#handleResetWarningSound" text="Reset"
+                                                    styleClass="settings-reset-btn"/>
+                                        </HBox>
+                                        <HBox alignment="CENTER_LEFT" spacing="12">
+                                            <Label text="Info:" styleClass="settings-sub-label"/>
+                                            <TextField fx:id="infoSoundField" editable="false" HBox.hgrow="ALWAYS"
+                                                       promptText="Default"/>
+                                            <Button onAction="#handleBrowseInfoSound" text="Browse"
+                                                    styleClass="settings-browse-btn"/>
+                                            <Button onAction="#handleResetInfoSound" text="Reset"
+                                                    styleClass="settings-reset-btn"/>
+                                        </HBox>
+                                    </VBox>
+                                </TitledPane>
                             </VBox>
 
                             <VBox spacing="14" styleClass="settings-card">
