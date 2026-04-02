@@ -268,6 +268,22 @@
                                     <Slider fx:id="countdownSlider" min="1" max="180" />
                                 </VBox>
                             </VBox>
+                            <VBox spacing="14" styleClass="settings-card">
+                                <Label text="Notifications" styleClass="settings-card-title"/>
+                                <HBox alignment="CENTER_LEFT">
+                                    <Label text="Toast Notifications" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="settings-toggle-label"/>
+                                    <ToggleSwitch fx:id="enableToastToggle" styleClass="toggle-switch"/>
+                                </HBox>
+                                <VBox spacing="4">
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Label text="Notification Duration"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Label fx:id="notifDurationLabel" text="4s" styleClass="val-label"/>
+                                    </HBox>
+                                    <Slider fx:id="notifDurationSlider" min="2" max="10" majorTickUnit="1" minorTickCount="0" snapToTicks="true" showTickMarks="true" showTickLabels="true"/>
+                                </VBox>
+                            </VBox>
+
                         </VBox>
                     </ScrollPane>
                 </Tab>
@@ -388,23 +404,6 @@
                                     </HBox>
                                 </VBox>
                             </VBox>
-
-                            <VBox spacing="14" styleClass="settings-card">
-                                <Label text="Notifications" styleClass="settings-card-title"/>
-                                <HBox alignment="CENTER_LEFT">
-                                    <Label text="Toast Notifications" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="settings-toggle-label"/>
-                                    <ToggleSwitch fx:id="enableToastToggle" styleClass="toggle-switch"/>
-                                </HBox>
-                                <VBox spacing="4">
-                                    <HBox alignment="CENTER_LEFT">
-                                        <Label text="Notification Duration"/>
-                                        <Region HBox.hgrow="ALWAYS"/>
-                                        <Label fx:id="notifDurationLabel" text="4s" styleClass="val-label"/>
-                                    </HBox>
-                                    <Slider fx:id="notifDurationSlider" min="2" max="10" majorTickUnit="1" minorTickCount="0" snapToTicks="true" showTickMarks="true" showTickLabels="true"/>
-                                </VBox>
-                            </VBox>
-
                         </VBox>
                     </ScrollPane>
                 </Tab>

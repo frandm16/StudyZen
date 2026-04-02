@@ -131,7 +131,8 @@ public class ApiClient {
         TagEventBus.getInstance().publish(TagEventBus.Type.CREATED, id, name);
     }
 
-    public static void patchTag(long id, Map<String, Object> body) {
+    public static void patchTag(long id, Map<String, Object> body) throws Exception {
+        patch("/tags/" + id, body);
         invalidateTagsCache();
         String name = body.containsKey("name") ? (String) body.get("name") : null;
         if (body.containsKey("isArchived")) {
@@ -199,9 +200,16 @@ public class ApiClient {
     }
 
 
-    public static void patchSession(long id, String title, String description, int rating) throws Exception {
-        mapper.readValue(patch("/sessions/" + id, Map.of("title", title, "description", description, "rating", rating)), new TypeReference<>() {
-        });
+    public static void patchSession(long id, String tagName, String tagColor, String taskName,
+                                    String title, String description, Integer rating) throws Exception {
+        Map<String, Object> body = new LinkedHashMap<>();
+        if (tagName != null) body.put("tagName", tagName);
+        if (tagColor != null) body.put("tagColor", tagColor);
+        if (taskName != null) body.put("taskName", taskName);
+        if (title != null) body.put("title", title);
+        if (description != null) body.put("description", description);
+        if (rating != null) body.put("rating", rating);
+        patch("/sessions/" + id, body);
     }
 
     public static void deleteSession(long id) throws Exception {

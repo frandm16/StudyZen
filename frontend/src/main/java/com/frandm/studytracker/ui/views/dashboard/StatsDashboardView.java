@@ -16,7 +16,6 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -479,8 +478,7 @@ public class StatsDashboardView {
         if (!OPTION_ALL_TAGS.equals(filter.tag()) && !Objects.equals(normalizeLabel(session.getTag(), "No tag"), filter.tag())) return false;
         if (!OPTION_ALL_TASKS.equals(filter.task()) && !Objects.equals(normalizeLabel(session.getTask(), "No task"), filter.task())) return false;
         if (!OPTION_ALL_SIZES.equals(filter.sizeBucket()) && !matchesSizeBucket(session.getTotalMinutes(), filter.sizeBucket())) return false;
-        if (!OPTION_ALL_DAY_TYPES.equals(filter.dayType()) && !matchesDayType(date.getDayOfWeek(), filter.dayType())) return false;
-        return true;
+        return OPTION_ALL_DAY_TYPES.equals(filter.dayType()) || matchesDayType(date.getDayOfWeek(), filter.dayType());
     }
 
     private DashboardSnapshot buildSnapshot(List<Session> sessions, FilterState filter) {
