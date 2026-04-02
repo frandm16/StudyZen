@@ -2311,6 +2311,13 @@
     -fx-font-size: 20px;
 }
 
+.theme-btn-selected {
+    -fx-border-color: -color-accent;
+    -fx-border-width: 2;
+    -fx-background-color: -color-hover;
+    -fx-effect: dropshadow(three-pass-box, -color-accent-light, 8, 0, 0, 0);
+}
+
 /* endregion */
 /* region --- daily view --- */
 

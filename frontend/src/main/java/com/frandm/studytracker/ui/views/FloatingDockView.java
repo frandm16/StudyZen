@@ -109,23 +109,13 @@ public class FloatingDockView {
         settingsIcon.getStyleClass().add("dock-icon");
         settingsButton.setGraphic(settingsIcon);
 
-        Button backgroundsButton = new Button();
-        backgroundsButton.getStyleClass().addAll("dock-button", "dock-button-utility");
-        backgroundsButton.setTooltip(new Tooltip("Backgrounds"));
-        backgroundsButton.setOnAction(_ -> onBackgroundsRequested.run());
-
-        FontIcon backgroundsIcon = new FontIcon("mdi2i-image-multiple-outline");
-        backgroundsIcon.getStyleClass().add("dock-icon");
-        backgroundsButton.setGraphic(backgroundsIcon);
-
         container.getChildren().addAll(
                 sectionButtons.get(Section.TIMER.name()),
                 sectionButtons.get(Section.PLANNER.name()),
                 sectionButtons.get(Section.STATS.name()),
                 sectionButtons.get(Section.HISTORY.name()),
                 separator,
-                settingsButton,
-                backgroundsButton
+                settingsButton
         );
 
         sectionButtons.get(Section.TIMER.name()).setSelected(true);

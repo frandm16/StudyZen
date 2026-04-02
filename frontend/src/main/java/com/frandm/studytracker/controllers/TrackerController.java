@@ -44,8 +44,9 @@ public class TrackerController {
     @FXML public VBox timerTextContainer, notificationContainer, scheduleListContainer,
             plannerContainer, historyContainer, fuzzyResultsContainer, tagsListContainer,
             pomoSettingsPane, countdownSettingsPane, settingsBox, confirmTagBox,
-            confirmBox, themeButtonsContainer, mainVbox;
+            confirmBox, mainVbox;
     @FXML public HBox starsContainer, editStarsContainer, buttonsHbox, floatingDock, activeTaskContainer;
+    @FXML public HBox themeButtonsContainer;
     @FXML public Label timerLabel, workValLabel, shortValLabel, longValLabel, intervalValLabel,
             alarmVolumeValLabel, widthSliderValLabel, countdownValLabel, circleSizeValLabel,
             selectedNameLabel, notificationVolumeLabel, masterVolumeLabel;
@@ -72,6 +73,8 @@ public class TrackerController {
     @FXML public TextField errorSoundField;
     @FXML public TextField warningSoundField;
     @FXML public TextField infoSoundField;
+    @FXML public TilePane backgroundTilePane;
+    @FXML public Label backgroundCurrentLabel;
     //endregion
 
     private final TrackerEngine engine = new TrackerEngine();
@@ -221,7 +224,7 @@ public class TrackerController {
                 () -> engine,
                 this::handleDockNavigation,
                 this::toggleSettings,
-                this::openBackgroundSelector
+                () -> {}
         );
     }
 
@@ -308,6 +311,32 @@ public class TrackerController {
         colCenterStats.percentWidthProperty().bind(widthSlider.valueProperty());
         colLeftStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
         colRightStats.percentWidthProperty().bind(widthSlider.valueProperty().multiply(-1).add(100).divide(2));
+        
+        setupBackgroundSelector();
+        updateThemeSelection();
+    }
+
+    private void setupBackgroundSelector() {
+        if (backgroundTilePane == null || backgroundCurrentLabel == null) return;
+        
+        backgroundTilePane.getChildren().clear();
+        
+        // Actualizar etiqueta con el fondo actual
+        backgroundCurrentLabel.setText("Current: " + backgroundManager.getLabel(engine.getBackgroundVideoSource()));
+        
+        // Crear botones para cada preset
+        for (BackgroundManager.BackgroundOption preset : backgroundManager.getDynamicPresets()) {
+            Button btn = backgroundManager.createOptionButton(
+                    preset,
+                    engine.getBackgroundVideoSource(),
+                    () -> {
+                        // Al hacer clic en un preset, actualizar la etiqueta y refrescar selección
+                        backgroundCurrentLabel.setText("Current: " + backgroundManager.getLabel(preset.source()));
+                        setupBackgroundSelector();
+                    }
+            );
+            backgroundTilePane.getChildren().add(btn);
+        }
     }
 
     private void setupModeSystem() {
@@ -686,69 +715,11 @@ public class TrackerController {
         plannerOverlayLayer.setManaged(false);
     }
 
-    public void openBackgroundSelector() {
-        StackPane overlay = new StackPane();
-        overlay.getStyleClass().add("planner-overlay");
-        overlay.setPickOnBounds(true);
-        overlay.setOnMouseClicked(event -> {
-            if (event.getTarget() == overlay) {
-                hidePlannerOverlay();
-            }
-        });
-
-        VBox card = new VBox(18);
-        card.getStyleClass().addAll("planner-overlay-card", "background-selector-card");
-        card.setMaxWidth(520);
-        card.setOnMouseClicked(Event::consume);
-
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
-
-        VBox titleGroup = new VBox(4);
-        Label title = new Label("Backgrounds");
-        title.getStyleClass().addAll("planner-overlay-title", "background-selector-title");
-        Label subtitle = new Label("Choose a preset video or load your own MP4 file.");
-        subtitle.getStyleClass().add("background-selector-subtitle");
-        titleGroup.getChildren().addAll(title, subtitle);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Button closeButton = new Button("✕");
-        closeButton.getStyleClass().add("close-button");
-        closeButton.setOnAction(_ -> hidePlannerOverlay());
-
-        header.getChildren().addAll(titleGroup, spacer, closeButton);
-
-        Label currentSourceLabel = new Label("Current: " + backgroundManager.getLabel(engine.getBackgroundVideoSource()));
-        currentSourceLabel.getStyleClass().add("background-current-label");
-
-        TilePane presetGrid = new TilePane();
-        presetGrid.setPrefColumns(2);
-        presetGrid.setHgap(12);
-        presetGrid.setVgap(12);
-        presetGrid.getStyleClass().add("background-selector-grid");
-
-        for (BackgroundManager.BackgroundOption preset : backgroundManager.getDynamicPresets()) {
-            Button btn = backgroundManager.createOptionButton(
-                    preset,
-                    engine.getBackgroundVideoSource(),
-                    this::openBackgroundSelector
-            );
-            presetGrid.getChildren().add(btn);
-        }
-
-        Button addFileButton = new Button("Add file");
-        addFileButton.getStyleClass().addAll("button-main", "background-file-button");
-        addFileButton.setOnAction(_ -> chooseCustomBackgroundFile());
-
-        card.getChildren().addAll(header, currentSourceLabel, presetGrid, addFileButton);
-        overlay.getChildren().add(card);
-        showPlannerOverlay(overlay);
-    }
 
 
-    private void chooseCustomBackgroundFile() {
+
+    @FXML
+    public void chooseCustomBackgroundFile() {
         Window window = rootPane != null && rootPane.getScene() != null ? rootPane.getScene().getWindow() : null;
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Choose background video");
@@ -762,6 +733,11 @@ public class TrackerController {
         backgroundManager.applyBackground(selectedFile.getAbsolutePath(), true);
         hidePlannerOverlay();
         NotificationManager.show("Background updated", selectedFile.getName(), NotificationManager.NotificationType.SUCCESS);
+        // Actualizar etiqueta en settings si existe
+        if (backgroundCurrentLabel != null) {
+            backgroundCurrentLabel.setText("Current: " + backgroundManager.getLabel(selectedFile.getAbsolutePath()));
+            setupBackgroundSelector();
+        }
     }
 
     private Region getActivePanel() {
@@ -949,6 +925,22 @@ public class TrackerController {
         engine.setCurrentTheme(theme);
         updateEngineSettings();
         applyTheme();
+        updateThemeSelection();
+    }
+
+    private void updateThemeSelection() {
+        if (themeButtonsContainer == null) return;
+        String currentTheme = engine.getCurrentTheme();
+        for (Node node : themeButtonsContainer.getChildren()) {
+            if (node instanceof Button btn) {
+                String theme = (String) btn.getUserData();
+                if (theme != null && theme.equals(currentTheme)) {
+                    btn.getStyleClass().add("theme-btn-selected");
+                } else {
+                    btn.getStyleClass().remove("theme-btn-selected");
+                }
+            }
+        }
     }
 
     private VBox createTodaySchedulesList() {
