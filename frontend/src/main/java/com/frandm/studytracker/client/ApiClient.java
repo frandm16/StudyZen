@@ -487,26 +487,13 @@ public class ApiClient {
         };
 
         try {
-            String tasksJson = get("/tasks");
-            List<Map<String, Object>> taskList = mapper.readValue(tasksJson, new TypeReference<>() {});
-            if (taskList.isEmpty()) {
-                System.out.println("[generateRandomTodos] Skipped: no tasks available");
-                return;
-            }
-
             for (int offset = -20; offset <= 24; offset++) {
                 LocalDate date = today.plusDays(offset);
                 int todosToday = random.nextInt(4);
                 for (int i = 0; i < todosToday; i++) {
-                    Map<String, Object> task = taskList.get(random.nextInt(taskList.size()));
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> tagMap = (Map<String, Object>) task.get("tag");
-
                     Map<String, Object> created = createTodo(
                             date,
-                            prefixes[random.nextInt(prefixes.length)] + " " + subjects[random.nextInt(subjects.length)],
-                            (String) tagMap.get("name"),
-                            (String) task.get("name")
+                            prefixes[random.nextInt(prefixes.length)] + " " + subjects[random.nextInt(subjects.length)]
                     );
 
                     boolean shouldComplete = offset < 0 && random.nextDouble() < 0.55;
@@ -672,23 +659,18 @@ public class ApiClient {
     // --- Todos ---
 
     public static List<Map<String, Object>> getTodosByDate(LocalDate date) throws Exception {
-        return getTodos(date, null);
+        return getTodos(date);
     }
 
-    public static List<Map<String, Object>> getTodos(LocalDate date, Long taskId) throws Exception {
+    public static List<Map<String, Object>> getTodos(LocalDate date) throws Exception {
         String path = "/todos?date=" + date;
-        if (taskId != null) {
-            path += "&taskId=" + taskId;
-        }
         return mapper.readValue(get(path), new TypeReference<>() {});
     }
 
-    public static Map<String, Object> createTodo(LocalDate date, String text, String tagName, String taskName) throws Exception {
+    public static Map<String, Object> createTodo(LocalDate date, String text) throws Exception {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("date", date.toString());
         body.put("text", text);
-        body.put("tagName", tagName);
-        body.put("taskName", taskName);
         return mapper.readValue(
                 post("/todos", body),
                 new TypeReference<>() {}

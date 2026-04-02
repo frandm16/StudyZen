@@ -2509,7 +2509,7 @@
 }
 
 .planner-row-base {
-    -fx-background-color: -color-bg-subtle;
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, -bg-dashboard, -fg-dashboard);
     -fx-background-radius: 10;
     -fx-padding: 15;
     -fx-spacing: 15;
@@ -2599,17 +2599,22 @@
 }
 
 .deadline-row {
-    -fx-background-color: -color-bg-subtle;
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, -bg-dashboard, -fg-dashboard);
     -fx-background-radius: 10;
     -fx-padding: 15;
     -fx-spacing: 15;
 }
 
 .event-row {
-    -fx-border-width: 0 0 0 4;
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, -bg-dashboard, -fg-dashboard);
     -fx-background-radius: 8;
-    -event-tag-color: -color-accent;
-    -fx-border-color: transparent transparent transparent -event-tag-color;
+}
+
+.event-row-color-bar {
+    -fx-min-width: 5;
+    -fx-pref-width: 5;
+    -fx-max-width: 5;
+    -fx-background-radius: 6;
 }
 
 .calendar-button-icon {
@@ -2803,7 +2808,7 @@
 .todo-row {
     -fx-padding: 15;
     -fx-spacing: 15;
-    -fx-background-color: -color-bg-subtle;
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, -bg-dashboard, -fg-dashboard);
     -fx-background-radius: 10;
     -fx-transition: all 0.2s ease-in-out;
     -fx-cursor: hand;
