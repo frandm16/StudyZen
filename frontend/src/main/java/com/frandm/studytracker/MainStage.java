@@ -1,9 +1,12 @@
 package com.frandm.studytracker;
 
 import com.frandm.studytracker.controllers.PomodoroController;
+import com.frandm.studytracker.core.NotificationManager;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
 import xss.it.nfx.NfxStage;
@@ -24,6 +27,17 @@ public class MainStage extends NfxStage {
         this.setCloseControl(controller.closeBtn);
         this.setMaxControl(controller.maxBtn);
         this.setMinControl(controller.minBtn);
+
+        controller.closeBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            if (controller.isTimerActive()) {
+                NotificationManager.show(
+                        "Close blocked",
+                        "You must finish your current session to close the app.",
+                        NotificationManager.NotificationType.WARNING
+                );
+                event.consume();
+            }
+        });
 
         this.windowStateProperty().addListener((_, _, newState) -> {
             FontIcon maxIcon = (FontIcon) controller.maxBtn.getGraphic();

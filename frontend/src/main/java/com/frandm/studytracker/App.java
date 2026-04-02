@@ -2,6 +2,7 @@ package com.frandm.studytracker;
 
 import atlantafx.base.theme.PrimerDark;
 import com.frandm.studytracker.controllers.PomodoroController;
+import com.frandm.studytracker.core.NotificationManager;
 import fr.brouillard.oss.cssfx.CSSFX;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
@@ -16,6 +17,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 import java.net.URL;
 import java.util.Objects;
@@ -51,15 +53,23 @@ public class App extends Application {
             finalStage.setScene(new Scene(root));
         }
 
-        finalStage.setOnCloseRequest(_ -> {
-            Platform.exit();
-            System.exit(0);
-        });
-
-        if (controller != null && controller.closeBtn != null) {
-            controller.closeBtn.setOnAction(_ -> {
+        finalStage.setOnCloseRequest(event -> {
+            if (controller != null && controller.isTimerActive()) {
+                NotificationManager.show(
+                        "Close blocked",
+                        "You must finish your current session to close the app.",
+                        NotificationManager.NotificationType.WARNING
+                );
+                event.consume();
+            } else {
                 Platform.exit();
                 System.exit(0);
+            }
+        });
+
+        if (!isWindows && controller != null && controller.closeBtn != null) {
+            controller.closeBtn.setOnAction(_ -> {
+                finalStage.fireEvent(new WindowEvent(finalStage, WindowEvent.WINDOW_CLOSE_REQUEST));
             });
         }
 

@@ -1352,6 +1352,14 @@ public class PomodoroController {
         Animations.hide(confirmTagOverlay, confirmTagBox, null);
     }
 
+    public void showCloseBlockedNotification() {
+        NotificationManager.show(
+            "Close blocked",
+            "You must finish your current session to close the app.",
+            NotificationManager.NotificationType.WARNING
+        );
+    }
+
     @FXML
     private void onConfirmDeleteTagClick() {
         if (tagToDelete != null) {
@@ -1451,6 +1459,10 @@ public class PomodoroController {
     }
 
     public String getCurrentTheme() { return engine.getCurrentTheme();}
+
+    public boolean isTimerActive() {
+        return engine.getCurrentState() != PomodoroEngine.State.MENU;
+    }
 
     private record BackgroundOption(String label, String source) {}
 

@@ -32,7 +32,7 @@ public class PomodoroEngine {
     private int secondsRemaining;
     private int secondsElapsed = 0;
 
-    private final int timePerSeconds = 123;
+    private final int timePerSeconds = 1;
 
     private int masterVolume = 100;
     private int alarmVolume = 100;
