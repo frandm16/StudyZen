@@ -152,7 +152,7 @@ public class CalendarTab extends VBox {
         timeGrid.setPrefHeight(ROW_HEIGHT * 24);
         timeGrid.setMinHeight(ROW_HEIGHT * 24);
 
-        for (int h = 0; h < 24; h++) {
+        for (int h = 1; h < 24; h++) {
             Label lblHour = new Label(String.format("%02d:00", h));
             lblHour.getStyleClass().add("calendar-hour-label");
             lblHour.setLayoutY(h * ROW_HEIGHT - 7);
@@ -178,7 +178,7 @@ public class CalendarTab extends VBox {
             columnCanvas.setMinHeight(ROW_HEIGHT * 24);
             dayColumns[i] = columnCanvas;
 
-            for (int h = 0; h < 24; h++) {
+            for (int h = 1; h < 24; h++) {
                 Region hourLine = new Region();
                 hourLine.getStyleClass().add("calendar-hour-line");
                 hourLine.setPrefHeight(1);
