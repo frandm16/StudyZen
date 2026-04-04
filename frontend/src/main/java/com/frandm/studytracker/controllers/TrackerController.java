@@ -36,8 +36,8 @@ public class TrackerController {
 
     public static final String PROJECT_VERSION = "v2.0.0";
 
-    @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane, shortcutMenuPane, connectionSetupPane;
-    @FXML public StackPane rootPane, setupBox, editSessionBox, summaryBox, stackpaneCircle, connectionSetupBox,
+    @FXML public GridPane mainContainer, setupPane, settingsPane, editSessionPane, summaryPane, shortcutMenuPane, connectionSetupPane, welcomeGuidePane;
+    @FXML public StackPane rootPane, setupBox, editSessionBox, summaryBox, stackpaneCircle, connectionSetupBox, welcomeGuideBox,
             confirmOverlay, confirmTagOverlay, plannerOverlayLayer;
     @FXML public VBox timerTextContainer, notificationContainer, scheduleListContainer,
             plannerContainer, historyContainer, fuzzyResultsContainer, tagsListContainer,
@@ -65,7 +65,11 @@ public class TrackerController {
     @FXML public ToggleSwitch enableToastToggle;
     @FXML public Slider notifDurationSlider;
     @FXML public Label notifDurationLabel, appVersionLabel, shortcutCaptureStatusLabel,
-            serverStatusLabel, connectionSetupStatusLabel;
+            serverStatusLabel, connectionSetupStatusLabel, welcomeGuideProgressLabel,
+            welcomeGuideTitleLabel, welcomeGuideSubtitleLabel, welcomeGuideTipTitleLabel,
+            welcomeGuideTipCopyLabel, welcomeFeatureTitleOne, welcomeFeatureCopyOne,
+            welcomeFeatureTitleTwo, welcomeFeatureCopyTwo, welcomeFeatureTitleThree,
+            welcomeFeatureCopyThree;
 
     @FXML public ComboBox<String> alarmPresetComboBox;
     @FXML public ComboBox<String> fontComboBox;
@@ -79,6 +83,11 @@ public class TrackerController {
     @FXML public TextField connectionSetupUrlField;
     @FXML public TilePane backgroundTilePane;
     @FXML public Label backgroundCurrentLabel;
+    @FXML public Button welcomeGuideBackButton;
+    @FXML public Button welcomeGuideContinueButton;
+    @FXML public FontIcon welcomeGuideFeatureIconOne;
+    @FXML public FontIcon welcomeGuideFeatureIconTwo;
+    @FXML public FontIcon welcomeGuideFeatureIconThree;
     //endregion
 
     private final TrackerEngine engine = new TrackerEngine();
@@ -129,6 +138,58 @@ public class TrackerController {
     @FXML
     private Region backgroundVideoOverlay;
     private boolean connectionSetupRequired;
+    private boolean welcomeGuideRequired;
+    private int welcomeGuideStepIndex = 0;
+    private final List<WelcomeGuideStep> welcomeGuideSteps = List.of(
+            new WelcomeGuideStep(
+                    "Step 1 of 4",
+                    "Welcome To StudyZen",
+                    "A personal study tracker for planning your weeks, logging focus sessions and reviewing your progress with your own self-hosted backend.",
+                    "mdi2c-compass-outline",
+                    "Track", "Run focused sessions and keep a real history of what you studied.",
+                    "Plan", "Organize tasks, weekly blocks and deadlines in one place.",
+                    "Review", "Use logs and stats to understand your study rhythm over time.",
+                    "What happens next",
+                    "After this intro, you'll configure your backend once and the app will remember it for future launches.",
+                    "Next"
+            ),
+            new WelcomeGuideStep(
+                    "Step 2 of 4",
+                    "Track Your Focus Sessions",
+                    "StudyZen is built around sessions you can start, rate and revisit later.",
+                    "mdi2t-timer-outline",
+                    "Start", "Pick a tag and task, then launch a focused session from the timer view.",
+                    "Capture", "Save title, notes and rating when you finish to build useful context.",
+                    "Reuse", "Your session history stays available in logs and stats for future review.",
+                    "Why it matters",
+                    "The timer is not just a stopwatch; it becomes your personal record of real work.",
+                    "Next"
+            ),
+            new WelcomeGuideStep(
+                    "Step 3 of 4",
+                    "Plan Ahead With Structure",
+                    "The planner helps you map what you want to do before you start doing it.",
+                    "mdi2c-calendar-month-outline",
+                    "Schedule", "Create study blocks and place them through your week calendar.",
+                    "Deadlines", "Track upcoming work and keep urgency visible before it becomes noise.",
+                    "Daily view", "Review todos, notes and sessions for a specific day in one place.",
+                    "Why it matters",
+                    "Planning reduces friction and makes the timer and logs more meaningful.",
+                    "Next"
+            ),
+            new WelcomeGuideStep(
+                    "Step 4 of 4",
+                    "Review Your Progress",
+                    "Once you have sessions and plans recorded, StudyZen helps you inspect the pattern.",
+                    "mdi2c-chart-line",
+                    "Logs", "Browse your history by day, task and calendar view.",
+                    "Stats", "See study volume, tendencies and distribution over time.",
+                    "Adjust", "Use that feedback to improve consistency instead of relying on guesswork.",
+                    "Ready to connect",
+                    "Next you'll set your backend URL so the app can save and load your data.",
+                    "Start Setup"
+            )
+    );
 
     @FXML
     public void initialize() {
@@ -247,8 +308,11 @@ public class TrackerController {
         boolean hasStoredApiUrl = ConfigManager.hasStoredApiUrl();
         boolean hasEnvApiUrl = System.getenv("API_URL") != null && !System.getenv("API_URL").isBlank();
         connectionSetupRequired = !hasStoredApiUrl && !hasEnvApiUrl;
+        welcomeGuideRequired = !ConfigManager.isWelcomeGuideCompleted();
 
-        if (connectionSetupRequired) {
+        if (welcomeGuideRequired) {
+            openWelcomeGuide();
+        } else if (connectionSetupRequired) {
             openConnectionSetup();
         } else {
             validateCurrentConnectionAsync(false);
@@ -301,6 +365,7 @@ public class TrackerController {
         if (connectionSetupPane == null || connectionSetupBox == null) {
             return;
         }
+        closeWelcomeGuide(false);
         syncConnectionFields(ApiClient.getBaseUrl());
         setConnectionStatus(connectionSetupStatusLabel, "Use the default local server or enter a custom URL.", "-text-muted");
         if (!connectionSetupPane.isVisible()) {
@@ -318,6 +383,71 @@ public class TrackerController {
             });
         } else {
             connectionSetupRequired = false;
+        }
+    }
+
+    private void openWelcomeGuide() {
+        if (welcomeGuidePane == null || welcomeGuideBox == null) {
+            return;
+        }
+        if (connectionSetupPane != null && connectionSetupPane.isVisible()) {
+            Animations.hide(connectionSetupPane, connectionSetupBox, null);
+        }
+        welcomeGuideStepIndex = 0;
+        renderWelcomeGuideStep();
+        if (!welcomeGuidePane.isVisible()) {
+            Animations.show(welcomeGuidePane, welcomeGuideBox, () -> {
+                if (rootPane != null) {
+                    rootPane.requestFocus();
+                }
+            });
+        }
+    }
+
+    private void renderWelcomeGuideStep() {
+        if (welcomeGuideSteps.isEmpty()) {
+            return;
+        }
+
+        WelcomeGuideStep step = welcomeGuideSteps.get(welcomeGuideStepIndex);
+        if (welcomeGuideProgressLabel != null) welcomeGuideProgressLabel.setText(step.progress());
+        if (welcomeGuideTitleLabel != null) welcomeGuideTitleLabel.setText(step.title());
+        if (welcomeGuideSubtitleLabel != null) welcomeGuideSubtitleLabel.setText(step.subtitle());
+        if (welcomeGuideTipTitleLabel != null) welcomeGuideTipTitleLabel.setText(step.tipTitle());
+        if (welcomeGuideTipCopyLabel != null) welcomeGuideTipCopyLabel.setText(step.tipCopy());
+
+        if (welcomeFeatureTitleOne != null) welcomeFeatureTitleOne.setText(step.featureTitleOne());
+        if (welcomeFeatureCopyOne != null) welcomeFeatureCopyOne.setText(step.featureCopyOne());
+        if (welcomeFeatureTitleTwo != null) welcomeFeatureTitleTwo.setText(step.featureTitleTwo());
+        if (welcomeFeatureCopyTwo != null) welcomeFeatureCopyTwo.setText(step.featureCopyTwo());
+        if (welcomeFeatureTitleThree != null) welcomeFeatureTitleThree.setText(step.featureTitleThree());
+        if (welcomeFeatureCopyThree != null) welcomeFeatureCopyThree.setText(step.featureCopyThree());
+
+        if (welcomeGuideFeatureIconOne != null) welcomeGuideFeatureIconOne.setIconLiteral(step.heroIcon());
+        if (welcomeGuideFeatureIconTwo != null) welcomeGuideFeatureIconTwo.setIconLiteral(step.featureIconTwo());
+        if (welcomeGuideFeatureIconThree != null) welcomeGuideFeatureIconThree.setIconLiteral(step.featureIconThree());
+
+        if (welcomeGuideBackButton != null) {
+            boolean firstStep = welcomeGuideStepIndex == 0;
+            welcomeGuideBackButton.setVisible(!firstStep);
+            welcomeGuideBackButton.setManaged(!firstStep);
+        }
+        if (welcomeGuideContinueButton != null) {
+            welcomeGuideContinueButton.setText(step.primaryButtonLabel());
+        }
+    }
+
+    private void closeWelcomeGuide(boolean markCompleted) {
+        if (markCompleted) {
+            ConfigManager.setWelcomeGuideCompleted(true);
+            welcomeGuideRequired = false;
+        }
+        if (welcomeGuidePane != null && welcomeGuidePane.isVisible()) {
+            Animations.hide(welcomeGuidePane, welcomeGuideBox, () -> {
+                if (rootPane != null) {
+                    rootPane.requestFocus();
+                }
+            });
         }
     }
 
@@ -921,6 +1051,7 @@ public class TrackerController {
         }
 
         ConfigManager.clearApiUrl();
+        ConfigManager.resetWelcomeGuideCompleted();
         ApiClient.setBaseUrl(ConfigManager.resolveApiUrl());
         syncConnectionFields(ApiClient.getBaseUrl());
         setConnectionStatus(serverStatusLabel, "Server setting reset.", "-text-muted");
@@ -1120,6 +1251,44 @@ public class TrackerController {
     public void handleSaveAndContinueConnectionSetup() {
         applyApiUrl(connectionSetupUrlField.getText(), true);
         validateCurrentConnectionAsync(false);
+    }
+
+    @FXML
+    public void handleContinueWelcomeGuide() {
+        if (welcomeGuideStepIndex < welcomeGuideSteps.size() - 1) {
+            welcomeGuideStepIndex++;
+            renderWelcomeGuideStep();
+            return;
+        }
+        closeWelcomeGuide(true);
+        if (connectionSetupRequired) {
+            openConnectionSetup();
+        } else {
+            validateCurrentConnectionAsync(false);
+        }
+    }
+
+    @FXML
+    public void handleSkipWelcomeGuide() {
+        closeWelcomeGuide(true);
+        if (connectionSetupRequired) {
+            openConnectionSetup();
+        } else {
+            validateCurrentConnectionAsync(false);
+        }
+    }
+
+    @FXML
+    public void handleOpenWelcomeGuide() {
+        openWelcomeGuide();
+    }
+
+    @FXML
+    public void handleBackWelcomeGuide() {
+        if (welcomeGuideStepIndex > 0) {
+            welcomeGuideStepIndex--;
+            renderWelcomeGuideStep();
+        }
     }
 
     //region Setup
@@ -1606,6 +1775,40 @@ public class TrackerController {
         setupManager.setSelectedTask(task);
         updateActiveTaskDisplay(setupManager.getSelectedTag(), setupManager.getSelectedTask());
         updateUIFromEngine();
+    }
+
+    private record WelcomeGuideStep(
+            String progress,
+            String title,
+            String subtitle,
+            String heroIcon,
+            String featureTitleOne,
+            String featureCopyOne,
+            String featureTitleTwo,
+            String featureCopyTwo,
+            String featureTitleThree,
+            String featureCopyThree,
+            String tipTitle,
+            String tipCopy,
+            String primaryButtonLabel
+    ) {
+        String featureIconTwo() {
+            return switch (progress) {
+                case "Step 1 of 4" -> "mdi2c-calendar-month-outline";
+                case "Step 2 of 4" -> "mdi2n-note-text-outline";
+                case "Step 3 of 4" -> "mdi2a-alert-outline";
+                default -> "mdi2c-chart-bar";
+            };
+        }
+
+        String featureIconThree() {
+            return switch (progress) {
+                case "Step 1 of 4" -> "mdi2c-chart-line";
+                case "Step 2 of 4" -> "mdi2h-history";
+                case "Step 3 of 4" -> "mdi2v-view-day-outline";
+                default -> "mdi2t-tune";
+            };
+        }
     }
 
     @FXML

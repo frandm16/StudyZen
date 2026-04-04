@@ -10,6 +10,7 @@ public class ConfigManager {
     private static final String FOLDER_NAME = ".StudyTracker";
     private static final String FILE_NAME = "settings.properties";
     public static final String API_URL_KEY = "apiUrl";
+    public static final String WELCOME_GUIDE_COMPLETED_KEY = "welcomeGuideCompleted";
     public static final String DEFAULT_API_URL = "http://localhost:8080/api";
 
     private static File getConfigFile() {
@@ -104,6 +105,20 @@ public class ConfigManager {
 
     public static void clearApiUrl() {
         saveApiUrl(null);
+    }
+
+    public static boolean isWelcomeGuideCompleted() {
+        return Boolean.parseBoolean(loadAllProperties().getProperty(WELCOME_GUIDE_COMPLETED_KEY, "false"));
+    }
+
+    public static void setWelcomeGuideCompleted(boolean completed) {
+        Properties props = loadAllProperties();
+        props.setProperty(WELCOME_GUIDE_COMPLETED_KEY, String.valueOf(completed));
+        storeProperties(props);
+    }
+
+    public static void resetWelcomeGuideCompleted() {
+        setWelcomeGuideCompleted(false);
     }
 
     public static void save(TrackerEngine engine) {

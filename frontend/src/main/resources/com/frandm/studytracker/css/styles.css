@@ -384,6 +384,18 @@
     -fx-text-fill: -text-muted;
 }
 
+.connection-setup-actions {
+    -fx-fill-width: true;
+}
+
+.connection-setup-actions-row {
+    -fx-fill-height: true;
+}
+
+.connection-default-btn {
+    -fx-alignment: center-left;
+}
+
 .connection-secondary-btn {
     -fx-padding: 10 16;
     -fx-font-size: 13px;
@@ -1120,6 +1132,116 @@
 
 .connection-secondary-btn {
     -fx-font-size: 13px;
+}
+
+.welcome-guide-overlay {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(5, 8, 14, 0.72), rgba(5, 8, 14, 0.84));
+}
+
+.welcome-guide-card {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(22, 27, 34, 0.98), rgba(13, 17, 23, 0.98));
+    -fx-background-radius: 26;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 26;
+    -fx-border-width: 1;
+    -fx-padding: 28;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.38), 32, 0.2, 0, 14);
+}
+
+.welcome-guide-icon-shell {
+    -fx-pref-width: 60;
+    -fx-pref-height: 60;
+    -fx-min-width: 60;
+    -fx-min-height: 60;
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, -color-accent-light, rgba(255, 255, 255, 0.05));
+    -fx-background-radius: 18;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 18;
+}
+
+.welcome-guide-icon {
+    -fx-icon-size: 28px;
+    -fx-icon-color: -color-accent;
+}
+
+.welcome-guide-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-dark;
+}
+
+.welcome-guide-progress {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-accent;
+    -fx-background-color: rgba(255,255,255,0.04);
+    -fx-background-radius: 999;
+    -fx-padding: 6 10;
+}
+
+.welcome-guide-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: -text-muted;
+    -fx-line-spacing: 3;
+}
+
+.welcome-guide-feature-grid {
+    -fx-padding: 6 0 0 0;
+}
+
+.welcome-guide-feature-card {
+    -fx-background-color: rgba(255,255,255,0.035);
+    -fx-background-radius: 18;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 18;
+    -fx-padding: 18;
+}
+
+.welcome-guide-feature-icon {
+    -fx-icon-size: 22px;
+    -fx-icon-color: -color-accent;
+}
+
+.welcome-guide-feature-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-dark;
+}
+
+.welcome-guide-feature-copy {
+    -fx-font-size: 12px;
+    -fx-text-fill: -text-muted;
+}
+
+.welcome-guide-tip-card {
+    -fx-background-color: rgba(255,255,255,0.03);
+    -fx-background-radius: 18;
+    -fx-border-color: -color-border-subtle-light;
+    -fx-border-radius: 18;
+    -fx-padding: 16 18;
+}
+
+.welcome-guide-tip-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-dark;
+}
+
+.welcome-guide-tip-copy {
+    -fx-font-size: 12px;
+    -fx-text-fill: -text-muted;
+}
+
+.welcome-guide-primary-btn {
+    -fx-padding: 10 20;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.welcome-guide-secondary-btn {
+    -fx-padding: 10 16;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
 }
 
 /* endregion */

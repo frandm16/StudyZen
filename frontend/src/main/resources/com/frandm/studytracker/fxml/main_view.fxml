@@ -168,6 +168,71 @@
 
 
 
+    <GridPane fx:id="welcomeGuidePane" visible="false" managed="false" maxHeight="Infinity" maxWidth="Infinity">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="23" />
+            <ColumnConstraints percentWidth="54" />
+            <ColumnConstraints percentWidth="23" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints percentHeight="16" />
+            <RowConstraints percentHeight="68" />
+            <RowConstraints percentHeight="16" />
+        </rowConstraints>
+        <Region styleClass="welcome-guide-overlay" GridPane.columnSpan="3" GridPane.rowSpan="3">
+            <effect><GaussianBlur radius="15" /></effect>
+        </Region>
+        <StackPane fx:id="welcomeGuideBox" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <VBox spacing="20" styleClass="welcome-guide-card" maxWidth="760">
+                <Label fx:id="welcomeGuideProgressLabel" text="Step 1 of 4" styleClass="welcome-guide-progress"/>
+                <HBox alignment="CENTER_LEFT" spacing="16">
+                    <StackPane styleClass="welcome-guide-icon-shell">
+                        <FontIcon fx:id="welcomeGuideFeatureIconOne" iconLiteral="mdi2c-compass-outline" styleClass="welcome-guide-icon"/>
+                    </StackPane>
+                    <VBox spacing="6">
+                        <Label fx:id="welcomeGuideTitleLabel" text="Welcome To StudyZen" styleClass="welcome-guide-title" />
+                        <Label fx:id="welcomeGuideSubtitleLabel" text="A personal study tracker for planning your weeks, logging focus sessions and reviewing your progress with your own self-hosted backend."
+                               wrapText="true" styleClass="welcome-guide-subtitle"/>
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="18" styleClass="welcome-guide-feature-grid">
+                    <VBox spacing="10" HBox.hgrow="ALWAYS" styleClass="welcome-guide-feature-card">
+                        <FontIcon iconLiteral="mdi2t-timer-outline" styleClass="welcome-guide-feature-icon"/>
+                        <Label fx:id="welcomeFeatureTitleOne" text="Track" styleClass="welcome-guide-feature-title"/>
+                        <Label fx:id="welcomeFeatureCopyOne" text="Run focused sessions, rate them and build a reliable personal study history." wrapText="true"
+                               styleClass="welcome-guide-feature-copy"/>
+                    </VBox>
+                    <VBox spacing="10" HBox.hgrow="ALWAYS" styleClass="welcome-guide-feature-card">
+                        <FontIcon fx:id="welcomeGuideFeatureIconTwo" iconLiteral="mdi2c-calendar-month-outline" styleClass="welcome-guide-feature-icon"/>
+                        <Label fx:id="welcomeFeatureTitleTwo" text="Plan" styleClass="welcome-guide-feature-title"/>
+                        <Label fx:id="welcomeFeatureCopyTwo" text="Organize deadlines, todos and scheduled study blocks from one place." wrapText="true"
+                               styleClass="welcome-guide-feature-copy"/>
+                    </VBox>
+                    <VBox spacing="10" HBox.hgrow="ALWAYS" styleClass="welcome-guide-feature-card">
+                        <FontIcon fx:id="welcomeGuideFeatureIconThree" iconLiteral="mdi2c-chart-line" styleClass="welcome-guide-feature-icon"/>
+                        <Label fx:id="welcomeFeatureTitleThree" text="Review" styleClass="welcome-guide-feature-title"/>
+                        <Label fx:id="welcomeFeatureCopyThree" text="Inspect your patterns with stats, logs and weekly views to improve consistency." wrapText="true"
+                               styleClass="welcome-guide-feature-copy"/>
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="10" styleClass="welcome-guide-tip-card">
+                    <Label fx:id="welcomeGuideTipTitleLabel" text="Before you start" styleClass="welcome-guide-tip-title"/>
+                    <Label fx:id="welcomeGuideTipCopyLabel" text="StudyZen works with your own backend. After this short intro, you'll set the server URL and the app will remember it for future launches."
+                           wrapText="true" styleClass="welcome-guide-tip-copy"/>
+                </VBox>
+
+                <HBox spacing="12" alignment="CENTER_LEFT">
+                    <Button text="Skip" onAction="#handleSkipWelcomeGuide" styleClass="button-secondary, welcome-guide-secondary-btn"/>
+                    <Button fx:id="welcomeGuideBackButton" text="Back" onAction="#handleBackWelcomeGuide" managed="false" visible="false" styleClass="button-secondary, welcome-guide-secondary-btn"/>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button fx:id="welcomeGuideContinueButton" text="Continue" onAction="#handleContinueWelcomeGuide" styleClass="button-main, welcome-guide-primary-btn"/>
+                </HBox>
+            </VBox>
+        </StackPane>
+    </GridPane>
+
     <GridPane fx:id="connectionSetupPane" visible="false" managed="false" maxHeight="Infinity" maxWidth="Infinity">
         <columnConstraints>
             <ColumnConstraints percentWidth="25" />
@@ -221,12 +286,13 @@
                                    wrapText="true" styleClass="connection-setup-status"/>
                         </VBox>
 
-                        <HBox spacing="12" alignment="CENTER_LEFT">
-                            <Button text="Use Default Local Server" onAction="#handleUseDefaultServerUrl" styleClass="button-secondary, connection-secondary-btn"/>
-                            <Region HBox.hgrow="ALWAYS" />
-                            <Button text="Test Connection" onAction="#handleTestConnectionSetup" styleClass="button-secondary, connection-secondary-btn"/>
-                            <Button text="Save and Continue" onAction="#handleSaveAndContinueConnectionSetup" styleClass="button-main, connection-primary-btn"/>
-                        </HBox>
+                        <VBox spacing="10" styleClass="connection-setup-actions">
+                            <Button text="Use Default Local Server" onAction="#handleUseDefaultServerUrl" maxWidth="Infinity" styleClass="button-secondary, connection-secondary-btn, connection-default-btn"/>
+                            <HBox spacing="12" alignment="CENTER_LEFT" styleClass="connection-setup-actions-row">
+                                <Button text="Test Connection" onAction="#handleTestConnectionSetup" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="button-secondary, connection-secondary-btn"/>
+                                <Button text="Save and Continue" onAction="#handleSaveAndContinueConnectionSetup" HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="button-main, connection-primary-btn"/>
+                            </HBox>
+                        </VBox>
                     </VBox>
                 </HBox>
             </VBox>
@@ -849,6 +915,7 @@
                                 <Label fx:id="appVersionLabel" text="v1.3.0" styleClass="settings-about-version"/>
                                 <Label text="Plan your weeks, track your focus sessions and visualize your progress to build consistent study habits."
                                        wrapText="true" textAlignment="CENTER" styleClass="settings-about-desc"/>
+                                <Button text="Open Welcome Guide" onAction="#handleOpenWelcomeGuide" styleClass="button-secondary"/>
                             </VBox>
 
                             <VBox spacing="14" styleClass="settings-card-danger">
