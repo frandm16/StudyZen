@@ -7,3 +7,11 @@ export interface ScheduledSession {
     endDate: string;
     task: Task;
 }
+
+export interface ScheduledSessionDTO {
+    tagName: string;
+    taskName: string;
+    title?: string;
+    startDate: string;
+    endDate: string;
+}

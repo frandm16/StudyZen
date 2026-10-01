@@ -4,3 +4,13 @@ export interface TodoItem {
     text: string;
     isCompleted: boolean;
 }
+export interface CreateTodoDTO {
+    date: string;
+    text: string
+}
+
+export interface UpdateTodoDTO {
+    date?: string;
+    text?: string;
+    completed?: boolean
+}

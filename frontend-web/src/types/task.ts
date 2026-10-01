@@ -5,3 +5,9 @@ export interface Task {
     name: string;
     tag: Tag;
 }
+
+export interface CreateTaskDTO {
+    taskName: string;
+    tagName: string;
+    tagColor: string;
+}

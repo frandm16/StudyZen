@@ -10,3 +10,15 @@ export interface Deadline {
     isCompleted: boolean;
     task: Task;
 }
+
+export interface CreateDeadlineDTO {
+    tagName: string;
+    tagColor: string;
+    taskName: string;
+    title: string;
+    description?: string;
+    urgency: string;
+    dueDate: string;
+    allDay: boolean;
+    isCompleted?: boolean;
+}
