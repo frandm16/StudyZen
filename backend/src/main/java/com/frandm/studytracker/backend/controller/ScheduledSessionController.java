@@ -46,8 +46,8 @@ public class ScheduledSessionController {
                 (String) body.get("tagName"),
                 (String) body.get("taskName"),
                 (String) body.get("title"),
-                DateTimeUtils.parseApiTimestamp((String) body.get("startDate")),
-                DateTimeUtils.parseApiTimestamp((String) body.get("endDate"))
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("startDate")),
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("endDate"))
         );
     }
 
@@ -58,8 +58,8 @@ public class ScheduledSessionController {
                 (String) body.get("tagName"),
                 (String) body.get("taskName"),
                 (String) body.get("title"),
-                DateTimeUtils.parseApiTimestamp((String) body.get("startDate")),
-                DateTimeUtils.parseApiTimestamp((String) body.get("endDate"))
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("startDate")),
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("endDate"))
         );
     }
 
@@ -68,8 +68,8 @@ public class ScheduledSessionController {
         return scheduledSessionService.partialUpdate(
                 id,
                 (String) body.get("title"),
-                DateTimeUtils.parseApiTimestamp((String) body.get("startDate")),
-                DateTimeUtils.parseApiTimestamp((String) body.get("endDate"))
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("startDate")),
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("endDate"))
         );
     }
 

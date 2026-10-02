@@ -1,7 +1,11 @@
 package com.frandm.studytracker.backend.util;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public final class DateTimeUtils {
 
@@ -15,10 +19,21 @@ public final class DateTimeUtils {
     }
 
     public static LocalDateTime parseIsoTimestamp(String value) {
-        return LocalDateTime.parse(value);
+        try {
+            return LocalDateTime.parse(value);
+        } catch (DateTimeParseException ignored) {
+            try {
+                return OffsetDateTime.parse(value).toLocalDateTime();
+            } catch (DateTimeParseException ignoredOffset) {
+                return LocalDateTime.ofInstant(Instant.parse(value), ZoneId.systemDefault());
+            }
+        }
     }
 
     public static LocalDateTime parseFlexibleTimestamp(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
         return value.contains("T") ? parseIsoTimestamp(value) : parseApiTimestamp(value);
     }
 

@@ -64,8 +64,8 @@ public class SessionController {
                 (String) body.get("title"),
                 (String) body.get("description"),
                 (Integer) body.get("totalMinutes"),
-                DateTimeUtils.parseApiTimestamp((String) body.get("startDate")),
-                DateTimeUtils.parseApiTimestamp((String) body.get("endDate")),
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("startDate")),
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("endDate")),
                 (Integer) body.get("rating")
         );
     }
@@ -80,8 +80,8 @@ public class SessionController {
                 (String) body.get("title"),
                 (String) body.get("description"),
                 (Integer) body.get("totalMinutes"),
-                DateTimeUtils.parseApiTimestamp((String) body.get("startDate")),
-                DateTimeUtils.parseApiTimestamp((String) body.get("endDate")),
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("startDate")),
+                DateTimeUtils.parseFlexibleTimestamp((String) body.get("endDate")),
                 (Integer) body.get("rating")
         );
     }
