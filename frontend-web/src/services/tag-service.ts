@@ -1,30 +1,31 @@
 import { api } from './api';
+import { normalizeTag } from '../lib/api-flags';
 import type { Tag } from '../types/tag';
 
 export const tagService = {
     getAll: async (): Promise<Tag[]> => {
-        const res = await api.get<Tag[]>('/tags');
-        return res.data;
+        const res = await api.get<unknown[]>('/tags');
+        return res.data.map(normalizeTag);
     },
 
     getAllIncludingArchived: async (): Promise<Tag[]> => {
-        const res = await api.get<Tag[]>('/tags/all');
-        return res.data;
+        const res = await api.get<unknown[]>('/tags/all');
+        return res.data.map(normalizeTag);
     },
 
     getFavorites: async (): Promise<Tag[]> => {
-        const res = await api.get<Tag[]>('/tags/favorites');
-        return res.data;
+        const res = await api.get<unknown[]>('/tags/favorites');
+        return res.data.map(normalizeTag);
     },
 
     getById: async (id: number): Promise<Tag> => {
-        const res = await api.get<Tag>(`/tags/${id}`);
-        return res.data;
+        const res = await api.get<unknown>(`/tags/${id}`);
+        return normalizeTag(res.data);
     },
 
     create: async (tag: { name: string; color: string }): Promise<Tag> => {
-        const res = await api.post<Tag>('/tags', tag);
-        return res.data;
+        const res = await api.post<unknown>('/tags', tag);
+        return normalizeTag(res.data);
     },
 
     toggleFavorite: async (id: number): Promise<Tag> => {
@@ -38,8 +39,8 @@ export const tagService = {
     },
 
     update: async (id: number, changes: Partial<Pick<Tag, 'name' | 'color' | 'isArchived' | 'isFavorite'>>): Promise<Tag> => {
-        const res = await api.patch<Tag>(`/tags/${id}`, changes);
-        return res.data;
+        const res = await api.patch<unknown>(`/tags/${id}`, changes);
+        return normalizeTag(res.data);
     },
 
     delete: async (id: number): Promise<void> => {
