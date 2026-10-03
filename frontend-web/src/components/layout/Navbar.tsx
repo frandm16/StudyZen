@@ -13,48 +13,58 @@ const NAV_ITEMS: NavItem[] = [
     { path: '/dashboard', label: 'Stats' },
 ];
 
+export default function Logo({ className = "" }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 64 64" className={className} role="img" aria-label="StudyZen">
+            <path fill="currentColor" d="M30 22 C23 16 14 15 8 17 V47 C14 45 23 46 30 52 Z" />
+            <path fill="currentColor" d="M34 22 C41 16 50 15 56 17 V47 C50 45 41 46 34 52 Z" />
+        </svg>
+    );
+}
+
 export const Navbar: React.FC = () => {
     const location = useLocation();
 
+    // @ts-ignore
     return (
-        <header className="w-full h-1/15 border-b border-white/10 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-40 select-none">
-            <div className="w-4/7 h-full  flex items-center justify-between z-40 select-none bg-white p-4">
+        <header className="w-full h-16 flex items-center justify-center z-40 select-none">
+            <div className="w-full h-full flex items-center justify-center px-4 z-40 select-none gap-[clamp(1rem,10vw,15.75rem)]">
 
                 <div className="flex h-full items-center gap-3 ">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold text-lg shadow-lg shadow-indigo-600/30">
-                        S
-                    </div>
-                    <span className="font-bold text-xl text-white tracking-wide">
+                    <Logo className="w-12 h-12 text-[#151414]" />
+                    <span className="font-pt font-bold text-xl text-[#151414] tracking-wide">
                       StudyZen
                     </span>
                 </div>
-    
-                <nav className="flex items-center gap-10 h-full ">
-                    {NAV_ITEMS.map((item) => {
-                        const isActive = location.pathname === item.path;
-                        return (
-                            <NavLink
-                                key={item.path}
-                                to={item.path}
-                                className={`px-6 py-2 rounded-lg text-sm font-normal transition-all duration-200 ${
+
+                <nav className="flex items-center gap-10 h-full">
+                    {NAV_ITEMS.map((item) => (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={({ isActive }) =>
+                                [
+                                    "relative flex items-center px-6 py-2 font-normal transition-colors duration-150",
+                                    "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[#151414] after:content-['']",
+                                    "after:origin-center after:transition-transform after:duration-150 after:ease-out motion-reduce:after:transition-none",
                                     isActive
-                                        ? 'bg-slate-800 text-white shadow-sm border border-white/10'
-                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
-                                }`}
-                            >
-                                {item.label}
-                            </NavLink>
-                        );
-                    })}
+                                        ? "text-[#151414] after:scale-x-100"
+                                        : "text-neutral-500 hover:text-[#151414] after:scale-x-0 hover:after:scale-x-100",
+                                ].join(" ")
+                            }
+                        >
+                            {item.label}
+                        </NavLink>
+                    ))}
                 </nav>
 
                 <div className="flex items-center gap-3">
                     <NavLink
                         to="/settings"
-                        className={`p-2 rounded-xl border border-white/5 transition-all duration-200 ${
+                        className={`p-2 rounded-xl border transition-all duration-200 ${
                             location.pathname === '/settings'
-                                ? 'bg-slate-800 text-white border-white/10'
-                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                ? 'text-[#151414] border-[#151414]'
+                                : 'text-neutral-500 hover:text-[#151414]'
                         }`}
                         title="Settings"
                     >

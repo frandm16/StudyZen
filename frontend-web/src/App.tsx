@@ -12,7 +12,7 @@ export function App() {
         <TimerProvider>
             <BrowserRouter>
                 <div
-                    className="flex flex-col h-screen w-screen overflow-hidden select-none bg-slate-950/80"
+                    className="flex flex-col h-screen w-screen overflow-hidden select-none bg-[#f7f6f5]"
                 >
                     <Navbar  />
 
