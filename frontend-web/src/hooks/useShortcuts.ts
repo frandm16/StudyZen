@@ -56,11 +56,14 @@ function normalizeKey(key: string) {
 }
 
 function shortcutSignature(binding: Pick<ShortcutBinding, 'key' | 'ctrl' | 'shift' | 'alt' | 'meta'>) {
+    const primaryModifier = isMacPlatform()
+        ? Boolean(binding.ctrl || binding.meta)
+        : Boolean(binding.ctrl);
     return [
-        binding.ctrl ? 'ctrl' : '',
+        primaryModifier ? (isMacPlatform() ? 'cmd' : 'ctrl') : '',
         binding.shift ? 'shift' : '',
         binding.alt ? 'alt' : '',
-        binding.meta ? 'meta' : '',
+        !isMacPlatform() && binding.meta ? 'meta' : '',
         normalizeKey(binding.key).toLowerCase(),
     ].join('+');
 }
@@ -86,8 +89,15 @@ function matchesBinding(event: KeyboardEvent, binding: ShortcutBinding, mapCtrlT
     if (event.shiftKey !== wantsShift) return false;
     if (event.altKey !== wantsAlt) return false;
 
-    if (mapCtrlToMeta && wantsCtrl && !wantsMeta) {
-        return event.metaKey && !event.ctrlKey;
+    if (mapCtrlToMeta) {
+        const wantsCommand = wantsCtrl || wantsMeta;
+        const hasCommand = event.ctrlKey || event.metaKey;
+        if (wantsCtrl && wantsMeta) {
+            if (!event.ctrlKey || !event.metaKey) return false;
+        } else if (hasCommand !== wantsCommand) {
+            return false;
+        }
+        return true;
     }
 
     return event.ctrlKey === wantsCtrl && event.metaKey === wantsMeta;
@@ -95,10 +105,11 @@ function matchesBinding(event: KeyboardEvent, binding: ShortcutBinding, mapCtrlT
 
 function formatBinding(binding: ShortcutBinding) {
     const parts: string[] = [];
-    if (binding.ctrl) parts.push('Ctrl');
+    if (isMacPlatform() && (binding.ctrl || binding.meta)) parts.push('Cmd');
+    else if (binding.ctrl) parts.push('Ctrl');
     if (binding.shift) parts.push('Shift');
     if (binding.alt) parts.push('Alt');
-    if (binding.meta) parts.push('Meta');
+    if (!isMacPlatform() && binding.meta) parts.push('Meta');
     parts.push(binding.key === ' ' ? 'Space' : binding.key);
     return parts.join('+');
 }
