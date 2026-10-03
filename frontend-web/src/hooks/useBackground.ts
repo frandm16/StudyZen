@@ -78,10 +78,18 @@ export function useBackground(initialSource?: string) {
         isCustom: source.startsWith('blob:'),
         videoProps: source === 'none'
             ? null
-            : { src: source, autoPlay: true as const, loop: true as const, muted: true as const, playsInline: true as const },
+            : {
+                src: source,
+                autoPlay: true as const,
+                loop: true as const,
+                muted: true as const,
+                playsInline: true as const,
+                onError: () => applyBackground('none'),
+            },
         options: BACKGROUND_OPTIONS,
         setBackground: applyBackground,
         setCustomBackground,
+        handleVideoError: () => applyBackground('none'),
         clearBackground: () => applyBackground('none'),
     };
 }
