@@ -1,3 +1,5 @@
+import type { Tag } from './tag';
+
 export interface Session {
     id: number;
     title: string;
@@ -10,13 +12,7 @@ export interface Session {
     task: {
         id: number;
         name: string;
-        tag: {
-            id: number;
-            name: string;
-            color: string;
-            isArchived: boolean;
-            isFavorite: boolean;
-        };
+        tag: Tag;
     };
 }
 export interface CreateSessionDTO {
@@ -29,4 +25,13 @@ export interface CreateSessionDTO {
     tagName: string;
     tagColor: string;
     taskName: string;
+}
+
+export interface SessionQuery {
+    tag?: string;
+    task?: string;
+    start?: string;
+    end?: string;
+    page?: number;
+    size?: number;
 }

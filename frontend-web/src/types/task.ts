@@ -11,3 +11,9 @@ export interface CreateTaskDTO {
     tagName: string;
     tagColor: string;
 }
+
+export interface UpdateTaskDTO {
+    tagName: string;
+    tagColor: string;
+    name: string;
+}
