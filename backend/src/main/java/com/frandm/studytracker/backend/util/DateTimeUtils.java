@@ -3,7 +3,7 @@ package com.frandm.studytracker.backend.util;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
@@ -15,17 +15,23 @@ public final class DateTimeUtils {
     private DateTimeUtils() {}
 
     public static LocalDateTime parseApiTimestamp(String value) {
-        return LocalDateTime.parse(value, API_TIMESTAMP_FORMAT);
+        return parseFlexibleTimestamp(value);
     }
 
     public static LocalDateTime parseIsoTimestamp(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String timestamp = value.trim();
         try {
-            return LocalDateTime.parse(value);
+            return LocalDateTime.parse(timestamp);
         } catch (DateTimeParseException ignored) {
             try {
-                return OffsetDateTime.parse(value).toLocalDateTime();
+                return OffsetDateTime.parse(timestamp)
+                        .withOffsetSameInstant(ZoneOffset.UTC)
+                        .toLocalDateTime();
             } catch (DateTimeParseException ignoredOffset) {
-                return LocalDateTime.ofInstant(Instant.parse(value), ZoneId.systemDefault());
+                return LocalDateTime.ofInstant(Instant.parse(timestamp), ZoneOffset.UTC);
             }
         }
     }
@@ -34,7 +40,12 @@ public final class DateTimeUtils {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return value.contains("T") ? parseIsoTimestamp(value) : parseApiTimestamp(value);
+        String timestamp = value.trim();
+        try {
+            return LocalDateTime.parse(timestamp, API_TIMESTAMP_FORMAT);
+        } catch (DateTimeParseException ignored) {
+            return parseIsoTimestamp(timestamp);
+        }
     }
 
     public static String formatApiTimestamp(LocalDateTime value) {
