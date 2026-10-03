@@ -27,11 +27,11 @@ export const Navbar: React.FC = () => {
 
     // @ts-ignore
     return (
-        <header className="w-full h-16 flex items-center justify-center z-40 select-none">
+        <header className="w-full h-16 flex items-center justify-center z-40 select-none border-b border-[#151414]">
             <div className="w-full h-full flex items-center justify-center px-4 z-40 select-none gap-[clamp(1rem,10vw,15.75rem)]">
 
                 <div className="flex h-full items-center gap-3 ">
-                    <Link to="/timer" aria-label="Ir a Timer" className="group flex h-full items-center gap-3">
+                    <Link to="/timer" aria-label="Go to Timer" className="group flex h-full items-center gap-3">
                         <Logo className="w-12 h-12 text-[#151414] " />
                         <span className="font-pt font-bold text-xl text-[#151414] tracking-wide">
                             StudyZen
@@ -39,7 +39,7 @@ export const Navbar: React.FC = () => {
                     </Link>
                 </div>
 
-                <nav className="flex items-center gap-10 h-full">
+                <nav className="flex items-center gap-5 h-full">
                     {NAV_ITEMS.map((item) => (
                         <NavLink
                             key={item.path}
@@ -63,14 +63,14 @@ export const Navbar: React.FC = () => {
                 <div className="flex items-center gap-3">
                     <NavLink
                         to="/settings"
-                        className={`p-2 rounded-xl border transition-all duration-200 ${
+                        className={`p-1 rounded-xl border transition-all duration-200 ${
                             location.pathname === '/settings'
                                 ? 'text-[#151414] border-[#151414]'
                                 : 'text-neutral-500 hover:text-[#151414]'
                         }`}
                         title="Settings"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="3" strokeWidth="2" />
                             <path
                                 strokeWidth="2"
