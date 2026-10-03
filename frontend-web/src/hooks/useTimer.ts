@@ -78,8 +78,9 @@ function shouldAutoStart(nextPhase: TimerPhase, config: TimerConfig) {
 }
 
 export function useTimer(options: TimerOptions = {}) {
-    const [internal, setInternal] = useState<TimerConfig>(DEFAULT_CONFIG);
-    const config = resolveConfig(options, internal);
+    const [internal, setInternal] = useState<TimerConfig>(() => resolveConfig(options, DEFAULT_CONFIG));
+    const previousOptionsRef = useRef(options);
+    const config = internal;
     const onCompleteRef = useRef(options.onComplete);
 
     const [mode, setModeState] = useState<TimerMode>('pomodoro');
@@ -110,6 +111,28 @@ export function useTimer(options: TimerOptions = {}) {
         elapsedRef.current = secondsElapsed;
         completedRef.current = completedSessions;
     });
+
+    useEffect(() => {
+        const previous = previousOptionsRef.current;
+        const changed: Partial<TimerConfig> = {};
+        const syncOption = <K extends keyof TimerConfig>(key: K, value: TimerOptions[K]) => {
+            if (value !== undefined && value !== previous[key]) changed[key] = value as TimerConfig[K];
+        };
+
+        syncOption('workMinutes', options.workMinutes);
+        syncOption('shortBreakMinutes', options.shortBreakMinutes);
+        syncOption('longBreakMinutes', options.longBreakMinutes);
+        syncOption('countdownMinutes', options.countdownMinutes);
+        syncOption('sessionsUntilLongBreak', options.sessionsUntilLongBreak);
+        syncOption('autoStartBreaks', options.autoStartBreaks);
+        syncOption('autoStartWork', options.autoStartWork);
+        syncOption('countBreakTime', options.countBreakTime);
+        previousOptionsRef.current = options;
+
+        if (Object.keys(changed).length > 0) {
+            setInternal((current) => ({ ...current, ...resolveConfig(changed, current) }));
+        }
+    }, [options]);
 
     const snapshotElapsed = () => {
         if (elapsedStartedAtRef.current === null) return;
@@ -239,7 +262,9 @@ export function useTimer(options: TimerOptions = {}) {
         snapshotElapsed();
         deadlineRef.current = null;
         elapsedStartedAtRef.current = null;
-        advancePomodoro(phaseRef.current);
+        const skippedPhase = phaseRef.current;
+        onCompleteRef.current?.(skippedPhase);
+        advancePomodoro(skippedPhase);
     }, [advancePomodoro]);
 
     useEffect(() => {
@@ -330,6 +355,15 @@ export function useTimer(options: TimerOptions = {}) {
         },
         setSessionsUntilLongBreak: (value: number) => {
             setInternal((current) => ({ ...current, sessionsUntilLongBreak: clampMinutes(value) }));
+        },
+        setAutoStartBreaks: (value: boolean) => {
+            setInternal((current) => ({ ...current, autoStartBreaks: value }));
+        },
+        setAutoStartWork: (value: boolean) => {
+            setInternal((current) => ({ ...current, autoStartWork: value }));
+        },
+        setCountBreakTime: (value: boolean) => {
+            setInternal((current) => ({ ...current, countBreakTime: value }));
         },
     };
 }
