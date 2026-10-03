@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 
 interface NavItem {
     path: string;
@@ -31,10 +31,12 @@ export const Navbar: React.FC = () => {
             <div className="w-full h-full flex items-center justify-center px-4 z-40 select-none gap-[clamp(1rem,10vw,15.75rem)]">
 
                 <div className="flex h-full items-center gap-3 ">
-                    <Logo className="w-12 h-12 text-[#151414]" />
-                    <span className="font-pt font-bold text-xl text-[#151414] tracking-wide">
-                      StudyZen
-                    </span>
+                    <Link to="/timer" aria-label="Ir a Timer" className="group flex h-full items-center gap-3">
+                        <Logo className="w-12 h-12 text-[#151414] " />
+                        <span className="font-pt font-bold text-xl text-[#151414] tracking-wide">
+                            StudyZen
+                        </span>
+                    </Link>
                 </div>
 
                 <nav className="flex items-center gap-10 h-full">
@@ -44,9 +46,9 @@ export const Navbar: React.FC = () => {
                             to={item.path}
                             className={({ isActive }) =>
                                 [
-                                    "relative flex items-center px-6 py-2 font-normal transition-colors duration-150",
+                                    "relative flex items-center px-6 py-2 font-normal transition-colors ",
                                     "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[#151414] after:content-['']",
-                                    "after:origin-center after:transition-transform after:duration-150 after:ease-out motion-reduce:after:transition-none",
+                                    "after:origin-center after:transition-transform after:duration-200 after:ease-out motion-reduce:after:transition-none",
                                     isActive
                                         ? "text-[#151414] after:scale-x-100"
                                         : "text-neutral-500 hover:text-[#151414] after:scale-x-0 hover:after:scale-x-100",
