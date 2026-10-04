@@ -1,14 +1,14 @@
 package com.frandm.studytracker.backend.model;
 
-import com.frandm.studytracker.backend.model.enums.DeadlineType;
-import com.frandm.studytracker.backend.model.enums.UrgencyLevel;
+import com.frandm.studytracker.backend.model.enums.AssessmentType;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "deadlines")
-public class Deadline {
+@Table(name = "assessments")
+public class Assessment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,29 +17,28 @@ public class Deadline {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "subject_id")
+    @Column(name = "subject_id", nullable = false)
     private Long subjectId;
 
-    @Column(name = "topic_id")
-    private Long topicId;
-
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
-    private DeadlineType type = DeadlineType.assignment;
+    @Column(nullable = false)
+    private AssessmentType type = AssessmentType.other;
 
     @Column(nullable = false)
     private String title;
 
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "urgency", nullable = false)
-    private UrgencyLevel urgency = UrgencyLevel.medium;
+    @Column(precision = 5, scale = 2)
+    private BigDecimal grade;
 
-    @Column(name = "all_day", nullable = false)
-    private boolean allDay = false;
+    @Column(name = "max_grade", nullable = false, precision = 5, scale = 2)
+    private BigDecimal maxGrade;
 
-    @Column(name = "due_at", nullable = false)
+    @Column(name = "weight_percent", nullable = false, precision = 5, scale = 2)
+    private BigDecimal weightPercent;
+
+    @Column(name = "due_at")
     private OffsetDateTime dueAt;
 
     @Column(name = "is_completed", nullable = false)
@@ -63,11 +62,8 @@ public class Deadline {
     public Long getSubjectId() { return subjectId; }
     public void setSubjectId(Long subjectId) { this.subjectId = subjectId; }
 
-    public Long getTopicId() { return topicId; }
-    public void setTopicId(Long topicId) { this.topicId = topicId; }
-
-    public DeadlineType getType() { return type; }
-    public void setType(DeadlineType type) { this.type = type; }
+    public AssessmentType getType() { return type; }
+    public void setType(AssessmentType type) { this.type = type; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -75,11 +71,14 @@ public class Deadline {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public UrgencyLevel getUrgency() { return urgency; }
-    public void setUrgency(UrgencyLevel urgency) { this.urgency = urgency; }
+    public BigDecimal getGrade() { return grade; }
+    public void setGrade(BigDecimal grade) { this.grade = grade; }
 
-    public boolean isAllDay() { return allDay; }
-    public void setAllDay(boolean allDay) { this.allDay = allDay; }
+    public BigDecimal getMaxGrade() { return maxGrade; }
+    public void setMaxGrade(BigDecimal maxGrade) { this.maxGrade = maxGrade; }
+
+    public BigDecimal getWeightPercent() { return weightPercent; }
+    public void setWeightPercent(BigDecimal weightPercent) { this.weightPercent = weightPercent; }
 
     public OffsetDateTime getDueAt() { return dueAt; }
     public void setDueAt(OffsetDateTime dueAt) { this.dueAt = dueAt; }

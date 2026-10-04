@@ -1,7 +1,9 @@
 package com.frandm.studytracker.backend.model;
 
+import com.frandm.studytracker.backend.model.enums.ScheduledSessionStatus;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "scheduled_sessions")
@@ -11,28 +13,54 @@ public class ScheduledSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "task_id", nullable = false)
-    private Task task;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
-    @Column(name = "title")
+    @Column(name = "topic_id", nullable = false)
+    private Long topicId;
+
     private String title;
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDateTime startDate;
+    @Column(name = "starts_at", nullable = false)
+    private OffsetDateTime startsAt;
 
-    @Column(name = "end_date", nullable = false)
-    private LocalDateTime endDate;
+    @Column(name = "ends_at", nullable = false)
+    private OffsetDateTime endsAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ScheduledSessionStatus status = ScheduledSessionStatus.scheduled;
+
+    @Column(name = "created_at")
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
 
     public Long getId() { return id; }
-    public Task getTask() { return task; }
-    public String getTitle() { return title; }
-    public LocalDateTime getStartDate() { return startDate; }
-    public LocalDateTime getEndDate() { return endDate; }
-
     public void setId(Long id) { this.id = id; }
-    public void setTask(Task task) { this.task = task; }
+
+    public UUID getUserId() { return userId; }
+    public void setUserId(UUID userId) { this.userId = userId; }
+
+    public Long getTopicId() { return topicId; }
+    public void setTopicId(Long topicId) { this.topicId = topicId; }
+
+    public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
-    public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }
-    public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }
+
+    public OffsetDateTime getStartsAt() { return startsAt; }
+    public void setStartsAt(OffsetDateTime startsAt) { this.startsAt = startsAt; }
+
+    public OffsetDateTime getEndsAt() { return endsAt; }
+    public void setEndsAt(OffsetDateTime endsAt) { this.endsAt = endsAt; }
+
+    public ScheduledSessionStatus getStatus() { return status; }
+    public void setStatus(ScheduledSessionStatus status) { this.status = status; }
+
+    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+    public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
