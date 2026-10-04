@@ -12,6 +12,7 @@ import { tagService } from '../services/tag-service';
 import { taskService } from '../services/task-service';
 import type { Tag } from '../types/tag';
 import type { Task } from '../types/task';
+import {SegmentedControl} from "../components/ui/SegmentedControl.tsx";
 
 const MODES: { value: TimerMode; label: string }[] = [
     { value: 'pomodoro', label: 'Pomodoro' },
@@ -183,8 +184,7 @@ export function TimerPage() {
         },
         !pickerOpen && !saveOpen,
     );
-    const startKey = shortcuts.find((item) => item.action === 'toggleStartPause')?.key;
-
+    shortcuts.find((item) => item.action === 'toggleStartPause')?.key;
     const isBreak = timer.mode === 'pomodoro' && timer.phase !== 'work';
     const tone: Tone = countdownDone
         ? 'done'
@@ -219,28 +219,17 @@ export function TimerPage() {
                     <div
                         role="radiogroup"
                         aria-label="Timer mode"
-                        className="mx-auto grid w-full max-w-sm grid-cols-3 gap-1 rounded-full bg-neutral-100 p-1"
+                        className="mx-auto  w-full flex max-w-sm rounded-full bg-neutral-100 py-1 h-10"
                     >
-                        {MODES.map(({ value, label }) => {
-                            const active = timer.mode === value;
-                            return (
-                                <button
-                                    key={value}
-                                    role="radio"
-                                    aria-checked={active}
-                                    disabled={timer.status !== 'idle'}
-                                    title={timer.status !== 'idle' ? 'Restart the timer to change mode' : undefined}
-                                    onClick={() => timer.setMode(value)}
-                                    className={`rounded-full px-3 py-1.5 text-sm transition-colors disabled:cursor-default ${focusRing} ${
-                                        active
-                                            ? 'bg-white font-medium text-[#151414] shadow-sm'
-                                            : 'text-neutral-500 enabled:hover:text-[#151414]'
-                                    }`}
-                                >
-                                    {label}
-                                </button>
-                            );
-                        })}
+                        <SegmentedControl
+                            options={MODES}
+                            value={timer.mode}
+                            onChange={timer.setMode}
+                            disabled={timer.status !== "idle"}
+                            ariaLabel="Timer mode"
+                            focusRing={focusRing}
+                            className="mx-auto max-w-sm"
+                        />
                     </div>
 
                     <div className="mt-8 flex flex-col items-center">
@@ -282,11 +271,10 @@ export function TimerPage() {
 
                     <button
                         onClick={() => setPickerOpen(true)}
-                        title={selectedTask ? 'Change tag and task' : 'Choose what you are studying'}
                         className={`group mx-auto mt-6 flex w-full max-w-sm items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${focusRing} ${
                             selectedTask
                                 ? 'border-neutral-200 bg-neutral-50 hover:border-[#151414]'
-                                : 'border-dashed border-neutral-300 hover:border-[#151414]'
+                                : 'border-dashed border-2 border-neutral-300 hover:border-[#151414]'
                         }`}
                     >
                         {selectedTag ? (
@@ -315,7 +303,6 @@ export function TimerPage() {
                         <button
                             onClick={timer.toggle}
                             onMouseUp={(e) => e.currentTarget.blur()}
-                            title={startKey ? `Shortcut: ${startKey}` : undefined}
                             className={`min-w-36 rounded-full bg-[#151414] px-10 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-85 ${focusRing}`}
                         >
                             {startLabel}
