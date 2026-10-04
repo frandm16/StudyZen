@@ -40,7 +40,7 @@ const focusRing =
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4287f5]';
 
 const secondaryButton =
-    'rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-700 transition-colors ' +
+    'rounded-full cursor-pointer border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-700 transition-colors ' +
     'hover:border-[#151414] hover:text-[#151414] disabled:cursor-not-allowed disabled:opacity-40 ' +
     'disabled:hover:border-neutral-300 disabled:hover:text-neutral-700 ' +
     focusRing;
@@ -271,7 +271,7 @@ export function TimerPage() {
 
                     <button
                         onClick={() => setPickerOpen(true)}
-                        className={`group mx-auto mt-6 flex w-full max-w-sm items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${focusRing} ${
+                        className={`group cursor-pointer mx-auto mt-6 flex w-full max-w-sm items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${focusRing} ${
                             selectedTask
                                 ? 'border-neutral-200 bg-neutral-50 hover:border-[#151414]'
                                 : 'border-dashed border-2 border-neutral-300 hover:border-[#151414]'
@@ -303,7 +303,7 @@ export function TimerPage() {
                         <button
                             onClick={timer.toggle}
                             onMouseUp={(e) => e.currentTarget.blur()}
-                            className={`min-w-36 rounded-full bg-[#151414] px-10 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-85 ${focusRing}`}
+                            className={`min-w-36 cursor-pointer rounded-full bg-[#151414] px-10 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-85 ${focusRing}`}
                         >
                             {startLabel}
                         </button>

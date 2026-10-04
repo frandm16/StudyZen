@@ -119,7 +119,7 @@ export const SegmentedControl = <T extends string>({
                         disabled={disabled}
                         onClick={() => onChange(optionValue)}
                         className={[
-                            "relative z-10 flex-1 rounded-full text-sm",
+                            "relative cursor-pointer z-10 flex-1 rounded-full text-sm",
                             "transition-colors duration-300",
                             "motion-reduce:transition-none",
                             "disabled:cursor-default disabled:opacity-60",
