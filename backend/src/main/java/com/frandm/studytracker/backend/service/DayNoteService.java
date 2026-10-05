@@ -2,9 +2,13 @@ package com.frandm.studytracker.backend.service;
 
 import com.frandm.studytracker.backend.model.DayNote;
 import com.frandm.studytracker.backend.repository.DayNoteRepository;
+import com.frandm.studytracker.backend.security.CurrentUser;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class DayNoteService {
@@ -15,17 +19,20 @@ public class DayNoteService {
         this.dayNoteRepository = dayNoteRepository;
     }
 
-    public List<DayNote> getAll() {
-        return dayNoteRepository.findAll();
+    public List<DayNote> list() {
+        UUID userId = CurrentUser.id();
+        return dayNoteRepository.findByUserIdOrderByDateDesc(userId);
     }
 
     public DayNote getById(Long id) {
-        return dayNoteRepository.findById(id)
+        UUID userId = CurrentUser.id();
+        return dayNoteRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new RuntimeException("DayNote not found: " + id));
     }
 
     public DayNote getOrEmpty(LocalDate date) {
-        return dayNoteRepository.findByDate(date).orElseGet(() -> {
+        UUID userId = CurrentUser.id();
+        return dayNoteRepository.findByUserIdAndDate(userId, date).orElseGet(() -> {
             DayNote empty = new DayNote();
             empty.setDate(date);
             empty.setContent("");
@@ -33,31 +40,55 @@ public class DayNoteService {
         });
     }
 
-    public DayNote create(LocalDate date, String content) {
-        return dayNoteRepository.findByDate(date).orElseGet(() -> {
+    public DayNote create(Map<String, Object> body) {
+        UUID userId = CurrentUser.id();
+        LocalDate date = LocalDate.parse((String) body.get("date"));
+        String content = (String) body.get("content");
+
+        // Return existing note for this date if one exists, only updating if absent
+        return dayNoteRepository.findByUserIdAndDate(userId, date).orElseGet(() -> {
             DayNote note = new DayNote();
+            note.setUserId(userId);
             note.setDate(date);
             note.setContent(content != null ? content : "");
+            note.setUpdatedAt(OffsetDateTime.now());
             return dayNoteRepository.save(note);
         });
     }
 
-    public DayNote fullUpdate(Long id, LocalDate date, String content) {
-        DayNote note = dayNoteRepository.findById(id)
+    public DayNote fullUpdate(Long id, Map<String, Object> body) {
+        UUID userId = CurrentUser.id();
+        DayNote note = dayNoteRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new RuntimeException("DayNote not found: " + id));
-        if (date != null) note.setDate(date);
+
+        LocalDate date = LocalDate.parse((String) body.get("date"));
+        String content = (String) body.get("content");
+
+        note.setDate(date);
         note.setContent(content != null ? content : "");
+        note.setUpdatedAt(OffsetDateTime.now());
+
         return dayNoteRepository.save(note);
     }
 
-    public DayNote partialUpdate(Long id, String content) {
-        DayNote note = dayNoteRepository.findById(id)
+    public DayNote partialUpdate(Long id, Map<String, Object> body) {
+        UUID userId = CurrentUser.id();
+        DayNote note = dayNoteRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new RuntimeException("DayNote not found: " + id));
-        if (content != null) note.setContent(content);
+
+        if (body.containsKey("content")) {
+            String content = (String) body.get("content");
+            note.setContent(content != null ? content : "");
+        }
+
+        note.setUpdatedAt(OffsetDateTime.now());
         return dayNoteRepository.save(note);
     }
 
     public void delete(Long id) {
-        dayNoteRepository.deleteById(id);
+        UUID userId = CurrentUser.id();
+        DayNote note = dayNoteRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new RuntimeException("DayNote not found: " + id));
+        dayNoteRepository.delete(note);
     }
 }
