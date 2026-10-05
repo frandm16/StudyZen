@@ -10,7 +10,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notes")
-@CrossOrigin
 public class DayNoteController {
 
     private final DayNoteService dayNoteService;

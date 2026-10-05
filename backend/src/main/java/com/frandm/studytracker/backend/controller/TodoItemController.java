@@ -10,7 +10,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/todos")
-@CrossOrigin
 public class TodoItemController {
 
     private final TodoItemService todoItemService;

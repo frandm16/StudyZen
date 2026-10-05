@@ -43,6 +43,11 @@ public class StudySession {
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = OffsetDateTime.now();
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

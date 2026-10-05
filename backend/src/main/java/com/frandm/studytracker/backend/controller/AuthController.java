@@ -1,7 +1,8 @@
 package com.frandm.studytracker.backend.controller;
 
+import com.frandm.studytracker.backend.model.User;
+import com.frandm.studytracker.backend.security.CurrentUser;
 import com.frandm.studytracker.backend.service.AuthService;
-import com.frandm.studytracker.backend.service.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +14,9 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final TokenService tokenService;
 
-    public AuthController(AuthService authService, TokenService tokenService) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.tokenService = tokenService;
     }
 
     @PostMapping("/register")
@@ -49,7 +48,23 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Void> logout(@RequestBody(required = false) Map<String, String> body) {
+        String refreshToken = body != null ? body.get("refreshToken") : null;
+        try {
+            authService.logout(refreshToken, CurrentUser.id());
+        } catch (Exception ignored) {
+            // Ignored if user context not present during logout
+        }
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<User> getMe() {
+        return ResponseEntity.ok(authService.getMe(CurrentUser.id()));
+    }
+
+    @PatchMapping("/profile")
+    public ResponseEntity<User> updateProfile(@RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(authService.updateProfile(CurrentUser.id(), body));
     }
 }

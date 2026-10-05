@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/scheduled")
-@CrossOrigin
 public class ScheduledSessionController {
 
     private final ScheduledSessionService scheduledSessionService;

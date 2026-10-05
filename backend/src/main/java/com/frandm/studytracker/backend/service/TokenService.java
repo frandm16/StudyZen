@@ -84,6 +84,15 @@ public class TokenService {
         return new TokenPair(newAccess, newRaw);
     }
 
+    public void revokeToken(String rawRefreshToken) {
+        if (rawRefreshToken == null || rawRefreshToken.isBlank()) return;
+        String hash = sha256(rawRefreshToken);
+        refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(hash).ifPresent(token -> {
+            token.setRevokedAt(OffsetDateTime.now());
+            refreshTokenRepository.save(token);
+        });
+    }
+
     public void revokeAllUserTokens(UUID userId) {
         refreshTokenRepository.revokeAllByUserId(userId, OffsetDateTime.now());
     }

@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/deadlines")
-@CrossOrigin
 public class DeadlineController {
 
     private final DeadlineService deadlineService;

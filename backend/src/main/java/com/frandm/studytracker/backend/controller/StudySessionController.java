@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sessions")
-@CrossOrigin
 public class StudySessionController {
 
     private final StudySessionService studySessionService;

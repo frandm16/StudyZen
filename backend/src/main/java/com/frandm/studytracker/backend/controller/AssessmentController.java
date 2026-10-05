@@ -13,7 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/assessments")
-@CrossOrigin
 public class AssessmentController {
 
     private final AssessmentService assessmentService;

@@ -31,6 +31,12 @@ public class UserSettings {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
+    @PrePersist
+    @PreUpdate
+    protected void onSave() {
+        updatedAt = OffsetDateTime.now();
+    }
+
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
 

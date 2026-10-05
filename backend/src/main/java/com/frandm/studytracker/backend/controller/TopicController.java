@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/topics")
-@CrossOrigin
 public class TopicController {
 
     private final TopicService topicService;

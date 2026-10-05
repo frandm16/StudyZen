@@ -10,7 +10,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/subjects")
-@CrossOrigin
 public class SubjectController {
 
     private final SubjectService subjectService;
