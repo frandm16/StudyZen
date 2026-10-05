@@ -3,14 +3,22 @@ export interface TodoItem {
     date: string;
     text: string;
     isCompleted: boolean;
+    subjectId?: number;
+    topicId?: number;
+    completedAt?: string;
 }
+
 export interface CreateTodoDTO {
     date: string;
-    text: string
+    text: string;
+    subjectId?: number;
+    topicId?: number;
 }
 
 export interface UpdateTodoDTO {
     date?: string;
     text?: string;
-    completed?: boolean
+    isCompleted?: boolean;
+    subjectId?: number;
+    topicId?: number;
 }
