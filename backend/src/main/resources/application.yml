@@ -47,3 +47,4 @@ app:
 
 server:
   port: ${BACKEND_PRIVATE_PORT}
+  forward-headers-strategy: framework
