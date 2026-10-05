@@ -26,6 +26,12 @@ public class User {
     @Column(name = "display_name")
     private String displayName;
 
+    @Column(name = "username", unique = true)
+    private String username;
+
+    @Column(name = "bio")
+    private String bio;
+
     @Column(name = "avatar_url")
     private String avatarUrl;
 
@@ -76,6 +82,12 @@ public class User {
 
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }

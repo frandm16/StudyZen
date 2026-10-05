@@ -122,6 +122,13 @@ public class AuthService {
             user.setPasswordHash(passwordEncoder.encode(newPassword));
         }
 
+        if (body.containsKey("username")) {
+            String newUsername = body.get("username") != null ? body.get("username").trim() : null;
+            user.setUsername(newUsername);
+        }
+        if (body.containsKey("bio")) {
+            user.setBio(body.get("bio"));
+        }
         if (body.containsKey("avatarUrl")) {
             user.setAvatarUrl(body.get("avatarUrl"));
         }
