@@ -168,7 +168,7 @@ CREATE TABLE refresh_tokens (
 
     user_agent TEXT,
 
-    ip_address INET,
+    ip_address VARCHAR(45),
 
     expires_at TIMESTAMPTZ NOT NULL,
 
