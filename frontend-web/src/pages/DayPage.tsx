@@ -6,20 +6,20 @@ import { dayNoteService } from '../services/day-note-service';
 import { deadlineService } from '../services/deadline-service';
 import { scheduledSessionService } from '../services/scheduled-session-service';
 import { sessionService } from '../services/session-service';
-import { tagService } from '../services/tag-service';
-import { taskService } from '../services/task-service';
+import { subjectService } from '../services/subject-service';
+import { topicService } from '../services/topic-service';
 import { todoService } from '../services/todo-service';
 import type { DayNote } from '../types/day-note';
 import type { Deadline } from '../types/deadline';
 import type { ScheduledSession } from '../types/scheduled-session';
 import type { Session } from '../types/session';
-import type { Tag } from '../types/tag';
-import type { Task } from '../types/task';
+import type { Subject } from '../types/subject';
+import type { Topic } from '../types/topic';
 import type { TodoItem } from '../types/todo-item';
 
 export interface StudyTarget {
     title: string;
-    task?: Task;
+    topic?: Topic;
 }
 
 interface DayPageProps {
@@ -122,18 +122,22 @@ const buildEvents = (
     sessions: Session[],
     dayKey: string,
     now: Date,
+    topicsMap: Map<number, Topic>,
+    subjectsMap: Map<number, Subject>,
 ): TimelineEvent[] => {
     const dayStart = fromKey(dayKey);
     const fromScheduled = scheduled.map<TimelineEvent>((item) => {
-        const start = new Date(item.startDate);
-        const end = new Date(item.endDate);
+        const start = new Date(item.startedAt);
+        const end = new Date(item.endedAt);
+        const topic = topicsMap.get(item.topicId);
+        const subject = topic ? subjectsMap.get(topic.subjectId) : undefined;
         return {
             key: `scheduled-${item.id}`,
             kind: 'scheduled',
             id: item.id,
-            title: item.title?.trim() || item.task.name,
-            subtitle: item.task.name,
-            color: item.task.tag.color,
+            title: item.title?.trim() || topic?.name || 'Study session',
+            subtitle: topic?.name || 'Study',
+            color: subject?.color || '#a3a3a3',
             start: minutesInDay(start, dayStart),
             end: minutesInDay(end, dayStart),
             startLabel: formatClock(start),
@@ -142,15 +146,17 @@ const buildEvents = (
         };
     });
     const fromSessions = sessions.map<TimelineEvent>((item) => {
-        const start = new Date(item.startDate);
-        const end = new Date(item.endDate);
+        const start = new Date(item.startedAt);
+        const end = new Date(item.endedAt);
+        const topic = topicsMap.get(item.topicId);
+        const subject = topic ? subjectsMap.get(topic.subjectId) : undefined;
         return {
             key: `session-${item.id}`,
             kind: 'session',
             id: item.id,
             title: item.title,
-            subtitle: item.task.name,
-            color: item.task.tag.color,
+            subtitle: topic?.name || 'Study',
+            color: subject?.color || '#a3a3a3',
             start: minutesInDay(start, dayStart),
             end: minutesInDay(end, dayStart),
             startLabel: formatClock(start),
@@ -376,18 +382,18 @@ function InlineAdd({
 
 function ItemDialog({
                         kind,
-                        task,
+                        topic,
                         saving,
                         error,
-                        onPickTask,
+                        onPickTopic,
                         onCancel,
                         onSubmit,
                     }: {
     kind: DialogKind;
-    task: Task | null;
+    topic: Topic | null;
     saving: boolean;
     error: string | null;
-    onPickTask: () => void;
+    onPickTopic: () => void;
     onCancel: () => void;
     onSubmit: (values: ItemValues) => void;
 }) {
@@ -408,7 +414,7 @@ function ItemDialog({
 
     const isDeadline = kind === 'deadline';
     const validTimes = isDeadline ? allDay || Boolean(time) : Boolean(start) && Boolean(end) && start < end;
-    const canSubmit = Boolean(task) && validTimes && (!isDeadline || title.trim().length > 0) && !saving;
+    const canSubmit = Boolean(topic) && validTimes && (!isDeadline || title.trim().length > 0) && !saving;
 
     return (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label={isDeadline ? 'Add deadline' : 'Schedule session'}>
@@ -417,19 +423,19 @@ function ItemDialog({
 
                 <div className="mt-5 flex flex-col gap-4">
                     <button
-                        onClick={onPickTask}
+                        onClick={onPickTopic}
                         className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors hover:border-[#151414] ${focusRing} ${
-                            task ? 'border-neutral-300' : 'border-dashed border-neutral-300'
+                            topic ? 'border-neutral-300' : 'border-dashed border-neutral-300'
                         }`}
                     >
                         <span
                             className="h-3 w-3 shrink-0 rounded-full"
-                            style={{ backgroundColor: task?.tag.color ?? '#d4d4d4' }}
+                            style={{ backgroundColor: '#d4d4d4' }}
                             aria-hidden
                         />
                         <span className="min-w-0 flex-1">
-                            <span className="block truncate font-medium text-[#151414]">{task ? task.name : 'Choose a tag and task'}</span>
-                            {task && <span className="block truncate text-xs text-neutral-500">{task.tag.name}</span>}
+                            <span className="block truncate font-medium text-[#151414]">{topic ? topic.name : 'Choose a subject and topic'}</span>
+                            {topic && <span className="block truncate text-xs text-neutral-500">Topic</span>}
                         </span>
                     </button>
 
@@ -513,8 +519,10 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
     const [selected, setSelected] = useState(() => fromKey(toKey(new Date())));
     const [now, setNow] = useState(() => new Date());
-    const [tags, setTags] = useState<Tag[]>([]);
-    const [tasks, setTasks] = useState<Task[]>([]);
+    const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [topics, setTopics] = useState<Topic[]>([]);
+    const [topicsMap, setTopicsMap] = useState<Map<number, Topic>>(new Map());
+    const [subjectsMap, setSubjectsMap] = useState<Map<number, Subject>>(new Map());
     const [todos, setTodos] = useState<TodoItem[]>([]);
     const [deadlines, setDeadlines] = useState<Deadline[]>([]);
     const [scheduled, setScheduled] = useState<ScheduledSession[]>([]);
@@ -526,7 +534,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const [addingTodo, setAddingTodo] = useState(false);
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const [dialog, setDialog] = useState<DialogKind | null>(null);
-    const [dialogTask, setDialogTask] = useState<Task | null>(null);
+    const [dialogTopic, setDialogTopic] = useState<Topic | null>(null);
     const [dialogSaving, setDialogSaving] = useState(false);
     const [dialogError, setDialogError] = useState<string | null>(null);
     const [pickerOpen, setPickerOpen] = useState(false);
@@ -540,12 +548,14 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
     useEffect(() => {
         let active = true;
-        Promise.all([tagService.getAll(), taskService.getAll(), dayNoteService.getAll()])
-            .then(([loadedTags, loadedTasks, loadedNotes]) => {
+        Promise.all([subjectService.getAll(), topicService.getAll(), dayNoteService.getAll()])
+            .then(([loadedSubjects, loadedTopics, loadedNotes]) => {
                 if (!active) return;
-                setTags(loadedTags);
-                setTasks(loadedTasks);
-                setNotes(Object.fromEntries(loadedNotes.map((note) => [note.date.slice(0, 10), note])));
+                setSubjects(loadedSubjects);
+                setTopics(loadedTopics);
+                setTopicsMap(new Map(loadedTopics.map((t) => [t.id, t])));
+                setSubjectsMap(new Map(loadedSubjects.map((s) => [s.id, s])));
+                setNotes(Object.fromEntries(loadedNotes.map((note: DayNote) => [note.date.slice(0, 10), note])));
             })
             .catch((failure) => {
                 if (active) setError(getApiErrorMessage(failure));
@@ -593,11 +603,11 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     }, [selected]);
 
     const sortedDeadlines = useMemo(
-        () => [...deadlines].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()),
+        () => [...deadlines].sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime()),
         [deadlines],
     );
 
-    const events = useMemo(() => buildEvents(scheduled, sessions, selectedKey, now), [scheduled, sessions, selectedKey, now]);
+    const events = useMemo(() => buildEvents(scheduled, sessions, selectedKey, now, topicsMap, subjectsMap), [scheduled, sessions, selectedKey, now, topicsMap, subjectsMap]);
     const placedEvents = useMemo(() => placeEvents(events), [events]);
 
     const todosDone = todos.filter((todo) => todo.isCompleted).length;
@@ -634,7 +644,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                         return next;
                     });
                 } else {
-                    const updated = await dayNoteService.patch(existing.id, draft);
+                    const updated = await dayNoteService.patch(existing.id, { content: draft });
                     setNotes((current) => ({ ...current, [selectedKey]: updated }));
                 }
             } else if (draft.trim()) {
@@ -659,7 +669,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
     const toggleTodo = async (todo: TodoItem) => {
         try {
-            const updated = await todoService.patch(todo.id, { completed: !todo.isCompleted });
+            const updated = await todoService.patch(todo.id, { isCompleted: !todo.isCompleted });
             setTodos((current) => current.map((item) => (item.id === todo.id ? updated : item)));
         } catch (failure) {
             fail(failure);
@@ -705,15 +715,15 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     };
 
     const startStudy = (target: StudyTarget) => {
-        if (target.task) {
-            setSelectedTagId(target.task.tag.id);
-            setSelectedTaskId(target.task.id);
+        if (target.topic) {
+            setSelectedTagId(target.topic.subjectId);
+            setSelectedTaskId(target.topic.id);
         }
         onStudy?.(target);
     };
 
     const openDialog = (kind: DialogKind) => {
-        setDialogTask(tasks.find((task) => task.id === selectedTaskId) ?? null);
+        setDialogTopic(topics.find((topic) => topic.id === selectedTaskId) ?? null);
         setDialogError(null);
         setDialog(kind);
     };
@@ -724,28 +734,26 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     };
 
     const submitDialog = async (values: ItemValues) => {
-        if (!dialog || !dialogTask) return;
+        if (!dialog || !dialogTopic) return;
         setDialogSaving(true);
         setDialogError(null);
         try {
             if (dialog === 'deadline') {
                 const created = await deadlineService.create({
-                    tagName: dialogTask.tag.name,
-                    tagColor: dialogTask.tag.color,
-                    taskName: dialogTask.name,
                     title: values.title.trim(),
-                    urgency: values.urgency,
-                    dueDate: `${selectedKey}T${values.allDay ? '23:59' : values.time}:00`,
+                    type: 'assignment',
+                    urgency: values.urgency as any,
+                    dueAt: `${selectedKey}T${values.allDay ? '23:59' : values.time}:00`,
                     allDay: values.allDay,
+                    topicId: dialogTopic.id,
                 });
                 setDeadlines((current) => [...current, created]);
             } else {
                 const created = await scheduledSessionService.create({
-                    tagName: dialogTask.tag.name,
-                    taskName: dialogTask.name,
                     title: values.title.trim() || undefined,
-                    startDate: `${selectedKey}T${values.start}:00`,
-                    endDate: `${selectedKey}T${values.end}:00`,
+                    startedAt: `${selectedKey}T${values.start}:00`,
+                    endedAt: `${selectedKey}T${values.end}:00`,
+                    topicId: dialogTopic.id,
                 });
                 setScheduled((current) => [...current, created]);
             }
@@ -757,10 +765,10 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         }
     };
 
-    const handlePicked = (tag: Tag, task: Task) => {
-        setTags((current) => (current.some((item) => item.id === tag.id) ? current : [...current, tag]));
-        setTasks((current) => (current.some((item) => item.id === task.id) ? current : [...current, task]));
-        setDialogTask(task);
+    const handlePicked = (subject: Subject, topic: Topic) => {
+        setSubjects((current) => (current.some((item) => item.id === subject.id) ? current : [...current, subject]));
+        setTopics((current) => (current.some((item) => item.id === topic.id) ? current : [...current, topic]));
+        setDialogTopic(topic);
         setPickerOpen(false);
     };
 
@@ -922,14 +930,16 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                 <li className="py-6 text-center text-sm text-neutral-400">No deadlines for this day</li>
                             )}
                             {sortedDeadlines.map((deadline) => {
-                                const due = new Date(deadline.dueDate);
+                                const due = new Date(deadline.dueAt);
                                 const urgent = !deadline.isCompleted && due.getTime() <= now.getTime() + 24 * 3600 * 1000;
                                 const menuId = `deadline-${deadline.id}`;
+                                const topic = deadline.topicId ? topicsMap.get(deadline.topicId) : undefined;
+                                const subject = topic ? subjectsMap.get(topic.subjectId) : (deadline.subjectId ? subjectsMap.get(deadline.subjectId) : undefined);
                                 return (
                                     <li key={deadline.id} className="flex items-center gap-3 px-1 py-3.5">
                                         <span
                                             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                                            style={{ backgroundColor: deadline.task.tag.color, color: readableText(deadline.task.tag.color) }}
+                                            style={{ backgroundColor: subject?.color || '#d4d4d4', color: readableText(subject?.color || '#d4d4d4') }}
                                         >
                                             <DocIcon className="h-4 w-4" />
                                         </span>
@@ -942,7 +952,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                             <p className={`truncate text-[15px] font-medium ${deadline.isCompleted ? 'line-through' : ''}`}>
                                                 {deadline.title}
                                             </p>
-                                            <p className="truncate text-[13px] text-neutral-500">{deadline.task.name}</p>
+                                            <p className="truncate text-[13px] text-neutral-500">{topic?.name || subject?.name || 'Study'}</p>
                                         </div>
                                         <span
                                             className={`hidden whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold sm:inline ${
@@ -957,7 +967,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                             {urgencyLabel(deadline.urgency)}
                                         </span>
                                         <button
-                                            onClick={() => startStudy({ title: deadline.title, task: deadline.task })}
+                                            onClick={() => startStudy({ title: deadline.title, topic })}
                                             className={`rounded-full border border-neutral-300 px-3 py-1 text-xs text-neutral-600 transition-colors hover:border-[#151414] hover:text-[#151414] ${focusRing}`}
                                         >
                                             Study
@@ -1051,10 +1061,10 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
             {dialog && (
                 <ItemDialog
                     kind={dialog}
-                    task={dialogTask}
+                    topic={dialogTopic}
                     saving={dialogSaving}
                     error={dialogError}
-                    onPickTask={() => setPickerOpen(true)}
+                    onPickTopic={() => setPickerOpen(true)}
                     onCancel={closeDialog}
                     onSubmit={submitDialog}
                 />
@@ -1062,18 +1072,24 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
             {pickerOpen && (
                 <TaskTagDialog
-                    tags={tags}
-                    tasks={tasks}
-                    initialTagId={dialogTask?.tag.id ?? null}
-                    initialTaskId={dialogTask?.id ?? null}
+                    subjects={subjects}
+                    topics={topics}
+                    initialSubjectId={dialogTopic?.subjectId ?? null}
+                    initialTopicId={dialogTopic?.id ?? null}
                     onClose={() => setPickerOpen(false)}
                     onConfirm={handlePicked}
                     onClear={() => {
-                        setDialogTask(null);
+                        setDialogTopic(null);
                         setPickerOpen(false);
                     }}
-                    onTagCreated={(tag) => setTags((current) => (current.some((t) => t.id === tag.id) ? current : [...current, tag]))}
-                    onTaskCreated={(task) => setTasks((current) => (current.some((t) => t.id === task.id) ? current : [...current, task]))}
+                    onSubjectCreated={(subject) => {
+                        setSubjects((current) => (current.some((t) => t.id === subject.id) ? current : [...current, subject]));
+                        setSubjectsMap((current) => new Map(current).set(subject.id, subject));
+                    }}
+                    onTopicCreated={(topic) => {
+                        setTopics((current) => (current.some((t) => t.id === topic.id) ? current : [...current, topic]));
+                        setTopicsMap((current) => new Map(current).set(topic.id, topic));
+                    }}
                 />
             )}
         </div>

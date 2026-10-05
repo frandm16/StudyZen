@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 
 import { NavbarDesktop } from "./NavbarDesktop";
 import { NavbarMobile } from "./NavbarMobile";
+import { UserProfile } from "./UserProfile";
 import {
     Logo,
     MenuIcon,
@@ -107,6 +108,8 @@ export const Navbar: React.FC = () => {
                         >
                             <SettingsIcon />
                         </NavLink>
+
+                        <UserProfile focusRing={focusRing} />
 
                         <button
                             type="button"

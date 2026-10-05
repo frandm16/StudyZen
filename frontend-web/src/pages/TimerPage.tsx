@@ -8,10 +8,10 @@ import type { TimerMode, TimerPhase } from '../hooks/useTimer';
 import { formatRequiredApiTimestamp } from '../lib/api-datetime';
 import { getApiErrorMessage } from '../services/api';
 import { sessionService } from '../services/session-service';
-import { tagService } from '../services/tag-service';
-import { taskService } from '../services/task-service';
-import type { Tag } from '../types/tag';
-import type { Task } from '../types/task';
+import { subjectService } from '../services/subject-service';
+import { topicService } from '../services/topic-service';
+import type { Subject } from '../types/subject';
+import type { Topic } from '../types/topic';
 import {SegmentedControl} from "../components/ui/SegmentedControl.tsx";
 
 const MODES: { value: TimerMode; label: string }[] = [
@@ -66,8 +66,8 @@ export function TimerPage() {
     const timer = useTimerContext();
     const { selectedTagId, setSelectedTagId, selectedTaskId, setSelectedTaskId } = timer;
 
-    const [tags, setTags] = useState<Tag[]>([]);
-    const [tasks, setTasks] = useState<Task[]>([]);
+    const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [topics, setTopics] = useState<Topic[]>([]);
     const [pickerOpen, setPickerOpen] = useState(false);
     const [saveOpen, setSaveOpen] = useState(false);
     const [endedAt, setEndedAt] = useState<Date | null>(null);
@@ -77,11 +77,11 @@ export function TimerPage() {
 
     useEffect(() => {
         let active = true;
-        Promise.all([tagService.getAll(), taskService.getAll()])
-            .then(([loadedTags, loadedTasks]) => {
+        Promise.all([subjectService.getActive(), topicService.getAll()])
+            .then(([loadedSubjects, loadedTopics]) => {
                 if (!active) return;
-                setTags(loadedTags);
-                setTasks(loadedTasks);
+                setSubjects(loadedSubjects);
+                setTopics(loadedTopics);
             })
             .catch((error) => {
                 if (active) setMessage({ type: 'error', text: getApiErrorMessage(error) });
@@ -118,8 +118,8 @@ export function TimerPage() {
         if (!countdownDone) promptedRef.current = false;
     }, [countdownDone]);
 
-    const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
-    const selectedTag = selectedTask?.tag ?? tags.find((tag) => tag.id === selectedTagId) ?? null;
+    const selectedTopic = topics.find((topic) => topic.id === selectedTaskId) ?? null;
+    const selectedSubject = selectedTopic ? subjects.find((subject) => subject.id === selectedTopic.subjectId) : (selectedTagId ? subjects.find((subject) => subject.id === selectedTagId) : null) ?? null;
 
     const canSave = timer.secondsElapsed >= 60;
     const minutes = Math.max(1, Math.round(timer.secondsElapsed / 60));
@@ -132,16 +132,16 @@ export function TimerPage() {
         setSaveOpen(true);
     };
 
-    const handlePicked = (tag: Tag, task: Task) => {
-        setTags((current) => (current.some((item) => item.id === tag.id) ? current : [...current, tag]));
-        setTasks((current) => (current.some((item) => item.id === task.id) ? current : [...current, task]));
-        setSelectedTagId(tag.id);
-        setSelectedTaskId(task.id);
+    const handlePicked = (subject: Subject, topic: Topic) => {
+        setSubjects((current) => (current.some((item) => item.id === subject.id) ? current : [...current, subject]));
+        setTopics((current) => (current.some((item) => item.id === topic.id) ? current : [...current, topic]));
+        setSelectedTagId(subject.id);
+        setSelectedTaskId(topic.id);
         setPickerOpen(false);
     };
 
     const handleSave = async ({ title, description, rating }: SaveValues) => {
-        if (!selectedTask) return;
+        if (!selectedTopic) return;
         setSaving(true);
         setSaveError(null);
 
@@ -153,12 +153,10 @@ export function TimerPage() {
                 title: title.trim(),
                 description: description.trim() || undefined,
                 totalMinutes: minutes,
-                startDate: formatRequiredApiTimestamp(start),
-                endDate: formatRequiredApiTimestamp(end),
-                rating: rating || undefined,
-                tagName: selectedTask.tag.name,
-                tagColor: selectedTask.tag.color,
-                taskName: selectedTask.name,
+                startedAt: formatRequiredApiTimestamp(start),
+                endedAt: formatRequiredApiTimestamp(end),
+                focusRating: rating || undefined,
+                topicId: selectedTopic.id,
             });
             setSaveOpen(false);
             timer.reset();
@@ -272,15 +270,15 @@ export function TimerPage() {
                     <button
                         onClick={() => setPickerOpen(true)}
                         className={`group cursor-pointer mx-auto mt-6 flex w-full max-w-sm items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${focusRing} ${
-                            selectedTask
+                            selectedTopic
                                 ? 'border-neutral-200 bg-neutral-50 hover:border-[#151414]'
                                 : 'border-dashed border-2 border-neutral-300 hover:border-[#151414]'
                         }`}
                     >
-                        {selectedTag ? (
+                        {selectedTopic && selectedSubject ? (
                             <span
                                 className="h-3 w-3 shrink-0 rounded-full"
-                                style={{ backgroundColor: selectedTag.color }}
+                                style={{ backgroundColor: selectedSubject.color }}
                                 aria-hidden
                             />
                         ) : (
@@ -288,12 +286,12 @@ export function TimerPage() {
                         )}
                         <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-medium">
-                                {selectedTask ? selectedTask.name : 'What are you studying?'}
+                                {selectedTopic ? selectedTopic.name : 'What are you studying?'}
                             </span>
                             <span className="block truncate text-xs text-neutral-500">
-                                {selectedTask
-                                    ? selectedTag?.name
-                                    : 'Pick a tag and task to save this session'}
+                                {selectedTopic && selectedSubject
+                                    ? selectedSubject.name
+                                    : 'Pick a subject and topic to save this session'}
                             </span>
                         </span>
                         <ChevronIcon className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" />
@@ -348,10 +346,10 @@ export function TimerPage() {
 
             {pickerOpen && (
                 <TaskTagDialog
-                    tags={tags}
-                    tasks={tasks}
-                    initialTagId={selectedTagId}
-                    initialTaskId={selectedTaskId}
+                    subjects={subjects}
+                    topics={topics}
+                    initialSubjectId={selectedTagId}
+                    initialTopicId={selectedTaskId}
                     onClose={() => setPickerOpen(false)}
                     onConfirm={handlePicked}
                     onClear={() => {
@@ -359,18 +357,18 @@ export function TimerPage() {
                         setSelectedTagId(null);
                         setPickerOpen(false);
                     }}
-                    onTagCreated={(tag) => setTags((current) => (current.some((t) => t.id === tag.id) ? current : [...current, tag]))}
-                    onTaskCreated={(task) => setTasks((current) => (current.some((t) => t.id === task.id) ? current : [...current, task]))}
+                    onSubjectCreated={(subject) => setSubjects((current) => (current.some((t) => t.id === subject.id) ? current : [...current, subject]))}
+                    onTopicCreated={(topic) => setTopics((current) => (current.some((t) => t.id === topic.id) ? current : [...current, topic]))}
                 />
             )}
 
             {saveOpen && (
                 <SaveSessionDialog
-                    task={selectedTask}
+                    topic={selectedTopic}
                     minutes={minutes}
                     saving={saving}
                     error={saveError}
-                    onPickTask={() => setPickerOpen(true)}
+                    onPickTopic={() => setPickerOpen(true)}
                     onCancel={() => setSaveOpen(false)}
                     onSave={handleSave}
                 />

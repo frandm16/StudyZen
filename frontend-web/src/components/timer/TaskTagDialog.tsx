@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { getApiErrorMessage } from '../../services/api';
-import { tagService } from '../../services/tag-service';
-import { taskService } from '../../services/task-service';
-import type { Tag } from '../../types/tag';
-import type { Task } from '../../types/task';
+import { subjectService } from '../../services/subject-service';
+import { topicService } from '../../services/topic-service';
+import type { Subject } from '../../types/subject';
+import type { Topic } from '../../types/topic';
 import { fieldClass, ghostButton, Modal, primaryButton } from '../ui/Modal';
 
 const PALETTE = ['#4287f5', '#7c3aed', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#64748b'];
 
 interface Props {
-    tags: Tag[];
-    tasks: Task[];
-    initialTagId: number | null;
-    initialTaskId: number | null;
+    subjects: Subject[];
+    topics: Topic[];
+    initialSubjectId: number | null;
+    initialTopicId: number | null;
     onClose: () => void;
-    onConfirm: (tag: Tag, task: Task) => void;
+    onConfirm: (subject: Subject, topic: Topic) => void;
     onClear?: () => void;
-    onTagCreated?: (tag: Tag) => void;
-    onTaskCreated?: (task: Task) => void;
+    onSubjectCreated?: (subject: Subject) => void;
+    onTopicCreated?: (topic: Topic) => void;
 }
 
 function Dot({ color, className = '' }: { color?: string; className?: string }) {
@@ -49,73 +49,73 @@ const rowIdle = 'text-[#151414] hover:bg-neutral-100';
 const rowSelected = 'bg-[#151414] text-white';
 
 export function TaskTagDialog({
-                                  tags,
-                                  tasks,
-                                  initialTagId,
-                                  initialTaskId,
-                                  onClose,
-                                  onConfirm,
-                                  onClear,
-                                  onTagCreated,
-                                  onTaskCreated,
-                              }: Props) {
+    subjects,
+    topics,
+    initialSubjectId,
+    initialTopicId,
+    onClose,
+    onConfirm,
+    onClear,
+    onSubjectCreated,
+    onTopicCreated,
+}: Props) {
     const searchRef = useRef<HTMLInputElement>(null);
-    const initialTask = tasks.find((task) => task.id === initialTaskId) ?? null;
+    const initialTopic = topics.find((topic) => topic.id === initialTopicId) ?? null;
 
-    const [localTags, setLocalTags] = useState(tags);
-    const [localTasks, setLocalTasks] = useState(tasks);
-    const [tagId, setTagId] = useState<number | null>(initialTask?.tag.id ?? initialTagId);
-    const [taskId, setTaskId] = useState<number | null>(initialTask?.id ?? null);
+    const [localSubjects, setLocalSubjects] = useState(subjects);
+    const [localTopics, setLocalTopics] = useState(topics);
+    const [subjectId, setSubjectId] = useState<number | null>(initialTopic?.subjectId ?? initialSubjectId);
+    const [topicId, setTopicId] = useState<number | null>(initialTopic?.id ?? null);
     const [query, setQuery] = useState('');
-    const [creatingTag, setCreatingTag] = useState(false);
-    const [newTagName, setNewTagName] = useState('');
-    const [newTagColor, setNewTagColor] = useState(PALETTE[0]);
+    const [creatingSubject, setCreatingSubject] = useState(false);
+    const [newSubjectName, setNewSubjectName] = useState('');
+    const [newSubjectColor, setNewSubjectColor] = useState(PALETTE[0]);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const activeTags = useMemo(
-        () => localTags.filter((tag) => !tag.isArchived).sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite)),
-        [localTags],
+    const activeSubjects = useMemo(
+        () => localSubjects.filter((subject) => !subject.isArchived).sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite)),
+        [localSubjects],
     );
-    const selectedTag = localTags.find((tag) => tag.id === tagId) ?? null;
-    const selectedTask = localTasks.find((task) => task.id === taskId) ?? null;
+    const selectedSubject = localSubjects.find((subject) => subject.id === subjectId) ?? null;
+    const selectedTopic = localTopics.find((topic) => topic.id === topicId) ?? null;
 
-    const tagTasks = useMemo(
-        () => localTasks.filter((task) => task.tag.id === tagId).sort((a, b) => a.name.localeCompare(b.name, 'es')),
-        [localTasks, tagId],
+    const subjectTopics = useMemo(
+        () => localTopics.filter((topic) => topic.subjectId === subjectId).sort((a, b) => a.name.localeCompare(b.name, 'es')),
+        [localTopics, subjectId],
     );
     const q = query.trim().toLowerCase();
-    const visibleTasks = q ? tagTasks.filter((task) => task.name.toLowerCase().includes(q)) : tagTasks;
-    const canCreateTask = selectedTag !== null && q !== '' && !tagTasks.some((task) => task.name.toLowerCase() === q);
+    const visibleTopics = q ? subjectTopics.filter((topic) => topic.name.toLowerCase().includes(q)) : subjectTopics;
+    const canCreateTopic = selectedSubject !== null && q !== '' && !subjectTopics.some((topic) => topic.name.toLowerCase() === q);
 
     useEffect(() => {
-        if (tagId !== null) searchRef.current?.focus();
-    }, [tagId]);
+        if (subjectId !== null) searchRef.current?.focus();
+    }, [subjectId]);
 
-    const pickTag = (tag: Tag) => {
-        setTagId(tag.id);
-        if (selectedTask && selectedTask.tag.id !== tag.id) setTaskId(null);
+    const pickSubject = (subject: Subject) => {
+        setSubjectId(subject.id);
+        if (selectedTopic && selectedTopic.subjectId !== subject.id) setTopicId(null);
         setQuery('');
         setError(null);
     };
 
-    const submitTag = async (event: FormEvent) => {
+    const submitSubject = async (event: FormEvent) => {
         event.preventDefault();
-        const name = newTagName.trim();
+        const name = newSubjectName.trim();
         if (!name || busy) return;
         setBusy(true);
         setError(null);
         try {
-            const clash = localTags.find((tag) => tag.name.toLowerCase() === name.toLowerCase());
-            if (clash?.isArchived) throw new Error('A tag with that name already exists in your archive.');
-            const tag = clash ?? (await tagService.create({ name, color: newTagColor }));
+            const clash = localSubjects.find((subject) => subject.name.toLowerCase() === name.toLowerCase());
+            if (clash?.isArchived) throw new Error('A subject with that name already exists in your archive.');
+            const subject = clash ?? (await subjectService.create({ name, color: newSubjectColor }));
             if (!clash) {
-                setLocalTags((current) => [...current, tag]);
-                onTagCreated?.(tag);
+                setLocalSubjects((current) => [...current, subject]);
+                onSubjectCreated?.(subject);
             }
-            pickTag(tag);
-            setCreatingTag(false);
-            setNewTagName('');
+            pickSubject(subject);
+            setCreatingSubject(false);
+            setNewSubjectName('');
         } catch (err) {
             setError(getApiErrorMessage(err));
         } finally {
@@ -123,20 +123,18 @@ export function TaskTagDialog({
         }
     };
 
-    const createTask = async () => {
-        if (!selectedTag || !canCreateTask || busy) return;
+    const createTopic = async () => {
+        if (!selectedSubject || !canCreateTopic || busy) return;
         setBusy(true);
         setError(null);
         try {
-            const created = await taskService.create({
-                taskName: query.trim(),
-                tagName: selectedTag.name,
-                tagColor: selectedTag.color,
+            const created = await topicService.create({
+                name: query.trim(),
+                subjectId: selectedSubject.id,
             });
-            const task: Task = { ...created, tag: selectedTag };
-            setLocalTasks((current) => [...current, task]);
-            onTaskCreated?.(task);
-            setTaskId(task.id);
+            setLocalTopics((current) => [...current, created]);
+            onTopicCreated?.(created);
+            setTopicId(created.id);
             setQuery('');
         } catch (err) {
             setError(getApiErrorMessage(err));
@@ -146,66 +144,66 @@ export function TaskTagDialog({
     };
 
     const confirm = () => {
-        if (selectedTag && selectedTask) onConfirm(selectedTag, selectedTask);
+        if (selectedSubject && selectedTopic) onConfirm(selectedSubject, selectedTopic);
     };
 
     const onSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== 'Enter') return;
         event.preventDefault();
-        if (canCreateTask) {
-            void createTask();
+        if (canCreateTopic) {
+            void createTopic();
             return;
         }
-        const target = visibleTasks.find((task) => task.id === taskId) ?? visibleTasks[0];
+        const target = visibleTopics.find((topic) => topic.id === topicId) ?? visibleTopics[0];
         if (!target) return;
-        if (target.id === taskId) confirm();
-        else setTaskId(target.id);
+        if (target.id === topicId) confirm();
+        else setTopicId(target.id);
     };
 
     return (
-        <Modal title="Choose tag & task" onClose={onClose} size="xl">
+        <Modal title="Choose subject & topic" onClose={onClose} size="xl">
             <div className="grid gap-6 md:grid-cols-[15rem_1fr]">
-                <section aria-label="Tag">
-                    <Step number={1} done={selectedTag !== null}>
-                        Tag
+                <section aria-label="Subject">
+                    <Step number={1} done={selectedSubject !== null}>
+                        Subject
                     </Step>
                     <div
                         role="radiogroup"
-                        aria-label="Tag"
+                        aria-label="Subject"
                         className="flex h-64 flex-col gap-1 overflow-y-auto rounded-xl border border-neutral-200 p-1.5"
                     >
-                        {activeTags.length === 0 && (
+                        {activeSubjects.length === 0 && (
                             <p className="m-auto px-4 text-center text-sm text-neutral-500">
-                                You don't have any tags yet. Create your first one below.
+                                You don't have any subjects yet. Create your first one below.
                             </p>
                         )}
-                        {activeTags.map((tag) => {
-                            const selected = tagId === tag.id;
-                            const count = localTasks.filter((task) => task.tag.id === tag.id).length;
+                        {activeSubjects.map((subject) => {
+                            const selected = subjectId === subject.id;
+                            const count = localTopics.filter((topic) => topic.subjectId === subject.id).length;
                             return (
                                 <button
-                                    key={tag.id}
+                                    key={subject.id}
                                     type="button"
                                     role="radio"
                                     aria-checked={selected}
-                                    onClick={() => pickTag(tag)}
+                                    onClick={() => pickSubject(subject)}
                                     className={`${rowBase} ${selected ? rowSelected : rowIdle}`}
                                 >
-                                    <Dot color={tag.color} className={selected ? 'ring-2 ring-white/60' : ''} />
-                                    <span className="truncate">{tag.name}</span>
+                                    <Dot color={subject.color} className={selected ? 'ring-2 ring-white/60' : ''} />
+                                    <span className="truncate">{subject.name}</span>
                                     <span className="ml-auto shrink-0 text-xs opacity-60">{count}</span>
                                 </button>
                             );
                         })}
                     </div>
 
-                    {creatingTag ? (
-                        <form onSubmit={submitTag} className="mt-3 flex flex-col gap-3 rounded-xl border border-neutral-200 p-3">
+                    {creatingSubject ? (
+                        <form onSubmit={submitSubject} className="mt-3 flex flex-col gap-3 rounded-xl border border-neutral-200 p-3">
                             <input
-                                value={newTagName}
-                                onChange={(e) => setNewTagName(e.target.value)}
-                                placeholder="Tag name"
-                                aria-label="Tag name"
+                                value={newSubjectName}
+                                onChange={(e) => setNewSubjectName(e.target.value)}
+                                placeholder="Subject name"
+                                aria-label="Subject name"
                                 maxLength={40}
                                 autoFocus
                                 className={fieldClass}
@@ -216,19 +214,19 @@ export function TaskTagDialog({
                                         key={color}
                                         type="button"
                                         role="radio"
-                                        aria-checked={newTagColor === color}
+                                        aria-checked={newSubjectColor === color}
                                         aria-label={`Color ${color}`}
-                                        onClick={() => setNewTagColor(color)}
+                                        onClick={() => setNewSubjectColor(color)}
                                         className={`h-6 w-6 rounded-full transition-shadow ${
-                                            newTagColor === color ? 'ring-2 ring-[#151414] ring-offset-2' : ''
+                                            newSubjectColor === color ? 'ring-2 ring-[#151414] ring-offset-2' : ''
                                         }`}
                                         style={{ backgroundColor: color }}
                                     />
                                 ))}
                                 <input
                                     type="color"
-                                    value={newTagColor}
-                                    onChange={(e) => setNewTagColor(e.target.value)}
+                                    value={newSubjectColor}
+                                    onChange={(e) => setNewSubjectColor(e.target.value)}
                                     aria-label="Custom color"
                                     className="h-6 w-8 cursor-pointer rounded border-0 bg-transparent p-0"
                                 />
@@ -236,43 +234,43 @@ export function TaskTagDialog({
                             <div className="flex justify-end gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setCreatingTag(false)}
+                                    onClick={() => setCreatingSubject(false)}
                                     className="px-3 py-1.5 text-sm text-neutral-500 transition-colors hover:text-[#151414]"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={busy || newTagName.trim() === ''}
+                                    disabled={busy || newSubjectName.trim() === ''}
                                     className="rounded-full bg-[#151414] px-4 py-1.5 text-sm text-white transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
-                                    Add tag
+                                    Add subject
                                 </button>
                             </div>
                         </form>
                     ) : (
                         <button
                             type="button"
-                            onClick={() => setCreatingTag(true)}
+                            onClick={() => setCreatingSubject(true)}
                             className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 px-3 py-2.5 text-sm text-neutral-600 transition-colors hover:border-[#151414] hover:text-[#151414]"
                         >
-                            + New tag
+                            + New subject
                         </button>
                     )}
                 </section>
 
-                <section aria-label="Task">
-                    <Step number={2} done={selectedTask !== null}>
-                        Task
+                <section aria-label="Topic">
+                    <Step number={2} done={selectedTopic !== null}>
+                        Topic
                     </Step>
                     <input
                         ref={searchRef}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={onSearchKeyDown}
-                        disabled={selectedTag === null}
-                        placeholder={selectedTag ? `Search or create a task in ${selectedTag.name}` : 'Pick a tag first'}
-                        aria-label="Search or create a task"
+                        disabled={selectedSubject === null}
+                        placeholder={selectedSubject ? `Search or create a topic in ${selectedSubject.name}` : 'Pick a subject first'}
+                        aria-label="Search or create a topic"
                         autoComplete="off"
                         maxLength={80}
                         className={fieldClass}
@@ -280,56 +278,56 @@ export function TaskTagDialog({
 
                     <div
                         role="radiogroup"
-                        aria-label="Task"
+                        aria-label="Topic"
                         className="mt-2 flex h-64 flex-col gap-1 overflow-y-auto rounded-xl border border-neutral-200 p-1.5"
                     >
-                        {selectedTag === null ? (
+                        {selectedSubject === null ? (
                             <p className="m-auto px-6 text-center text-sm text-neutral-500">
-                                Pick a tag on the left to see its tasks.
+                                Pick a subject on the left to see its topics.
                             </p>
                         ) : (
                             <>
-                                {canCreateTask && (
+                                {canCreateTopic && (
                                     <button
                                         type="button"
-                                        onClick={() => void createTask()}
+                                        onClick={() => void createTopic()}
                                         disabled={busy}
                                         className="flex w-full items-center gap-3 rounded-lg border border-dashed border-neutral-300 px-3 py-2.5 text-left text-sm transition-colors hover:border-[#151414] disabled:opacity-50"
                                     >
                                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#151414] text-white">
                                             +
                                         </span>
-                                        <span className="truncate">Create “{query.trim()}”</span>
-                                        <span className="ml-auto shrink-0 text-xs text-neutral-400">in {selectedTag.name}</span>
+                                        <span className="truncate">Create "{query.trim()}"</span>
+                                        <span className="ml-auto shrink-0 text-xs text-neutral-400">in {selectedSubject.name}</span>
                                     </button>
                                 )}
-                                {visibleTasks.map((task) => {
-                                    const selected = taskId === task.id;
+                                {visibleTopics.map((topic) => {
+                                    const selected = topicId === topic.id;
                                     return (
                                         <button
-                                            key={task.id}
+                                            key={topic.id}
                                             type="button"
                                             role="radio"
                                             aria-checked={selected}
-                                            onClick={() => setTaskId(task.id)}
-                                            onDoubleClick={() => onConfirm(selectedTag, task)}
+                                            onClick={() => setTopicId(topic.id)}
+                                            onDoubleClick={() => onConfirm(selectedSubject, topic)}
                                             className={`${rowBase} ${selected ? rowSelected : rowIdle}`}
                                         >
-                                            <span className="truncate">{task.name}</span>
-                                            {task.id === initialTaskId && !selected && (
+                                            <span className="truncate">{topic.name}</span>
+                                            {topic.id === initialTopicId && !selected && (
                                                 <span className="ml-auto shrink-0 text-xs text-neutral-400">In use</span>
                                             )}
                                             {selected && <span className="ml-auto shrink-0">✓</span>}
                                         </button>
                                     );
                                 })}
-                                {tagTasks.length === 0 && !canCreateTask && (
+                                {subjectTopics.length === 0 && !canCreateTopic && (
                                     <p className="m-auto px-6 text-center text-sm text-neutral-500">
-                                        No tasks in this tag yet. Type a name above to create the first one.
+                                        No topics in this subject yet. Type a name above to create the first one.
                                     </p>
                                 )}
-                                {tagTasks.length > 0 && visibleTasks.length === 0 && !canCreateTask && (
-                                    <p className="m-auto px-6 text-center text-sm text-neutral-500">No tasks match your search.</p>
+                                {subjectTopics.length > 0 && visibleTopics.length === 0 && !canCreateTopic && (
+                                    <p className="m-auto px-6 text-center text-sm text-neutral-500">No topics match your search.</p>
                                 )}
                             </>
                         )}
@@ -345,22 +343,22 @@ export function TaskTagDialog({
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-200 pt-5">
                 <p className="flex min-h-8 min-w-0 items-center gap-2 text-sm text-neutral-500">
-                    {selectedTag && selectedTask ? (
+                    {selectedSubject && selectedTopic ? (
                         <>
                             Selected
                             <span className="flex min-w-0 items-center gap-2 rounded-full bg-neutral-100 px-3 py-1 text-[#151414]">
-                                <Dot color={selectedTag.color} className="h-2.5 w-2.5" />
+                                <Dot color={selectedSubject.color} className="h-2.5 w-2.5" />
                                 <span className="truncate">
-                                    {selectedTag.name} › {selectedTask.name}
+                                    {selectedSubject.name} › {selectedTopic.name}
                                 </span>
                             </span>
                         </>
                     ) : (
-                        'Choose a tag and a task to continue.'
+                        'Choose a subject and a topic to continue.'
                     )}
                 </p>
                 <div className="flex items-center gap-3">
-                    {onClear && initialTaskId !== null && (
+                    {onClear && initialTopicId !== null && (
                         <button
                             type="button"
                             onClick={onClear}
@@ -372,8 +370,8 @@ export function TaskTagDialog({
                     <button type="button" onClick={onClose} className={ghostButton}>
                         Cancel
                     </button>
-                    <button type="button" onClick={confirm} disabled={!selectedTask || busy} className={primaryButton}>
-                        Use this task
+                    <button type="button" onClick={confirm} disabled={!selectedTopic || busy} className={primaryButton}>
+                        Use this topic
                     </button>
                 </div>
             </div>
