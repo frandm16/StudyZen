@@ -5,7 +5,7 @@ import com.frandm.studytracker.backend.service.ScheduledSessionService;
 import com.frandm.studytracker.backend.util.DateTimeUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.Map;
 
@@ -25,14 +25,13 @@ public class ScheduledSessionController {
             @RequestParam(required = false) String start,
             @RequestParam(required = false) String end) {
 
-        if (start == null || end == null || start.isEmpty() || end.isEmpty()) {
-            return scheduledSessionService.getAll();
+        if (start != null && end != null) {
+            return scheduledSessionService.getByDateRange(
+                    DateTimeUtils.parseFlexibleOffset(start),
+                    DateTimeUtils.parseFlexibleOffset(end)
+            );
         }
-
-        return scheduledSessionService.getByDateRange(
-                DateTimeUtils.parseFlexibleTimestamp(start),
-                DateTimeUtils.parseFlexibleTimestamp(end)
-        );
+        return scheduledSessionService.getAll();
     }
 
     @GetMapping("/{id}")
@@ -42,35 +41,17 @@ public class ScheduledSessionController {
 
     @PostMapping
     public ScheduledSession create(@RequestBody Map<String, Object> body) {
-        return scheduledSessionService.save(
-                (String) body.get("tagName"),
-                (String) body.get("taskName"),
-                (String) body.get("title"),
-                DateTimeUtils.parseFlexibleTimestamp((String) body.get("startDate")),
-                DateTimeUtils.parseFlexibleTimestamp((String) body.get("endDate"))
-        );
+        return scheduledSessionService.create(body);
     }
 
     @PutMapping("/{id}")
     public ScheduledSession update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return scheduledSessionService.fullUpdate(
-                id,
-                (String) body.get("tagName"),
-                (String) body.get("taskName"),
-                (String) body.get("title"),
-                DateTimeUtils.parseFlexibleTimestamp((String) body.get("startDate")),
-                DateTimeUtils.parseFlexibleTimestamp((String) body.get("endDate"))
-        );
+        return scheduledSessionService.fullUpdate(id, body);
     }
 
     @PatchMapping("/{id}")
     public ScheduledSession patch(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return scheduledSessionService.partialUpdate(
-                id,
-                (String) body.get("title"),
-                DateTimeUtils.parseFlexibleTimestamp((String) body.get("startDate")),
-                DateTimeUtils.parseFlexibleTimestamp((String) body.get("endDate"))
-        );
+        return scheduledSessionService.partialUpdate(id, body);
     }
 
     @DeleteMapping("/{id}")

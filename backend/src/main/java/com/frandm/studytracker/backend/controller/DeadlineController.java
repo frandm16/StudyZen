@@ -5,7 +5,7 @@ import com.frandm.studytracker.backend.service.DeadlineService;
 import com.frandm.studytracker.backend.util.DateTimeUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -25,14 +25,17 @@ public class DeadlineController {
             @RequestParam(required = false) String start,
             @RequestParam(required = false) String end) {
 
-        if (start == null || end == null || start.isEmpty() || end.isEmpty()) {
-            return deadlineService.getAll();
+        OffsetDateTime startDt = null;
+        OffsetDateTime endDt = null;
+
+        if (start != null && !start.isBlank()) {
+            startDt = DateTimeUtils.parseFlexibleOffset(start);
+        }
+        if (end != null && !end.isBlank()) {
+            endDt = DateTimeUtils.parseFlexibleOffset(end);
         }
 
-        LocalDateTime startDt = DateTimeUtils.parseFlexibleTimestamp(start);
-        LocalDateTime endDt = DateTimeUtils.parseFlexibleTimestamp(end);
-
-        return deadlineService.getByDateRange(startDt, endDt);
+        return deadlineService.list(startDt, endDt);
     }
 
     @GetMapping("/{id}")
@@ -42,54 +45,42 @@ public class DeadlineController {
 
     @PostMapping
     public Deadline create(@RequestBody Map<String, Object> body) {
-        return deadlineService.save(
-                (String) body.get("tagName"),
-                (String) body.get("tagColor"),
-                (String) body.get("taskName"),
-                (String) body.get("title"),
-                (String) body.get("description"),
-                (String) body.get("urgency"),
-                DateTimeUtils.parseFlexibleTimestamp((String) body.get("dueDate")),
-                (Boolean) body.get("allDay"),
-                (Boolean) body.get("isCompleted")
-        );
+        // Parse dueAt from body
+        Object dueAtObj = body.get("dueAt");
+        if (dueAtObj != null && dueAtObj instanceof String) {
+            body.put("dueAt", DateTimeUtils.parseFlexibleOffset((String) dueAtObj));
+        }
+        return deadlineService.create(body);
     }
 
     @PutMapping("/{id}")
     public Deadline update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return deadlineService.fullUpdate(
-                id,
-                (String) body.get("tagName"),
-                (String) body.get("tagColor"),
-                (String) body.get("taskName"),
-                (String) body.get("title"),
-                (String) body.get("description"),
-                (String) body.get("urgency"),
-                DateTimeUtils.parseFlexibleTimestamp((String) body.get("dueDate")),
-                (Boolean) body.get("allDay"),
-                (Boolean) body.get("isCompleted")
-        );
+        // Parse dueAt from body
+        Object dueAtObj = body.get("dueAt");
+        if (dueAtObj != null && dueAtObj instanceof String) {
+            body.put("dueAt", DateTimeUtils.parseFlexibleOffset((String) dueAtObj));
+        }
+        return deadlineService.fullUpdate(id, body);
     }
 
     @PatchMapping("/{id}")
     public Deadline patch(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        LocalDateTime dueDate = DateTimeUtils.parseFlexibleTimestamp(
-                body.get("dueDate") != null ? String.valueOf(body.get("dueDate")) : null
-        );
-        return deadlineService.partialUpdate(
-                id,
-                (String) body.get("title"),
-                (String) body.get("description"),
-                (String) body.get("urgency"),
-                dueDate,
-                (Boolean) body.get("allDay"),
-                (Boolean) body.get("isCompleted")
-        );
+        // Parse dueAt from body if present
+        Object dueAtObj = body.get("dueAt");
+        if (dueAtObj != null && dueAtObj instanceof String) {
+            body.put("dueAt", DateTimeUtils.parseFlexibleOffset((String) dueAtObj));
+        }
+        return deadlineService.partialUpdate(id, body);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         deadlineService.delete(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/toggle")
+    public Deadline toggle(@PathVariable Long id) {
+        return deadlineService.toggleCompleted(id);
     }
 }

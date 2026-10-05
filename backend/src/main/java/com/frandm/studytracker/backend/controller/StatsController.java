@@ -23,8 +23,8 @@ public class StatsController {
     }
 
     @GetMapping("/summary")
-    public Map<String, Integer> getSummaryByTag(@RequestParam String tag) {
-        return statsService.getSummaryByTag(tag);
+    public Map<String, Integer> getSummaryBySubject(@RequestParam Long subjectId) {
+        return statsService.getSummaryBySubject(subjectId);
     }
 
     @GetMapping("/sessions/all")

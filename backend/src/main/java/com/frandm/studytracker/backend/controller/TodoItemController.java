@@ -21,9 +21,11 @@ public class TodoItemController {
 
     @GetMapping
     public List<TodoItem> list(@RequestParam(required = false) String date) {
-        return todoItemService.getFiltered(
-                date != null && !date.isBlank() ? LocalDate.parse(date) : null
-        );
+        LocalDate parsedDate = null;
+        if (date != null && !date.isBlank()) {
+            parsedDate = LocalDate.parse(date);
+        }
+        return todoItemService.list(parsedDate);
     }
 
     @GetMapping("/{id}")
@@ -33,29 +35,17 @@ public class TodoItemController {
 
     @PostMapping
     public TodoItem create(@RequestBody Map<String, Object> body) {
-        return todoItemService.create(
-                LocalDate.parse((String) body.get("date")),
-                (String) body.get("text")
-        );
+        return todoItemService.create(body);
     }
 
     @PutMapping("/{id}")
     public TodoItem update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return todoItemService.fullUpdate(
-                id,
-                body.get("date") != null ? LocalDate.parse((String) body.get("date")) : null,
-                (String) body.get("text"),
-                (Boolean) body.get("completed")
-        );
+        return todoItemService.fullUpdate(id, body);
     }
 
     @PatchMapping("/{id}")
     public TodoItem patch(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return todoItemService.partialUpdate(
-                id,
-                (String) body.get("text"),
-                (Boolean) body.get("completed")
-        );
+        return todoItemService.partialUpdate(id, body);
     }
 
     @DeleteMapping("/{id}")

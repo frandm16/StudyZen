@@ -51,4 +51,13 @@ public final class DateTimeUtils {
     public static String formatApiTimestamp(LocalDateTime value) {
         return value.format(API_TIMESTAMP_FORMAT);
     }
+
+    public static OffsetDateTime parseFlexibleOffset(String value) {
+        LocalDateTime local = parseFlexibleTimestamp(value);
+        return local == null ? null : local.atOffset(ZoneOffset.UTC);
+    }
+
+    public static String formatApiTimestamp(OffsetDateTime value) {
+        return value == null ? null : formatApiTimestamp(value.toLocalDateTime());
+    }
 }

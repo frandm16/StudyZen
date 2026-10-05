@@ -21,7 +21,7 @@ public class DayNoteController {
 
     @GetMapping
     public List<DayNote> list() {
-        return dayNoteService.getAll();
+        return dayNoteService.list();
     }
 
     @GetMapping("/{id}")
@@ -30,22 +30,18 @@ public class DayNoteController {
     }
 
     @PostMapping
-    public DayNote create(@RequestBody Map<String, String> body) {
-        LocalDate date = LocalDate.parse(body.get("date"));
-        String content = body.getOrDefault("content", "");
-        return dayNoteService.create(date, content);
+    public DayNote create(@RequestBody Map<String, Object> body) {
+        return dayNoteService.create(body);
     }
 
     @PutMapping("/{id}")
-    public DayNote update(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        LocalDate date = body.get("date") != null ? LocalDate.parse(body.get("date")) : null;
-        String content = body.get("content");
-        return dayNoteService.fullUpdate(id, date, content);
+    public DayNote update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return dayNoteService.fullUpdate(id, body);
     }
 
     @PatchMapping("/{id}")
-    public DayNote patch(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return dayNoteService.partialUpdate(id, body.get("content"));
+    public DayNote patch(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return dayNoteService.partialUpdate(id, body);
     }
 
     @DeleteMapping("/{id}")
