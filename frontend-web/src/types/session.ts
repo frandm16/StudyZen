@@ -1,37 +1,41 @@
-import type { Tag } from './tag';
-
 export interface Session {
     id: number;
+    topicId: number;
     title: string;
     description?: string;
     totalMinutes: number;
-    startDate: string;
-    endDate: string;
-    rating: number;           // 0-5
-
-    task: {
-        id: number;
-        name: string;
-        tag: Tag;
-    };
+    startedAt: string;
+    endedAt: string;
+    focusRating?: number;           // 0-5
+    pausedMinutes?: number;
+    scheduledSessionId?: number;
 }
+
 export interface CreateSessionDTO {
     title: string;
     description?: string;
     totalMinutes: number;
-    startDate: string;
-    endDate: string;
-    rating?: number;
-    tagName: string;
-    tagColor: string;
-    taskName: string;
+    startedAt: string;
+    endedAt: string;
+    topicId: number;
+    focusRating?: number;
+    pausedMinutes?: number;
+}
+
+export interface UpdateSessionDTO {
+    title?: string;
+    description?: string;
+    totalMinutes?: number;
+    startedAt?: string;
+    endedAt?: string;
+    focusRating?: number;
+    pausedMinutes?: number;
 }
 
 export interface SessionQuery {
-    tag?: string;
-    task?: string;
     start?: string;
     end?: string;
+    topicId?: number;
     page?: number;
     size?: number;
 }

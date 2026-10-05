@@ -1,9 +1,10 @@
 import type { Deadline } from '../types/deadline';
 import type { Session } from '../types/session';
 import type { ScheduledSession } from '../types/scheduled-session';
-import type { Tag } from '../types/tag';
-import type { Task } from '../types/task';
+import type { Subject } from '../types/subject';
+import type { Topic } from '../types/topic';
 import type { TodoItem } from '../types/todo-item';
+import type { DayNote } from '../types/day-note';
 import { parseApiTimestamp } from './api-datetime';
 
 type WireObject = Record<string, unknown>;
@@ -35,23 +36,33 @@ export function readCompleted(value: unknown): boolean {
     return readAlias(value, 'isCompleted', 'completed');
 }
 
-export function normalizeTag(value: unknown): Tag {
+export function normalizeSubject(value: unknown): Subject {
     const data = object(value);
     return {
         id: Number(data.id),
         name: String(data.name ?? ''),
         color: String(data.color ?? ''),
+        notes: typeof data.notes === 'string' ? data.notes : undefined,
+        termId: data.termId ? Number(data.termId) : undefined,
         isArchived: readArchived(data),
         isFavorite: readFavorite(data),
+        createdAt: typeof data.createdAt === 'string' ? data.createdAt : undefined,
+        updatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : undefined,
     };
 }
 
-export function normalizeTask(value: unknown): Task {
+export function normalizeTopic(value: unknown): Topic {
     const data = object(value);
     return {
         id: Number(data.id),
         name: String(data.name ?? ''),
-        tag: normalizeTag(data.tag),
+        subjectId: Number(data.subjectId),
+        description: typeof data.description === 'string' ? data.description : undefined,
+        status: String(data.status ?? 'not_started') as any,
+        confidence: data.confidence ? Number(data.confidence) : undefined,
+        sortOrder: Number(data.sortOrder ?? 0),
+        createdAt: typeof data.createdAt === 'string' ? data.createdAt : undefined,
+        updatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : undefined,
     };
 }
 
@@ -62,34 +73,64 @@ export function normalizeTodo(value: unknown): TodoItem {
         date: String(data.date ?? ''),
         text: String(data.text ?? ''),
         isCompleted: readCompleted(data),
+        subjectId: data.subjectId ? Number(data.subjectId) : undefined,
+        topicId: data.topicId ? Number(data.topicId) : undefined,
+        completedAt: typeof data.completedAt === 'string' ? data.completedAt : undefined,
     };
 }
 
-export function normalizeSession(value: unknown): Session {
+export function normalizeStudySession(value: unknown): Session {
     const data = object(value);
     return {
         id: Number(data.id),
+        topicId: Number(data.topicId),
         title: String(data.title ?? ''),
         description: typeof data.description === 'string' ? data.description : undefined,
         totalMinutes: Number(data.totalMinutes ?? 0),
-        startDate: parseApiTimestamp(String(data.startDate ?? '')) ?? '',
-        endDate: parseApiTimestamp(String(data.endDate ?? '')) ?? '',
-        rating: Number(data.rating ?? 0),
-        task: normalizeTask(data.task),
+        startedAt: parseApiTimestamp(String(data.startedAt ?? '')) ?? '',
+        endedAt: parseApiTimestamp(String(data.endedAt ?? '')) ?? '',
+        focusRating: data.focusRating ? Number(data.focusRating) : undefined,
+        pausedMinutes: data.pausedMinutes ? Number(data.pausedMinutes) : undefined,
+        scheduledSessionId: data.scheduledSessionId ? Number(data.scheduledSessionId) : undefined,
     };
 }
 
-export function normalizeDeadline(value: unknown): Deadline {
+export function normalizeDeadlineV2(value: unknown): Deadline {
     const data = object(value);
     return {
         id: Number(data.id),
         title: String(data.title ?? ''),
         description: typeof data.description === 'string' ? data.description : undefined,
-        urgency: String(data.urgency ?? 'medium'),
-        dueDate: parseApiTimestamp(String(data.dueDate ?? '')) ?? '',
+        type: String(data.type ?? 'assignment') as any,
+        urgency: String(data.urgency ?? 'medium') as any,
+        dueAt: parseApiTimestamp(String(data.dueAt ?? '')) ?? '',
         allDay: flag(data.allDay),
         isCompleted: readCompleted(data),
-        task: normalizeTask(data.task),
+        completedAt: typeof data.completedAt === 'string' ? data.completedAt : undefined,
+        subjectId: data.subjectId ? Number(data.subjectId) : undefined,
+        topicId: data.topicId ? Number(data.topicId) : undefined,
+    };
+}
+
+export function normalizeDayNote(value: unknown): DayNote {
+    const data = object(value);
+    return {
+        id: Number(data.id),
+        date: String(data.date ?? ''),
+        content: String(data.content ?? ''),
+    };
+}
+
+export function normalizeTodoItem(value: unknown): TodoItem {
+    const data = object(value);
+    return {
+        id: Number(data.id),
+        date: String(data.date ?? ''),
+        text: String(data.text ?? ''),
+        isCompleted: readCompleted(data),
+        subjectId: data.subjectId ? Number(data.subjectId) : undefined,
+        topicId: data.topicId ? Number(data.topicId) : undefined,
+        completedAt: typeof data.completedAt === 'string' ? data.completedAt : undefined,
     };
 }
 
@@ -98,8 +139,8 @@ export function normalizeScheduledSession(value: unknown): ScheduledSession {
     return {
         id: Number(data.id),
         title: typeof data.title === 'string' ? data.title : undefined,
-        startDate: parseApiTimestamp(String(data.startDate ?? '')) ?? '',
-        endDate: parseApiTimestamp(String(data.endDate ?? '')) ?? '',
-        task: normalizeTask(data.task),
+        startedAt: parseApiTimestamp(String(data.startedAt ?? '')) ?? '',
+        endedAt: parseApiTimestamp(String(data.endedAt ?? '')) ?? '',
+        topicId: Number(data.topicId),
     };
 }

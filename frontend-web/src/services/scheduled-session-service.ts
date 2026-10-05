@@ -1,20 +1,20 @@
 import { api } from './api';
 import { normalizeScheduledSession } from '../lib/api-flags';
 import { formatApiTimestamp, formatRequiredApiTimestamp } from '../lib/api-datetime';
-import type { ScheduledSession, ScheduledSessionDTO } from '../types/scheduled-session';
+import type { ScheduledSession, CreateScheduledSessionDTO } from '../types/scheduled-session';
 
-function formatDates(session: ScheduledSessionDTO): ScheduledSessionDTO {
+function formatDates(session: CreateScheduledSessionDTO): CreateScheduledSessionDTO {
     return {
         ...session,
-        startDate: formatRequiredApiTimestamp(session.startDate),
-        endDate: formatRequiredApiTimestamp(session.endDate),
+        startedAt: formatRequiredApiTimestamp(session.startedAt),
+        endedAt: formatRequiredApiTimestamp(session.endedAt),
     };
 }
 
-function formatPatch(changes: Partial<Pick<ScheduledSessionDTO, 'title' | 'startDate' | 'endDate'>>) {
+function formatPatch(changes: Partial<Pick<CreateScheduledSessionDTO, 'title' | 'startedAt' | 'endedAt'>>) {
     return Object.fromEntries(Object.entries(changes)
         .filter(([, value]) => value !== undefined)
-        .map(([key, value]) => [key, key === 'startDate' || key === 'endDate'
+        .map(([key, value]) => [key, key === 'startedAt' || key === 'endedAt'
             ? formatApiTimestamp(value as string)
             : value]));
 }
@@ -31,15 +31,15 @@ export const scheduledSessionService = {
         const response = await api.get<unknown>(`/scheduled/${id}`);
         return normalizeScheduledSession(response.data);
     },
-    create: async (session: ScheduledSessionDTO): Promise<ScheduledSession> => {
+    create: async (session: CreateScheduledSessionDTO): Promise<ScheduledSession> => {
         const response = await api.post<unknown>('/scheduled', formatDates(session));
         return normalizeScheduledSession(response.data);
     },
-    update: async (id: number, session: ScheduledSessionDTO): Promise<ScheduledSession> => {
+    update: async (id: number, session: CreateScheduledSessionDTO): Promise<ScheduledSession> => {
         const response = await api.put<unknown>(`/scheduled/${id}`, formatDates(session));
         return normalizeScheduledSession(response.data);
     },
-    patch: async (id: number, changes: Partial<Pick<ScheduledSessionDTO, 'title' | 'startDate' | 'endDate'>>): Promise<ScheduledSession> => {
+    patch: async (id: number, changes: Partial<Pick<CreateScheduledSessionDTO, 'title' | 'startedAt' | 'endedAt'>>): Promise<ScheduledSession> => {
         const response = await api.patch<unknown>(`/scheduled/${id}`, formatPatch(changes));
         return normalizeScheduledSession(response.data);
     },

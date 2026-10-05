@@ -17,6 +17,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -50,8 +51,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String providerUserId = oAuth2User.getAttribute("sub");
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
-        String picture = oAuth2User.getAttribute("picture");
-
+        String picture = Objects.requireNonNull(
+                (String) Optional.ofNullable(oAuth2User.getAttribute("picture"))
+                        .orElse(oAuth2User.getAttribute("avatar_url"))
+        );
+        
         // Find or create user
         User user = authIdentityRepository
                 .findByProviderAndProviderUserId(AuthProvider.google, providerUserId)
