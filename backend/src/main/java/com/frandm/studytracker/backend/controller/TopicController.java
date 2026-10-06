@@ -86,6 +86,11 @@ public class TopicController {
     }
 
     private TopicStatus status(Object value) {
-        return value != null ? TopicStatus.valueOf((String) value) : null;
+        if (value == null) return null;
+        try {
+            return TopicStatus.valueOf(value.toString().toLowerCase().trim());
+        } catch (IllegalArgumentException e) {
+            return TopicStatus.not_started;
+        }
     }
 }

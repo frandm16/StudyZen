@@ -4,5 +4,7 @@ public enum TopicStatus {
     not_started,
     in_progress,
     reviewing,
-    mastered
+    completed,
+    mastered,
+    skipped
 }
