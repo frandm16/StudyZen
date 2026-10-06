@@ -53,6 +53,27 @@ function resolveConfig(options: TimerOptions, internal: TimerConfig): TimerConfi
     };
 }
 
+const TIMER_STORAGE_KEY = 'studyzen_timer_config';
+
+function loadPersistedTimerConfig(): TimerConfig {
+    try {
+        const raw = localStorage.getItem(TIMER_STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            return resolveConfig(parsed, DEFAULT_CONFIG);
+        }
+    } catch {
+    }
+    return DEFAULT_CONFIG;
+}
+
+function persistTimerConfig(config: TimerConfig) {
+    try {
+        localStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(config));
+    } catch {
+    }
+}
+
 function phaseDuration(phase: TimerPhase, mode: TimerMode, config: TimerConfig) {
     if (mode === 'countdown') return config.countdownMinutes * 60;
     if (mode !== 'pomodoro') return 0;
@@ -78,7 +99,7 @@ function shouldAutoStart(nextPhase: TimerPhase, config: TimerConfig) {
 }
 
 export function useTimer(options: TimerOptions = {}) {
-    const [internal, setInternal] = useState<TimerConfig>(() => resolveConfig(options, DEFAULT_CONFIG));
+    const [internal, setInternal] = useState<TimerConfig>(() => resolveConfig(options, loadPersistedTimerConfig()));
     const previousOptionsRef = useRef(options);
     const config = internal;
     const onCompleteRef = useRef(options.onComplete);
@@ -86,7 +107,7 @@ export function useTimer(options: TimerOptions = {}) {
     const [mode, setModeState] = useState<TimerMode>('pomodoro');
     const [phase, setPhase] = useState<TimerPhase>('work');
     const [status, setStatus] = useState<TimerStatus>('idle');
-    const [secondsRemaining, setSecondsRemaining] = useState(() => DEFAULT_CONFIG.workMinutes * 60);
+    const [secondsRemaining, setSecondsRemaining] = useState(() => config.workMinutes * 60);
     const [secondsElapsed, setSecondsElapsed] = useState(0);
     const [completedSessions, setCompletedSessions] = useState(0);
 
@@ -335,6 +356,14 @@ export function useTimer(options: TimerOptions = {}) {
         completedSessions,
         totalSeconds,
         formattedTime: `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`,
+        workMinutes: config.workMinutes,
+        shortBreakMinutes: config.shortBreakMinutes,
+        longBreakMinutes: config.longBreakMinutes,
+        countdownMinutes: config.countdownMinutes,
+        sessionsUntilLongBreak: config.sessionsUntilLongBreak,
+        autoStartBreaks: config.autoStartBreaks,
+        autoStartWork: config.autoStartWork,
+        countBreakTime: config.countBreakTime,
         start,
         pause,
         toggle: isRunning ? pause : start,
@@ -342,28 +371,80 @@ export function useTimer(options: TimerOptions = {}) {
         skip,
         setMode,
         setWorkMinutes: (minutesValue: number) => {
-            setInternal((current) => ({ ...current, workMinutes: clampMinutes(minutesValue) }));
+            const clamped = clampMinutes(minutesValue);
+            setInternal((current) => {
+                const next = { ...current, workMinutes: clamped };
+                persistTimerConfig(next);
+                return next;
+            });
+            if (statusRef.current === 'idle' && modeRef.current === 'pomodoro' && phaseRef.current === 'work') {
+                remainingRef.current = clamped * 60;
+                setSecondsRemaining(clamped * 60);
+            }
         },
         setShortBreakMinutes: (minutesValue: number) => {
-            setInternal((current) => ({ ...current, shortBreakMinutes: clampMinutes(minutesValue) }));
+            const clamped = clampMinutes(minutesValue);
+            setInternal((current) => {
+                const next = { ...current, shortBreakMinutes: clamped };
+                persistTimerConfig(next);
+                return next;
+            });
+            if (statusRef.current === 'idle' && modeRef.current === 'pomodoro' && phaseRef.current === 'short-break') {
+                remainingRef.current = clamped * 60;
+                setSecondsRemaining(clamped * 60);
+            }
         },
         setLongBreakMinutes: (minutesValue: number) => {
-            setInternal((current) => ({ ...current, longBreakMinutes: clampMinutes(minutesValue) }));
+            const clamped = clampMinutes(minutesValue);
+            setInternal((current) => {
+                const next = { ...current, longBreakMinutes: clamped };
+                persistTimerConfig(next);
+                return next;
+            });
+            if (statusRef.current === 'idle' && modeRef.current === 'pomodoro' && phaseRef.current === 'long-break') {
+                remainingRef.current = clamped * 60;
+                setSecondsRemaining(clamped * 60);
+            }
         },
         setCountdownMinutes: (minutesValue: number) => {
-            setInternal((current) => ({ ...current, countdownMinutes: clampMinutes(minutesValue) }));
+            const clamped = clampMinutes(minutesValue);
+            setInternal((current) => {
+                const next = { ...current, countdownMinutes: clamped };
+                persistTimerConfig(next);
+                return next;
+            });
+            if (statusRef.current === 'idle' && modeRef.current === 'countdown') {
+                remainingRef.current = clamped * 60;
+                setSecondsRemaining(clamped * 60);
+            }
         },
         setSessionsUntilLongBreak: (value: number) => {
-            setInternal((current) => ({ ...current, sessionsUntilLongBreak: clampMinutes(value) }));
+            setInternal((current) => {
+                const next = { ...current, sessionsUntilLongBreak: clampMinutes(value) };
+                persistTimerConfig(next);
+                return next;
+            });
         },
         setAutoStartBreaks: (value: boolean) => {
-            setInternal((current) => ({ ...current, autoStartBreaks: value }));
+            setInternal((current) => {
+                const next = { ...current, autoStartBreaks: value };
+                persistTimerConfig(next);
+                return next;
+            });
         },
         setAutoStartWork: (value: boolean) => {
-            setInternal((current) => ({ ...current, autoStartWork: value }));
+            setInternal((current) => {
+                const next = { ...current, autoStartWork: value };
+                persistTimerConfig(next);
+                return next;
+            });
         },
         setCountBreakTime: (value: boolean) => {
-            setInternal((current) => ({ ...current, countBreakTime: value }));
+            setInternal((current) => {
+                const next = { ...current, countBreakTime: value };
+                persistTimerConfig(next);
+                return next;
+            });
         },
     };
 }

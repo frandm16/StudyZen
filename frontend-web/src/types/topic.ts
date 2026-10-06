@@ -1,4 +1,4 @@
-export type TopicStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped';
+export type TopicStatus = 'not_started' | 'in_progress' | 'reviewing' | 'completed' | 'mastered' | 'skipped';
 
 export interface Topic {
     id: number;

@@ -5,6 +5,7 @@ import type { Subject } from '../types/subject';
 import type { Topic } from '../types/topic';
 import type { TodoItem } from '../types/todo-item';
 import type { DayNote } from '../types/day-note';
+import type { AcademicTerm } from '../types/academic-term';
 import { parseApiTimestamp } from './api-datetime';
 
 type WireObject = Record<string, unknown>;
@@ -34,6 +35,24 @@ export function readFavorite(value: unknown): boolean {
 
 export function readCompleted(value: unknown): boolean {
     return readAlias(value, 'isCompleted', 'completed');
+}
+
+export function readCurrent(value: unknown): boolean {
+    return readAlias(value, 'isCurrent', 'current');
+}
+
+export function normalizeAcademicTerm(value: unknown): AcademicTerm {
+    const data = object(value);
+    return {
+        id: Number(data.id),
+        name: String(data.name ?? ''),
+        startDate: String(data.startDate ?? ''),
+        endDate: String(data.endDate ?? ''),
+        isCurrent: readCurrent(data),
+        isArchived: readArchived(data),
+        createdAt: typeof data.createdAt === 'string' ? data.createdAt : undefined,
+        updatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : undefined,
+    };
 }
 
 export function normalizeSubject(value: unknown): Subject {
