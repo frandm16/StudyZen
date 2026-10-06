@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { NavbarDesktop } from "./NavbarDesktop";
 import { NavbarMobile } from "./NavbarMobile";
@@ -7,7 +7,6 @@ import { UserProfile } from "./UserProfile";
 import {
     Logo,
     MenuIcon,
-    SettingsIcon,
 } from "./NavbarIcons";
 
 export interface NavItem {
@@ -20,12 +19,12 @@ export const NAV_ITEMS: NavItem[] = [
     { path: "/day", label: "Day" },
     { path: "/week", label: "Week" },
     { path: "/planner", label: "Planning" },
-    { path: "/logs", label: "Logs" },
+    { path: "/subjects", label: "Subjects" },
     { path: "/dashboard", label: "Stats" },
 ];
 
 export const focusRing =
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151414]/20 focus-visible:ring-offset-2";
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)]/50 focus-visible:ring-offset-2";
 
 export const Navbar: React.FC = () => {
     const { pathname } = useLocation();
@@ -79,9 +78,9 @@ export const Navbar: React.FC = () => {
                         to="/timer"
                         className={`group flex w-fit items-center gap-2.5 rounded-xl ${focusRing}`}
                     >
-                        <Logo className="h-10 w-10 text-[#151414]" />
+                        <Logo className="h-10 w-10 text-[var(--app-text)]" />
 
-                        <span className="font-pt text-[1.5rem] font-bold tracking-[-0.02em] text-[#151414]">
+                        <span className="font-pt text-[1.5rem] font-bold tracking-[-0.02em] text-[var(--app-text)]">
                             StudyZen
                         </span>
                     </Link>
@@ -93,22 +92,6 @@ export const Navbar: React.FC = () => {
                     />
 
                     <div className="col-start-3 flex items-center justify-end gap-1.5">
-                        <NavLink
-                            to="/settings"
-                            className={({ isActive }) =>
-                                [
-                                    "flex h-10 w-10 items-center justify-center rounded-xl",
-                                    "transition-all duration-200 motion-reduce:transition-none",
-                                    focusRing,
-                                    isActive
-                                        ? "bg-[#151414] text-white"
-                                        : "text-neutral-500 hover:bg-[#151414]/[0.06] hover:text-[#151414]",
-                                ].join(" ")
-                            }
-                        >
-                            <SettingsIcon />
-                        </NavLink>
-
                         <UserProfile focusRing={focusRing} />
 
                         <button
@@ -118,8 +101,8 @@ export const Navbar: React.FC = () => {
                             aria-controls="mobile-nav"
                             className={[
                                 "flex h-10 w-10 items-center justify-center rounded-xl",
-                                "text-[#151414] transition-colors",
-                                "hover:bg-[#151414]/[0.06]",
+                                "text-[var(--app-text)] transition-colors",
+                                "hover:bg-neutral-500/10",
                                 "md:hidden",
                                 focusRing,
                             ].join(" ")}
@@ -139,7 +122,7 @@ export const Navbar: React.FC = () => {
                 </div>
             </div>
 
-            <div className="h-px bg-[#151414]/[0.07]" />
+            <div className="h-px bg-[var(--app-border)]" />
         </header>
     );
 };

@@ -19,10 +19,10 @@ const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { d
 
 function Panel({ title, emptyText, items }: { title: string; emptyText: string; items: ReactNode[] }) {
     return (
-        <section className="rounded-2xl border border-neutral-200 bg-white p-4">
-            <h2 className="text-xs text-neutral-500">{title}</h2>
+        <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4 shadow-sm">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">{title}</h2>
             {items.length === 0 ? (
-                <p className="mt-2 text-sm text-neutral-400">{emptyText}</p>
+                <p className="mt-2 text-xs text-[var(--app-text-muted)]">{emptyText}</p>
             ) : (
                 <ul className="mt-2 flex flex-col gap-1.5 text-sm">{items}</ul>
             )}
@@ -93,22 +93,22 @@ export function TodayPanels() {
                         <li
                             key={item.id}
                             onClick={() => navigate('/day')}
-                            className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 hover:-translate-y-px hover:bg-neutral-50"
+                            className="group flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:-translate-y-px hover:bg-neutral-500/10"
                         >
                             <span className="h-9 w-1 shrink-0 rounded-full" style={{ backgroundColor: subject?.color ?? '#d4d4d4' }} />
 
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="truncate text-sm font-medium text-[#151414]">{item.title}</span>
+                                    <span className="truncate text-sm font-semibold text-[var(--app-text)]">{item.title}</span>
 
                                     {item.urgency && (
                                         <span
                                             className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ${
                                                 item.urgency === 'high'
-                                                    ? 'bg-red-100 text-red-600'
+                                                    ? 'bg-red-500/15 text-red-500'
                                                     : item.urgency === 'medium'
-                                                        ? 'bg-amber-100 text-amber-600'
-                                                        : 'bg-green-100 text-green-600'
+                                                        ? 'bg-amber-500/15 text-amber-500'
+                                                        : 'bg-emerald-500/15 text-emerald-500'
                                             }`}
                                         >
                                             {item.urgency.toLowerCase()}
@@ -116,7 +116,7 @@ export function TodayPanels() {
                                     )}
                                 </div>
 
-                                <div className="mt-0.5 text-xs text-neutral-400">
+                                <div className="mt-0.5 text-xs text-[var(--app-text-muted)]">
                                     {item.allDay ? shortDate(item.dueAt) : `${shortDate(item.dueAt)} · ${clock(item.dueAt)}`}
                                 </div>
                             </div>
@@ -132,13 +132,13 @@ export function TodayPanels() {
                     <li
                         key={item.id}
                         onClick={() => navigate('/day')}
-                        className={`group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 hover:-translate-y-px hover:bg-neutral-50 ${
+                        className={`group flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:-translate-y-px hover:bg-neutral-500/10 ${
                             item.isCompleted ? 'opacity-60' : ''
                         }`}
                     >
                         <span
                             className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${
-                                item.isCompleted ? 'border-[#151414] bg-[#151414]' : 'border-neutral-300 group-hover:border-[#151414]/50'
+                                item.isCompleted ? 'border-[var(--accent-color)] bg-[var(--accent-color)]' : 'border-[var(--app-border)] group-hover:border-[var(--accent-color)]/70'
                             }`}
                         >
                             {item.isCompleted && (
@@ -156,7 +156,7 @@ export function TodayPanels() {
                             )}
                         </span>
 
-                        <span className={`min-w-0 truncate text-sm ${item.isCompleted ? 'text-neutral-400 line-through' : 'font-medium text-[#151414]'}`}>
+                        <span className={`min-w-0 truncate text-sm ${item.isCompleted ? 'text-[var(--app-text-muted)] line-through' : 'font-semibold text-[var(--app-text)]'}`}>
                             {item.text}
                         </span>
                     </li>
@@ -174,13 +174,13 @@ export function TodayPanels() {
                         <li
                             key={item.id}
                             onClick={() => navigate('/week')}
-                            className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 hover:-translate-y-px hover:bg-neutral-50"
+                            className="group flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:-translate-y-px hover:bg-neutral-500/10"
                         >
                             <span className="h-9 w-1 shrink-0 rounded-full" style={{ backgroundColor: subject?.color ?? '#d4d4d4' }} />
 
                             <div className="min-w-0">
-                                <div className="truncate text-sm font-medium text-[#151414]">{item.title ?? topic?.name ?? 'Study session'}</div>
-                                <div className="mt-0.5 text-xs tabular-nums text-neutral-400">
+                                <div className="truncate text-sm font-semibold text-[var(--app-text)]">{item.title ?? topic?.name ?? 'Study session'}</div>
+                                <div className="mt-0.5 text-xs tabular-nums text-[var(--app-text-muted)]">
                                     {clock(item.startedAt)} – {clock(item.endedAt)}
                                 </div>
                             </div>

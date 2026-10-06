@@ -71,7 +71,7 @@ export const NavbarDesktop: React.FC<NavbarDesktopProps> = ({
     return (
         <nav
             aria-label="Main navigation"
-            className="relative hidden h-10 items-center rounded-full bg-[#151414]/[0.045] p-1 md:flex"
+            className="relative hidden h-10 items-center rounded-full bg-neutral-500/10 p-1 md:flex"
         >
             <div
                 ref={linksRef}
@@ -81,8 +81,8 @@ export const NavbarDesktop: React.FC<NavbarDesktopProps> = ({
                     aria-hidden="true"
                     className="
                         pointer-events-none absolute inset-y-0
-                        rounded-full bg-white
-                        shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)]
+                        rounded-full bg-[var(--app-card-bg,#fff)]
+                        shadow-[0_1px_3px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)]
                         transition-[transform,width]
                         duration-500
                         ease-[cubic-bezier(0.22,1,0.36,1)]
@@ -103,13 +103,13 @@ export const NavbarDesktop: React.FC<NavbarDesktopProps> = ({
                         }}
                         className={({ isActive }) =>
                             [
-                                "group relative flex h-full items-center rounded-full px-6 font-medium",
+                                "group relative flex h-full items-center rounded-full px-6 font-medium text-xs",
                                 "transition-colors duration-300",
                                 "motion-reduce:transition-none",
                                 focusRing,
                                 isActive
-                                    ? "text-[#151414]"
-                                    : "text-neutral-500 hover:text-[#151414]",
+                                    ? "text-[var(--app-text)] font-bold"
+                                    : "text-[var(--app-text-muted)] hover:text-[var(--app-text)]",
                             ].join(" ")
                         }
                     >

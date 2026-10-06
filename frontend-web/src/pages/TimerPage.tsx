@@ -12,7 +12,7 @@ import { subjectService } from '../services/subject-service';
 import { topicService } from '../services/topic-service';
 import type { Subject } from '../types/subject';
 import type { Topic } from '../types/topic';
-import {SegmentedControl} from "../components/ui/SegmentedControl.tsx";
+import { SegmentedControl } from '../components/ui/SegmentedControl';
 
 const MODES: { value: TimerMode; label: string }[] = [
     { value: 'pomodoro', label: 'Pomodoro' },
@@ -29,20 +29,19 @@ const PHASE_LABEL: Record<TimerPhase, string> = {
 type Tone = 'idle' | 'work' | 'break' | 'paused' | 'done';
 
 const TONE_STYLES: Record<Tone, { bg: string; fg: string; dot: string }> = {
-    idle: { bg: '#f5f5f5', fg: '#525252', dot: '#a3a3a3' },
-    work: { bg: '#e8f0fe', fg: '#1d4ed8', dot: '#4287f5' },
-    break: { bg: '#ecfdf5', fg: '#065f46', dot: '#10b981' },
-    paused: { bg: '#fffbeb', fg: '#92400e', dot: '#f59e0b' },
-    done: { bg: '#f5f3ff', fg: '#5b21b6', dot: '#8b5cf6' },
+    idle: { bg: 'rgba(163, 163, 163, 0.15)', fg: 'var(--app-text-muted)', dot: '#a3a3a3' },
+    work: { bg: 'var(--accent-ring)', fg: 'var(--accent-color)', dot: 'var(--accent-color)' },
+    break: { bg: 'rgba(16, 185, 129, 0.15)', fg: '#10b981', dot: '#10b981' },
+    paused: { bg: 'rgba(245, 158, 11, 0.15)', fg: '#f59e0b', dot: '#f59e0b' },
+    done: { bg: 'rgba(168, 85, 247, 0.15)', fg: '#a855f7', dot: '#a855f7' },
 };
 
 const focusRing =
-    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4287f5]';
+    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]';
 
 const secondaryButton =
-    'rounded-full cursor-pointer border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-700 transition-colors ' +
-    'hover:border-[#151414] hover:text-[#151414] disabled:cursor-not-allowed disabled:opacity-40 ' +
-    'disabled:hover:border-neutral-300 disabled:hover:text-neutral-700 ' +
+    'rounded-full cursor-pointer border border-[var(--app-border)] bg-[var(--app-bg)] px-5 py-2.5 text-sm font-semibold text-[var(--app-text)] transition-colors ' +
+    'hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] disabled:cursor-not-allowed disabled:opacity-40 ' +
     focusRing;
 
 function TagIcon({ className = '' }: { className?: string }) {
@@ -173,7 +172,7 @@ export function TimerPage() {
         else void document.documentElement.requestFullscreen().catch(() => {});
     };
 
-    const { shortcuts } = useShortcuts(
+    useShortcuts(
         {
             toggleStartPause: timer.toggle,
             skipSession: timer.mode === 'pomodoro' && timer.status !== 'idle' ? timer.skip : undefined,
@@ -182,7 +181,7 @@ export function TimerPage() {
         },
         !pickerOpen && !saveOpen,
     );
-    shortcuts.find((item) => item.action === 'toggleStartPause')?.key;
+
     const isBreak = timer.mode === 'pomodoro' && timer.phase !== 'work';
     const tone: Tone = countdownDone
         ? 'done'
@@ -208,16 +207,16 @@ export function TimerPage() {
     const saveIsPrimary = canSave && timer.status === 'paused';
 
     return (
-        <div className="relative flex min-h-full flex-col items-center justify-center gap-8 px-4 py-10 text-[#151414]">
+        <div className="relative flex min-h-[calc(100vh-4.5rem)] flex-col items-center justify-center gap-8 px-4 py-10 bg-[var(--app-bg)] text-[var(--app-text)] transition-colors duration-200">
             <div className="flex w-full max-w-2xl flex-col items-center gap-4">
                 <section
                     aria-label="Study timer"
-                    className="w-full rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-8"
+                    className="w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-6 shadow-2xl sm:p-10 transition-colors"
                 >
                     <div
                         role="radiogroup"
                         aria-label="Timer mode"
-                        className="mx-auto  w-full flex max-w-sm rounded-full bg-neutral-100 py-1 h-10"
+                        className="mx-auto w-full flex max-w-sm"
                     >
                         <SegmentedControl
                             options={MODES}
@@ -232,7 +231,7 @@ export function TimerPage() {
 
                     <div className="mt-8 flex flex-col items-center">
                         <span
-                            className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium transition-colors"
+                            className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition-colors"
                             style={{ backgroundColor: TONE_STYLES[tone].bg, color: TONE_STYLES[tone].fg }}
                         >
                             <span className="relative flex h-2 w-2">
@@ -253,12 +252,12 @@ export function TimerPage() {
                         <div
                             role="timer"
                             aria-label={`Time: ${timer.formattedTime}`}
-                            className="mt-4 font-pt text-8xl font-bold tabular-nums leading-none tracking-tight sm:text-9xl"
+                            className="mt-4 font-pt text-8xl font-bold tabular-nums leading-none tracking-tight sm:text-9xl text-[var(--app-text)]"
                         >
                             {timer.formattedTime}
                         </div>
 
-                        <p className="mt-3 h-5 text-sm text-neutral-500">
+                        <p className="mt-3 h-5 text-xs font-semibold text-[var(--app-text-muted)]">
                             {timer.mode === 'pomodoro'
                                 ? timer.completedSessions === 1
                                     ? '1 session completed'
@@ -271,37 +270,37 @@ export function TimerPage() {
                         onClick={() => setPickerOpen(true)}
                         className={`group cursor-pointer mx-auto mt-6 flex w-full max-w-sm items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${focusRing} ${
                             selectedTopic
-                                ? 'border-neutral-200 bg-neutral-50 hover:border-[#151414]'
-                                : 'border-dashed border-2 border-neutral-300 hover:border-[#151414]'
+                                ? 'border-[var(--app-border)] bg-[var(--app-bg)] hover:border-[var(--accent-color)]/70'
+                                : 'border-dashed border-2 border-[var(--app-border)] hover:border-[var(--accent-color)]/70 bg-[var(--app-bg)]'
                         }`}
                     >
                         {selectedTopic && selectedSubject ? (
                             <span
-                                className="h-3 w-3 shrink-0 rounded-full"
+                                className="h-3.5 w-3.5 shrink-0 rounded-full"
                                 style={{ backgroundColor: selectedSubject.color }}
                                 aria-hidden
                             />
                         ) : (
-                            <TagIcon className="h-4 w-4 shrink-0 text-neutral-400" />
+                            <TagIcon className="h-4 w-4 shrink-0 text-[var(--app-text-muted)]" />
                         )}
                         <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-medium">
+                            <span className="block truncate text-sm font-semibold text-[var(--app-text)]">
                                 {selectedTopic ? selectedTopic.name : 'What are you studying?'}
                             </span>
-                            <span className="block truncate text-xs text-neutral-500">
+                            <span className="block truncate text-xs text-[var(--app-text-muted)] mt-0.5">
                                 {selectedTopic && selectedSubject
                                     ? selectedSubject.name
                                     : 'Pick a subject and topic to save this session'}
                             </span>
                         </span>
-                        <ChevronIcon className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" />
+                        <ChevronIcon className="h-4 w-4 shrink-0 text-[var(--app-text-muted)] transition-transform group-hover:translate-x-0.5" />
                     </button>
 
                     <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                         <button
                             onClick={timer.toggle}
                             onMouseUp={(e) => e.currentTarget.blur()}
-                            className={`min-w-36 cursor-pointer rounded-full bg-[#151414] px-10 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-85 ${focusRing}`}
+                            className={`min-w-36 cursor-pointer rounded-full bg-[var(--accent-color)] px-10 py-3.5 text-sm font-bold text-white transition-opacity hover:opacity-90 shadow-lg ${focusRing}`}
                         >
                             {startLabel}
                         </button>
@@ -319,7 +318,7 @@ export function TimerPage() {
                             title={canSave ? undefined : 'Study at least 1 minute to save'}
                             className={
                                 saveIsPrimary
-                                    ? `rounded-full border border-[#4287f5] bg-[#4287f5]/10 px-5 py-2.5 text-sm font-medium text-[#1d5fd1] transition-colors hover:bg-[#4287f5]/20 ${focusRing}`
+                                    ? `rounded-full cursor-pointer border border-[var(--accent-color)] bg-[var(--accent-color)]/15 px-5 py-2.5 text-sm font-bold text-[var(--accent-color)] transition-colors hover:bg-[var(--accent-color)]/25 ${focusRing}`
                                     : secondaryButton
                             }
                         >
@@ -332,7 +331,7 @@ export function TimerPage() {
                     {message && (
                         <p
                             role="status"
-                            className={`text-sm ${message.type === 'ok' ? 'text-emerald-700' : 'text-red-600'}`}
+                            className={`text-sm font-semibold ${message.type === 'ok' ? 'text-emerald-500' : 'text-red-500'}`}
                         >
                             {message.text}
                         </p>

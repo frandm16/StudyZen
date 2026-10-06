@@ -11,20 +11,20 @@ interface NavbarMobileProps {
 }
 
 export const NavbarMobile: React.FC<NavbarMobileProps> = ({
-                                                              pathname,
-                                                              open,
-                                                              items,
-                                                              focusRing,
-                                                          }) => {
+    pathname,
+    open,
+    items,
+    focusRing,
+}) => {
     if (!open) return null;
 
     return (
         <nav
             id="mobile-nav"
             aria-label="Mobile navigation"
-            className="border-t border-[#151414]/[0.06] pb-4 pt-3 md:hidden"
+            className="border-t border-[var(--app-border)] pb-4 pt-3 md:hidden"
         >
-            <div className="rounded-2xl bg-[#151414]/[0.035] p-1.5">
+            <div className="rounded-2xl bg-neutral-500/10 border border-[var(--app-border)] p-1.5 space-y-1">
                 {items.map((item) => {
                     const isActive =
                         pathname === item.path ||
@@ -35,12 +35,12 @@ export const NavbarMobile: React.FC<NavbarMobileProps> = ({
                             key={item.path}
                             to={item.path}
                             className={[
-                                "flex min-h-11 items-center rounded-xl px-4 text-sm font-medium",
-                                "transition-all duration-200 motion-reduce:transition-none",
+                                "flex min-h-11 items-center rounded-xl px-4 text-xs font-semibold",
+                                "transition-all duration-200 motion-reduce:transition-none cursor-pointer",
                                 focusRing,
                                 isActive
-                                    ? "bg-white text-[#151414] shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
-                                    : "text-neutral-500 hover:bg-white/70 hover:text-[#151414]",
+                                    ? "bg-[var(--app-card-bg)] text-[var(--accent-color)] font-bold shadow-sm"
+                                    : "text-[var(--app-text-muted)] hover:bg-neutral-500/10 hover:text-[var(--app-text)]",
                             ].join(" ")}
                         >
                             {item.label}

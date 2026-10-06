@@ -35,27 +35,27 @@ export function SaveSessionDialog({ topic, minutes, saving, error, onPickTopic, 
     return (
         <Modal title="Save Session" onClose={onCancel}>
             <form onSubmit={submit} className="flex flex-col gap-5">
-                <div className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 px-4 py-3">
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)] px-4 py-3 text-[var(--app-text)]">
                     <div className="min-w-0 text-sm">
-                        <p className="font-medium">{minutes} min studied</p>
+                        <p className="font-semibold text-[var(--app-text)]">{minutes} min studied</p>
                         {topic ? (
-                            <p className="truncate text-neutral-500">
+                            <p className="truncate text-xs text-[var(--app-text-muted)] mt-0.5">
                                 {topic.name}
                             </p>
                         ) : (
-                            <p className="text-neutral-500">Pick a subject and topic first.</p>
+                            <p className="text-xs text-[var(--app-text-muted)] mt-0.5">Pick a subject and topic first.</p>
                         )}
                     </div>
                     <button
                         type="button"
                         onClick={onPickTopic}
-                        className="cursor-pointer whitespace-nowrap rounded-full border border-neutral-300 px-4 py-2 text-sm text-neutral-600 transition-colors hover:border-[#151414] hover:text-[#151414]"
+                        className="cursor-pointer whitespace-nowrap rounded-full border border-[var(--app-border)] px-4 py-1.5 text-xs font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)]"
                     >
                         Change
                     </button>
                 </div>
 
-                <label className="flex flex-col gap-1.5 text-sm text-neutral-500">
+                <label className="flex flex-col gap-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                     Title
                     <input
                         autoFocus
@@ -67,7 +67,7 @@ export function SaveSessionDialog({ topic, minutes, saving, error, onPickTopic, 
                     />
                 </label>
 
-                <label className="flex flex-col gap-1.5 text-sm text-neutral-500">
+                <label className="flex flex-col gap-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                     Description (optional)
                     <input
                         value={description}
@@ -77,7 +77,7 @@ export function SaveSessionDialog({ topic, minutes, saving, error, onPickTopic, 
                     />
                 </label>
 
-                <label className="flex flex-col gap-1.5 text-sm text-neutral-500">
+                <label className="flex flex-col gap-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                     Focus (1-5)
                     <input
                         type="number"
@@ -89,9 +89,9 @@ export function SaveSessionDialog({ topic, minutes, saving, error, onPickTopic, 
                     />
                 </label>
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
 
-                <div className="flex justify-end gap-2 border-t border-neutral-200 pt-5">
+                <div className="flex justify-end gap-2 border-t border-[var(--app-border)] pt-5">
                     <button type="button" onClick={onCancel} className={ghostButton}>
                         Cancel
                     </button>
