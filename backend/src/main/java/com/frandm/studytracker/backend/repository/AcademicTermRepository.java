@@ -14,4 +14,5 @@ public interface AcademicTermRepository extends JpaRepository<AcademicTerm, Long
     List<AcademicTerm> findByUserIdAndIsArchivedFalseOrderByStartDateDesc(UUID userId);
     Optional<AcademicTerm> findByIdAndUserId(Long id, UUID userId);
     Optional<AcademicTerm> findByUserIdAndIsCurrentTrue(UUID userId);
+    List<AcademicTerm> findAllByUserIdAndIsCurrentTrue(UUID userId);
 }

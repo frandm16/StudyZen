@@ -1,11 +1,13 @@
 package com.frandm.studytracker.backend.service;
 
+import com.frandm.studytracker.backend.model.AcademicTerm;
 import com.frandm.studytracker.backend.model.Subject;
 import com.frandm.studytracker.backend.repository.AcademicTermRepository;
 import com.frandm.studytracker.backend.repository.SubjectRepository;
 import com.frandm.studytracker.backend.security.CurrentUser;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -43,14 +45,19 @@ public class SubjectService {
     }
 
     public Subject create(String name, Long termId, String color, String notes, Boolean isArchived, Boolean isFavorite) {
-        requireTerm(termId);
-        rejectDuplicate(termId, name, null);
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Subject name is required");
+        }
+        UUID userId = CurrentUser.id();
+        Long resolvedTermId = resolveOrCreateTerm(termId, userId);
+        String trimmedName = name.trim();
+        rejectDuplicate(resolvedTermId, trimmedName, null);
         Subject subject = new Subject();
-        subject.setUserId(CurrentUser.id());
+        subject.setUserId(userId);
         subject.setCreatedAt(OffsetDateTime.now());
-        subject.setName(name);
-        subject.setTermId(termId);
-        subject.setColor(color);
+        subject.setName(trimmedName);
+        subject.setTermId(resolvedTermId);
+        subject.setColor(color != null && !color.isBlank() ? color : "#4287f5");
         subject.setNotes(notes);
         subject.setArchived(Boolean.TRUE.equals(isArchived));
         subject.setFavorite(Boolean.TRUE.equals(isFavorite));
@@ -95,6 +102,28 @@ public class SubjectService {
     public void delete(Long id) {
         Subject subject = getById(id);
         subjectRepository.delete(subject);
+    }
+
+    private Long resolveOrCreateTerm(Long termId, UUID userId) {
+        if (termId != null) {
+            requireTerm(termId);
+            return termId;
+        }
+        return academicTermRepository.findByUserIdAndIsCurrentTrue(userId)
+                .map(AcademicTerm::getId)
+                .or(() -> academicTermRepository.findByUserIdAndIsArchivedFalseOrderByStartDateDesc(userId).stream().findFirst().map(AcademicTerm::getId))
+                .orElseGet(() -> {
+                    AcademicTerm defaultTerm = new AcademicTerm();
+                    defaultTerm.setUserId(userId);
+                    defaultTerm.setName("General");
+                    defaultTerm.setStartDate(LocalDate.now());
+                    defaultTerm.setEndDate(LocalDate.now().plusYears(1));
+                    defaultTerm.setCurrent(true);
+                    defaultTerm.setArchived(false);
+                    defaultTerm.setCreatedAt(OffsetDateTime.now());
+                    defaultTerm.setUpdatedAt(OffsetDateTime.now());
+                    return academicTermRepository.save(defaultTerm).getId();
+                });
     }
 
     private void requireTerm(Long termId) {
