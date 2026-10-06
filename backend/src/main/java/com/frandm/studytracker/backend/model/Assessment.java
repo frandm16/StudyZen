@@ -1,6 +1,5 @@
 package com.frandm.studytracker.backend.model;
 
-import com.frandm.studytracker.backend.model.enums.AssessmentType;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -20,9 +19,8 @@ public class Assessment {
     @Column(name = "subject_id", nullable = false)
     private Long subjectId;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AssessmentType type = AssessmentType.other;
+    private String type = "other";
 
     @Column(nullable = false)
     private String title;
@@ -73,8 +71,8 @@ public class Assessment {
     public Long getSubjectId() { return subjectId; }
     public void setSubjectId(Long subjectId) { this.subjectId = subjectId; }
 
-    public AssessmentType getType() { return type; }
-    public void setType(AssessmentType type) { this.type = type; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type != null && !type.isBlank() ? type : "other"; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

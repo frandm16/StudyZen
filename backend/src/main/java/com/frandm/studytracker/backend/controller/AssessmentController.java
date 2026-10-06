@@ -1,7 +1,6 @@
 package com.frandm.studytracker.backend.controller;
 
 import com.frandm.studytracker.backend.model.Assessment;
-import com.frandm.studytracker.backend.model.enums.AssessmentType;
 import com.frandm.studytracker.backend.service.AssessmentService;
 import com.frandm.studytracker.backend.util.DateTimeUtils;
 import org.springframework.http.ResponseEntity;
@@ -95,12 +94,9 @@ public class AssessmentController {
         return value != null ? new BigDecimal(value.toString()) : null;
     }
 
-    private AssessmentType type(Object value) {
-        if (value == null) return null;
-        try {
-            return AssessmentType.valueOf(value.toString().toLowerCase().trim());
-        } catch (IllegalArgumentException e) {
-            return AssessmentType.other;
-        }
+    private String type(Object value) {
+        if (value == null) return "other";
+        String str = value.toString().trim();
+        return str.isBlank() ? "other" : str;
     }
 }

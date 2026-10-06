@@ -1,7 +1,6 @@
 package com.frandm.studytracker.backend.service;
 
 import com.frandm.studytracker.backend.model.Assessment;
-import com.frandm.studytracker.backend.model.enums.AssessmentType;
 import com.frandm.studytracker.backend.repository.AssessmentRepository;
 import com.frandm.studytracker.backend.repository.SubjectRepository;
 import com.frandm.studytracker.backend.security.CurrentUser;
@@ -34,15 +33,16 @@ public class AssessmentService {
                 .orElseThrow(() -> new RuntimeException("Assessment not found: " + id));
     }
 
-    public Assessment create(Long subjectId, AssessmentType type, String title, String description,
+    public Assessment create(Long subjectId, String type, String title, String description,
                              BigDecimal grade, BigDecimal maxGrade, BigDecimal weightPercent,
                              OffsetDateTime dueAt, Boolean isCompleted) {
         requireSubject(subjectId);
+        validateTotalWeight(subjectId, weightPercent, null);
         Assessment assessment = new Assessment();
         assessment.setUserId(CurrentUser.id());
         assessment.setCreatedAt(OffsetDateTime.now());
         assessment.setSubjectId(subjectId);
-        assessment.setType(type != null ? type : AssessmentType.other);
+        assessment.setType(type != null && !type.isBlank() ? type.trim() : "other");
         assessment.setTitle(title);
         assessment.setDescription(description);
         assessment.setGrade(grade);
@@ -56,13 +56,14 @@ public class AssessmentService {
         return assessmentRepository.save(assessment);
     }
 
-    public Assessment fullUpdate(Long id, Long subjectId, AssessmentType type, String title, String description,
+    public Assessment fullUpdate(Long id, Long subjectId, String type, String title, String description,
                                  BigDecimal grade, BigDecimal maxGrade, BigDecimal weightPercent,
                                  OffsetDateTime dueAt, Boolean isCompleted) {
         Assessment assessment = getById(id);
         requireSubject(subjectId);
+        validateTotalWeight(subjectId, weightPercent, assessment.getId());
         assessment.setSubjectId(subjectId);
-        assessment.setType(type != null ? type : AssessmentType.other);
+        assessment.setType(type != null && !type.isBlank() ? type.trim() : "other");
         assessment.setTitle(title);
         assessment.setDescription(description);
         assessment.setGrade(grade);
@@ -74,15 +75,20 @@ public class AssessmentService {
         return assessmentRepository.save(assessment);
     }
 
-    public Assessment partialUpdate(Long id, Long subjectId, AssessmentType type, String title, String description,
+    public Assessment partialUpdate(Long id, Long subjectId, String type, String title, String description,
                                     BigDecimal grade, BigDecimal maxGrade, BigDecimal weightPercent,
                                     OffsetDateTime dueAt, Boolean isCompleted, boolean dueAtPresent) {
         Assessment assessment = getById(id);
+        Long targetSubjectId = subjectId != null ? subjectId : assessment.getSubjectId();
         if (subjectId != null) {
             requireSubject(subjectId);
             assessment.setSubjectId(subjectId);
         }
-        if (type != null) assessment.setType(type);
+        if (weightPercent != null || subjectId != null) {
+            BigDecimal targetWeight = weightPercent != null ? weightPercent : assessment.getWeightPercent();
+            validateTotalWeight(targetSubjectId, targetWeight, assessment.getId());
+        }
+        if (type != null && !type.isBlank()) assessment.setType(type.trim());
         if (title != null) assessment.setTitle(title);
         if (description != null) assessment.setDescription(description);
         if (grade != null) assessment.setGrade(grade);
@@ -111,6 +117,22 @@ public class AssessmentService {
     private void requireSubject(Long subjectId) {
         if (subjectId == null || subjectRepository.findByIdAndUserId(subjectId, CurrentUser.id()).isEmpty()) {
             throw new RuntimeException("Subject not found: " + subjectId);
+        }
+    }
+
+    private void validateTotalWeight(Long subjectId, BigDecimal newWeight, Long excludeAssessmentId) {
+        if (newWeight == null || subjectId == null) return;
+        List<Assessment> existing = assessmentRepository.findByUserIdAndSubjectIdOrderByDueAtAsc(CurrentUser.id(), subjectId);
+        BigDecimal sum = BigDecimal.ZERO;
+        for (Assessment a : existing) {
+            if (excludeAssessmentId != null && excludeAssessmentId.equals(a.getId())) continue;
+            if (a.getWeightPercent() != null) {
+                sum = sum.add(a.getWeightPercent());
+            }
+        }
+        sum = sum.add(newWeight);
+        if (sum.compareTo(new BigDecimal("100.00")) > 0) {
+            throw new RuntimeException("Total weight for subject cannot exceed 100% (currently " + sum + "%)");
         }
     }
 }

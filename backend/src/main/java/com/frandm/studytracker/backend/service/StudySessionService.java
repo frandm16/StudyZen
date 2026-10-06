@@ -123,8 +123,8 @@ public class StudySessionService {
             Short focusRating = body.get("focusRating") != null
                     ? ((Number) body.get("focusRating")).shortValue()
                     : null;
-            if (focusRating != null && (focusRating < 1 || focusRating > 5)) {
-                throw new RuntimeException("focusRating must be between 1 and 5");
+            if (focusRating != null && (focusRating < 0 || focusRating > 5)) {
+                throw new RuntimeException("focusRating must be between 0 and 5");
             }
             session.setFocusRating(focusRating);
         }
