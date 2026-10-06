@@ -96,6 +96,11 @@ public class AssessmentController {
     }
 
     private AssessmentType type(Object value) {
-        return value != null ? AssessmentType.valueOf((String) value) : null;
+        if (value == null) return null;
+        try {
+            return AssessmentType.valueOf(value.toString().toLowerCase().trim());
+        } catch (IllegalArgumentException e) {
+            return AssessmentType.other;
+        }
     }
 }

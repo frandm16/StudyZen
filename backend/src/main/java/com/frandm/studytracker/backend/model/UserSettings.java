@@ -41,13 +41,13 @@ public class UserSettings {
     private int pomodoroSessionsInterval = 4;
 
     @Column(name = "auto_start_breaks", nullable = false)
-    private boolean autoStartBreaks = false;
+    private Boolean autoStartBreaks = false;
 
     @Column(name = "auto_start_work", nullable = false)
-    private boolean autoStartWork = false;
+    private Boolean autoStartWork = false;
 
     @Column(name = "count_break_time", nullable = false)
-    private boolean countBreakTime = false;
+    private Boolean countBreakTime = false;
 
     @Column(name = "countdown_default_minutes", nullable = false)
     private int countdownDefaultMinutes = 10;
@@ -115,14 +115,17 @@ public class UserSettings {
     public int getPomodoroSessionsInterval() { return pomodoroSessionsInterval; }
     public void setPomodoroSessionsInterval(int pomodoroSessionsInterval) { this.pomodoroSessionsInterval = pomodoroSessionsInterval; }
 
-    public boolean isAutoStartBreaks() { return autoStartBreaks; }
-    public void setAutoStartBreaks(boolean autoStartBreaks) { this.autoStartBreaks = autoStartBreaks; }
+    public Boolean getAutoStartBreaks() { return autoStartBreaks; }
+    public Boolean isAutoStartBreaks() { return autoStartBreaks; }
+    public void setAutoStartBreaks(Boolean autoStartBreaks) { this.autoStartBreaks = autoStartBreaks; }
 
-    public boolean isAutoStartWork() { return autoStartWork; }
-    public void setAutoStartWork(boolean autoStartWork) { this.autoStartWork = autoStartWork; }
+    public Boolean getAutoStartWork() { return autoStartWork; }
+    public Boolean isAutoStartWork() { return autoStartWork; }
+    public void setAutoStartWork(Boolean autoStartWork) { this.autoStartWork = autoStartWork; }
 
-    public boolean isCountBreakTime() { return countBreakTime; }
-    public void setCountBreakTime(boolean countBreakTime) { this.countBreakTime = countBreakTime; }
+    public Boolean getCountBreakTime() { return countBreakTime; }
+    public Boolean isCountBreakTime() { return countBreakTime; }
+    public void setCountBreakTime(Boolean countBreakTime) { this.countBreakTime = countBreakTime; }
 
     public int getCountdownDefaultMinutes() { return countdownDefaultMinutes; }
     public void setCountdownDefaultMinutes(int countdownDefaultMinutes) { this.countdownDefaultMinutes = countdownDefaultMinutes; }

@@ -7,5 +7,6 @@ public enum DeadlineType {
     project,
     presentation,
     lab,
+    submission,
     other
 }

@@ -2,6 +2,14 @@ import { api } from './api';
 import { normalizeTodoItem } from '../lib/api-flags';
 import type { TodoItem, CreateTodoDTO, UpdateTodoDTO } from '../types/todo-item';
 
+function formatTodoUpdate(todo: UpdateTodoDTO | Partial<UpdateTodoDTO>): Record<string, unknown> {
+    const payload: Record<string, unknown> = { ...todo };
+    if (todo.isCompleted !== undefined) {
+        payload.completed = todo.isCompleted;
+    }
+    return payload;
+}
+
 export const todoService = {
     getAll: async (date?: string): Promise<TodoItem[]> => {
         const response = await api.get<unknown[]>('/todos', { params: { date } });
@@ -19,12 +27,12 @@ export const todoService = {
     },
 
     update: async (id: number, todo: UpdateTodoDTO): Promise<TodoItem> => {
-        const response = await api.put<unknown>(`/todos/${id}`, todo);
+        const response = await api.put<unknown>(`/todos/${id}`, formatTodoUpdate(todo));
         return normalizeTodoItem(response.data);
     },
 
     patch: async (id: number, changes: Partial<UpdateTodoDTO>): Promise<TodoItem> => {
-        const response = await api.patch<unknown>(`/todos/${id}`, changes);
+        const response = await api.patch<unknown>(`/todos/${id}`, formatTodoUpdate(changes));
         return normalizeTodoItem(response.data);
     },
 

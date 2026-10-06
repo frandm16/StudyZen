@@ -155,11 +155,13 @@ export function normalizeTodoItem(value: unknown): TodoItem {
 
 export function normalizeScheduledSession(value: unknown): ScheduledSession {
     const data = object(value);
+    const startedRaw = data.startedAt ?? data.startsAt ?? '';
+    const endedRaw = data.endedAt ?? data.endsAt ?? '';
     return {
         id: Number(data.id),
         title: typeof data.title === 'string' ? data.title : undefined,
-        startedAt: parseApiTimestamp(String(data.startedAt ?? '')) ?? '',
-        endedAt: parseApiTimestamp(String(data.endedAt ?? '')) ?? '',
+        startedAt: parseApiTimestamp(String(startedRaw)) ?? '',
+        endedAt: parseApiTimestamp(String(endedRaw)) ?? '',
         topicId: Number(data.topicId),
     };
 }

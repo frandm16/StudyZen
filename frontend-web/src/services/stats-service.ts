@@ -10,8 +10,12 @@ export const statsService = {
         const response = await api.get<Heatmap>('/stats/heatmap');
         return response.data;
     },
+    getSummaryBySubject: async (subjectId: number): Promise<TagSummary> => {
+        const response = await api.get<TagSummary>('/stats/summary', { params: { subjectId } });
+        return response.data;
+    },
     getSummaryByTag: async (tag: string): Promise<TagSummary> => {
-        const response = await api.get<TagSummary>('/stats/summary', { params: { tag } });
+        const response = await api.get<TagSummary>('/stats/summary', { params: { subjectId: tag } });
         return response.data;
     },
     getAllSessions: async (): Promise<SessionStatsRow[]> => {

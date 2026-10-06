@@ -45,8 +45,8 @@ public class SubjectController {
                 longValue(body.get("termId")),
                 (String) body.get("color"),
                 (String) body.get("notes"),
-                (Boolean) body.get("isArchived"),
-                (Boolean) body.get("isFavorite")
+                parseBoolean(body.get("isArchived"), body.get("archived")),
+                parseBoolean(body.get("isFavorite"), body.get("favorite"))
         );
     }
 
@@ -58,8 +58,8 @@ public class SubjectController {
                 longValue(body.get("termId")),
                 (String) body.get("color"),
                 (String) body.get("notes"),
-                (Boolean) body.get("isArchived"),
-                (Boolean) body.get("isFavorite")
+                parseBoolean(body.get("isArchived"), body.get("archived")),
+                parseBoolean(body.get("isFavorite"), body.get("favorite"))
         );
     }
 
@@ -71,8 +71,8 @@ public class SubjectController {
                 longValue(body.get("termId")),
                 (String) body.get("color"),
                 (String) body.get("notes"),
-                (Boolean) body.get("isArchived"),
-                (Boolean) body.get("isFavorite")
+                parseBoolean(body.get("isArchived"), body.get("archived")),
+                parseBoolean(body.get("isFavorite"), body.get("favorite"))
         );
     }
 
@@ -84,5 +84,12 @@ public class SubjectController {
 
     private Long longValue(Object value) {
         return value != null ? ((Number) value).longValue() : null;
+    }
+
+    private Boolean parseBoolean(Object v1, Object v2) {
+        Object val = v1 != null ? v1 : v2;
+        if (val instanceof Boolean b) return b;
+        if (val instanceof String s) return Boolean.parseBoolean(s);
+        return null;
     }
 }

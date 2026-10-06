@@ -83,18 +83,20 @@ public class ScheduledSessionService {
             session.setTitle((String) body.get("title"));
         }
 
-        if (full || body.get("startsAt") != null) {
+        Object startsAtRaw = body.get("startsAt") != null ? body.get("startsAt") : body.get("startedAt");
+        if (full || startsAtRaw != null) {
             OffsetDateTime startsAt = DateTimeUtils.parseFlexibleOffset(
-                    body.get("startsAt") != null ? String.valueOf(body.get("startsAt")) : null);
+                    startsAtRaw != null ? String.valueOf(startsAtRaw) : null);
             if (startsAt == null) {
                 throw new RuntimeException("startsAt is required");
             }
             session.setStartsAt(startsAt);
         }
 
-        if (full || body.get("endsAt") != null) {
+        Object endsAtRaw = body.get("endsAt") != null ? body.get("endsAt") : body.get("endedAt");
+        if (full || endsAtRaw != null) {
             OffsetDateTime endsAt = DateTimeUtils.parseFlexibleOffset(
-                    body.get("endsAt") != null ? String.valueOf(body.get("endsAt")) : null);
+                    endsAtRaw != null ? String.valueOf(endsAtRaw) : null);
             if (endsAt == null) {
                 throw new RuntimeException("endsAt is required");
             }
@@ -102,11 +104,16 @@ public class ScheduledSessionService {
         }
 
         if (full || body.get("status") != null) {
-            String raw = body.get("status") != null ? String.valueOf(body.get("status")) : null;
-            ScheduledSessionStatus status = raw != null && !raw.isBlank()
-                    ? ScheduledSessionStatus.valueOf(raw)
-                    : ScheduledSessionStatus.scheduled;
-            session.setStatus(status);
+            session.setStatus(parseStatus(body.get("status")));
+        }
+    }
+
+    private ScheduledSessionStatus parseStatus(Object value) {
+        if (value == null) return ScheduledSessionStatus.scheduled;
+        try {
+            return ScheduledSessionStatus.valueOf(value.toString().toLowerCase().trim());
+        } catch (IllegalArgumentException e) {
+            return ScheduledSessionStatus.scheduled;
         }
     }
 }

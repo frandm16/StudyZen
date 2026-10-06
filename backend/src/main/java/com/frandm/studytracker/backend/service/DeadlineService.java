@@ -77,11 +77,8 @@ public class DeadlineService {
         deadline.setTitle(title);
         deadline.setDescription((String) body.get("description"));
 
-        String typeStr = (String) body.get("type");
-        deadline.setType(typeStr != null ? DeadlineType.valueOf(typeStr) : DeadlineType.assignment);
-
-        String urgencyStr = (String) body.get("urgency");
-        deadline.setUrgency(urgencyStr != null ? UrgencyLevel.valueOf(urgencyStr) : UrgencyLevel.medium);
+        deadline.setType(parseType(body.get("type")));
+        deadline.setUrgency(parseUrgency(body.get("urgency")));
 
         Boolean allDay = (Boolean) body.get("allDay");
         deadline.setAllDay(allDay != null ? allDay : false);
@@ -129,11 +126,8 @@ public class DeadlineService {
         deadline.setTitle(title);
         deadline.setDescription((String) body.get("description"));
 
-        String typeStr = (String) body.get("type");
-        if (typeStr != null) deadline.setType(DeadlineType.valueOf(typeStr));
-
-        String urgencyStr = (String) body.get("urgency");
-        if (urgencyStr != null) deadline.setUrgency(UrgencyLevel.valueOf(urgencyStr));
+        deadline.setType(parseType(body.get("type")));
+        deadline.setUrgency(parseUrgency(body.get("urgency")));
 
         Boolean allDay = (Boolean) body.get("allDay");
         if (allDay != null) deadline.setAllDay(allDay);
@@ -185,13 +179,11 @@ public class DeadlineService {
         }
 
         if (body.containsKey("type")) {
-            String typeStr = (String) body.get("type");
-            if (typeStr != null) deadline.setType(DeadlineType.valueOf(typeStr));
+            deadline.setType(parseType(body.get("type")));
         }
 
         if (body.containsKey("urgency")) {
-            String urgencyStr = (String) body.get("urgency");
-            if (urgencyStr != null) deadline.setUrgency(UrgencyLevel.valueOf(urgencyStr));
+            deadline.setUrgency(parseUrgency(body.get("urgency")));
         }
 
         if (body.containsKey("allDay")) {
@@ -203,8 +195,9 @@ public class DeadlineService {
             deadline.setDueAt((OffsetDateTime) body.get("dueAt"));
         }
 
-        if (body.containsKey("isCompleted")) {
-            Boolean isCompleted = (Boolean) body.get("isCompleted");
+        if (body.containsKey("isCompleted") || body.containsKey("completed")) {
+            Object completedRaw = body.get("isCompleted") != null ? body.get("isCompleted") : body.get("completed");
+            Boolean isCompleted = completedRaw instanceof Boolean b ? b : (completedRaw instanceof String s ? Boolean.parseBoolean(s) : null);
             if (isCompleted != null) {
                 boolean wasCompleted = deadline.isCompleted();
                 deadline.setCompleted(isCompleted);
@@ -240,5 +233,23 @@ public class DeadlineService {
         }
         deadline.setUpdatedAt(OffsetDateTime.now());
         return deadlineRepository.save(deadline);
+    }
+
+    private DeadlineType parseType(Object value) {
+        if (value == null) return DeadlineType.assignment;
+        try {
+            return DeadlineType.valueOf(value.toString().toLowerCase().trim());
+        } catch (IllegalArgumentException e) {
+            return DeadlineType.assignment;
+        }
+    }
+
+    private UrgencyLevel parseUrgency(Object value) {
+        if (value == null) return UrgencyLevel.medium;
+        try {
+            return UrgencyLevel.valueOf(value.toString().toLowerCase().trim());
+        } catch (IllegalArgumentException e) {
+            return UrgencyLevel.medium;
+        }
     }
 }

@@ -57,9 +57,15 @@ public class UserSettingsService {
         if (incoming.getPomodoroSessionsInterval() > 0) {
             current.setPomodoroSessionsInterval(incoming.getPomodoroSessionsInterval());
         }
-        current.setAutoStartBreaks(incoming.isAutoStartBreaks());
-        current.setAutoStartWork(incoming.isAutoStartWork());
-        current.setCountBreakTime(incoming.isCountBreakTime());
+        if (incoming.getAutoStartBreaks() != null) {
+            current.setAutoStartBreaks(incoming.getAutoStartBreaks());
+        }
+        if (incoming.getAutoStartWork() != null) {
+            current.setAutoStartWork(incoming.getAutoStartWork());
+        }
+        if (incoming.getCountBreakTime() != null) {
+            current.setCountBreakTime(incoming.getCountBreakTime());
+        }
         if (incoming.getCountdownDefaultMinutes() > 0) {
             current.setCountdownDefaultMinutes(incoming.getCountdownDefaultMinutes());
         }

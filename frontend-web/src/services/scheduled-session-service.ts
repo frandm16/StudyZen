@@ -3,20 +3,32 @@ import { normalizeScheduledSession } from '../lib/api-flags';
 import { formatApiTimestamp, formatRequiredApiTimestamp } from '../lib/api-datetime';
 import type { ScheduledSession, CreateScheduledSessionDTO } from '../types/scheduled-session';
 
-function formatDates(session: CreateScheduledSessionDTO): CreateScheduledSessionDTO {
+function formatDates(session: CreateScheduledSessionDTO): Record<string, unknown> {
+    const started = formatRequiredApiTimestamp(session.startedAt);
+    const ended = formatRequiredApiTimestamp(session.endedAt);
     return {
         ...session,
-        startedAt: formatRequiredApiTimestamp(session.startedAt),
-        endedAt: formatRequiredApiTimestamp(session.endedAt),
+        startedAt: started,
+        endedAt: ended,
+        startsAt: started,
+        endsAt: ended,
     };
 }
 
 function formatPatch(changes: Partial<Pick<CreateScheduledSessionDTO, 'title' | 'startedAt' | 'endedAt'>>) {
-    return Object.fromEntries(Object.entries(changes)
+    const entries = Object.entries(changes)
         .filter(([, value]) => value !== undefined)
         .map(([key, value]) => [key, key === 'startedAt' || key === 'endedAt'
             ? formatApiTimestamp(value as string)
-            : value]));
+            : value]);
+    const obj = Object.fromEntries(entries);
+    if ('startedAt' in obj) {
+        obj.startsAt = obj.startedAt;
+    }
+    if ('endedAt' in obj) {
+        obj.endsAt = obj.endedAt;
+    }
+    return obj;
 }
 
 export const scheduledSessionService = {

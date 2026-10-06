@@ -1,5 +1,5 @@
-export type DeadlineType = 'assignment' | 'exam' | 'project' | 'submission' | 'other';
-export type UrgencyLevel = 'low' | 'medium' | 'high';
+export type DeadlineType = 'assignment' | 'exam' | 'quiz' | 'project' | 'presentation' | 'lab' | 'submission' | 'other';
+export type UrgencyLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export interface Deadline {
     id: number;

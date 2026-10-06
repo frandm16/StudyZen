@@ -120,7 +120,7 @@ public class TodoItemService {
         item.setSubjectId(subjectId);
         item.setTopicId(topicId);
 
-        Boolean completed = body.get("completed") != null ? (Boolean) body.get("completed") : null;
+        Boolean completed = parseBoolean(body.get("isCompleted"), body.get("completed"));
         if (completed != null) {
             boolean wasCompleted = item.isCompleted();
             item.setCompleted(completed);
@@ -167,8 +167,8 @@ public class TodoItemService {
             if (text != null) item.setText(text);
         }
 
-        if (body.containsKey("completed")) {
-            Boolean completed = (Boolean) body.get("completed");
+        if (body.containsKey("completed") || body.containsKey("isCompleted")) {
+            Boolean completed = parseBoolean(body.get("isCompleted"), body.get("completed"));
             if (completed != null) {
                 boolean wasCompleted = item.isCompleted();
                 item.setCompleted(completed);
@@ -188,5 +188,12 @@ public class TodoItemService {
         TodoItem item = todoItemRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new RuntimeException("TodoItem not found: " + id));
         todoItemRepository.delete(item);
+    }
+
+    private Boolean parseBoolean(Object v1, Object v2) {
+        Object val = v1 != null ? v1 : v2;
+        if (val instanceof Boolean b) return b;
+        if (val instanceof String s) return Boolean.parseBoolean(s);
+        return null;
     }
 }
