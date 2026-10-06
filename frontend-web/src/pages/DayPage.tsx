@@ -111,7 +111,7 @@ const readableText = (color: string) => {
     if (!match) return '#ffffff';
     const value = parseInt(match[1], 16);
     const luminance = 0.299 * ((value >> 16) & 255) + 0.587 * ((value >> 8) & 255) + 0.114 * (value & 255);
-    return luminance > 160 ? '#1c1200' : '#ffffff';
+    return luminance > 160 ? '#18181b' : '#ffffff';
 };
 
 const minutesInDay = (date: Date, dayStart: Date) =>
@@ -207,31 +207,31 @@ const urgencyLabel = (urgency: string) => {
 const urgencyStyle = (urgency: string) => {
     switch (urgency?.trim().toLowerCase()) {
         case 'low':
-            return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+            return 'border-emerald-500/30 bg-emerald-500/15 text-emerald-500';
         case 'high':
-            return 'border-red-200 bg-red-50 text-red-700';
+            return 'border-red-500/30 bg-red-500/15 text-red-500';
         case 'medium':
-            return 'border-blue-200 bg-blue-50 text-blue-700';
+            return 'border-blue-500/30 bg-blue-500/15 text-blue-500';
         default:
-            return 'border-neutral-300 bg-transparent text-neutral-600';
+            return 'border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)]';
     }
 };
 
-const focusRing = 'cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4287f5]';
+const focusRing = 'cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]';
 
 const outlineButton =
-    'rounded-lg border border-neutral-300 px-3 py-1.5 text-xs text-neutral-600 transition-colors ' +
-    'hover:border-[#151414] hover:text-[#151414] ' +
+    'rounded-xl cursor-pointer border border-[var(--app-border)] bg-[var(--app-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--app-text)] transition-colors ' +
+    'hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] ' +
     focusRing;
 
 const squareButton =
-    'flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-300 text-neutral-600 transition-colors ' +
-    'hover:border-[#151414] hover:text-[#151414] ' +
+    'flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)] transition-colors ' +
+    'hover:border-[var(--accent-color)] hover:text-[var(--app-text)] ' +
     focusRing;
 
 const fieldClass =
-    'w-full rounded-xl border border-neutral-300 bg-transparent px-3 py-2.5 text-sm text-[#151414] ' +
-    'placeholder:text-neutral-400 focus:border-[#4287f5] focus:outline-none';
+    'w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-3.5 py-2.5 text-sm text-[var(--app-text)] ' +
+    'placeholder:text-[var(--app-text-muted)] focus:border-[var(--accent-color)] focus:outline-none transition-colors';
 
 function ChevronIcon({ direction, className = '' }: { direction: 'left' | 'right'; className?: string }) {
     return (
@@ -299,8 +299,8 @@ function CheckCircle({ done, onClick, label }: { done: boolean; onClick: () => v
             role="checkbox"
             aria-checked={done}
             aria-label={label}
-            className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors ${focusRing} ${
-                done ? 'border-emerald-500 text-emerald-500' : 'border-neutral-300 text-transparent hover:border-[#151414]'
+            className={`flex h-[18px] w-[18px] cursor-pointer shrink-0 items-center justify-center rounded-full border-2 transition-colors ${focusRing} ${
+                done ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm' : 'border-[var(--app-border)] text-transparent hover:border-[var(--accent-color)]'
             }`}
         >
             <CheckIcon className="h-2.5 w-2.5" />
@@ -309,11 +309,11 @@ function CheckCircle({ done, onClick, label }: { done: boolean; onClick: () => v
 }
 
 function RowMenu({
-                     open,
-                     onToggle,
-                     onClose,
-                     onDelete,
-                 }: {
+    open,
+    onToggle,
+    onClose,
+    onDelete,
+}: {
     open: boolean;
     onToggle: () => void;
     onClose: () => void;
@@ -327,12 +327,12 @@ function RowMenu({
             {open && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={onClose} aria-hidden />
-                    <ul role="menu" className="absolute right-0 top-full z-20 mt-1 w-32 rounded-xl border border-neutral-300 bg-white p-1 shadow-xl">
+                    <ul role="menu" className="absolute right-0 top-full z-20 mt-1 w-32 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-1.5 shadow-2xl">
                         <li>
                             <button
                                 role="menuitem"
                                 onClick={onDelete}
-                                className="w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+                                className="w-full cursor-pointer rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-500 transition-colors hover:bg-red-500/10"
                             >
                                 Delete
                             </button>
@@ -345,10 +345,10 @@ function RowMenu({
 }
 
 function InlineAdd({
-                       placeholder,
-                       onSubmit,
-                       onCancel,
-                   }: {
+    placeholder,
+    onSubmit,
+    onCancel,
+}: {
     placeholder: string;
     onSubmit: (value: string) => void;
     onCancel: () => void;
@@ -381,14 +381,14 @@ function InlineAdd({
 }
 
 function ItemDialog({
-                        kind,
-                        topic,
-                        saving,
-                        error,
-                        onPickTopic,
-                        onCancel,
-                        onSubmit,
-                    }: {
+    kind,
+    topic,
+    saving,
+    error,
+    onPickTopic,
+    onCancel,
+    onSubmit,
+}: {
     kind: DialogKind;
     topic: Topic | null;
     saving: boolean;
@@ -417,15 +417,15 @@ function ItemDialog({
     const canSubmit = Boolean(topic) && validTimes && (!isDeadline || title.trim().length > 0) && !saving;
 
     return (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label={isDeadline ? 'Add deadline' : 'Schedule session'}>
-            <div className="w-full max-w-md rounded-2xl border border-neutral-300 bg-white p-5 shadow-2xl">
-                <h2 className="text-lg font-semibold text-[#151414]">{isDeadline ? 'Add deadline' : 'Schedule session'}</h2>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-label={isDeadline ? 'Add deadline' : 'Schedule session'}>
+            <div className="w-full max-w-md rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-6 shadow-2xl text-[var(--app-text)]">
+                <h2 className="text-lg font-bold text-[var(--app-text)]">{isDeadline ? 'Add deadline' : 'Schedule session'}</h2>
 
                 <div className="mt-5 flex flex-col gap-4">
                     <button
                         onClick={onPickTopic}
-                        className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors hover:border-[#151414] ${focusRing} ${
-                            topic ? 'border-neutral-300' : 'border-dashed border-neutral-300'
+                        className={`flex items-center gap-3 rounded-2xl border px-3.5 py-2.5 text-left text-sm transition-colors hover:border-[var(--accent-color)] cursor-pointer text-[var(--app-text)] ${focusRing} ${
+                            topic ? 'border-[var(--app-border)] bg-[var(--app-bg)]' : 'border-dashed border-[var(--app-border)] bg-[var(--app-bg)]'
                         }`}
                     >
                         <span
@@ -434,12 +434,12 @@ function ItemDialog({
                             aria-hidden
                         />
                         <span className="min-w-0 flex-1">
-                            <span className="block truncate font-medium text-[#151414]">{topic ? topic.name : 'Choose a subject and topic'}</span>
-                            {topic && <span className="block truncate text-xs text-neutral-500">Topic</span>}
+                            <span className="block truncate font-semibold text-[var(--app-text)]">{topic ? topic.name : 'Choose a subject and topic'}</span>
+                            {topic && <span className="block truncate text-xs text-[var(--app-text-muted)] mt-0.5">Topic</span>}
                         </span>
                     </button>
 
-                    <label className="flex flex-col gap-1.5 text-sm text-neutral-500">
+                    <label className="flex flex-col gap-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                         {isDeadline ? 'Title' : 'Title (optional)'}
                         <input
                             autoFocus
@@ -452,16 +452,16 @@ function ItemDialog({
 
                     {isDeadline ? (
                         <>
-                            <label className="flex flex-col gap-1.5 text-sm text-neutral-500">
+                            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                                 Urgency
-                                <select value={urgency} onChange={(event) => setUrgency(event.target.value)} className={fieldClass}>
-                                    <option value="low" className="bg-white">Low</option>
-                                    <option value="medium" className="bg-white">Medium</option>
-                                    <option value="high" className="bg-white">High</option>
+                                <select value={urgency} onChange={(event) => setUrgency(event.target.value)} className={`${fieldClass} cursor-pointer`}>
+                                    <option value="low" className="bg-[var(--app-card-bg)] text-[var(--app-text)]">Low</option>
+                                    <option value="medium" className="bg-[var(--app-card-bg)] text-[var(--app-text)]">Medium</option>
+                                    <option value="high" className="bg-[var(--app-card-bg)] text-[var(--app-text)]">High</option>
                                 </select>
                             </label>
                             <div className="flex items-end gap-4">
-                                <label className="flex flex-1 flex-col gap-1.5 text-sm text-neutral-500">
+                                <label className="flex flex-1 flex-col gap-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                                     Due time
                                     <input
                                         type="time"
@@ -471,19 +471,19 @@ function ItemDialog({
                                         className={`${fieldClass} disabled:opacity-40`}
                                     />
                                 </label>
-                                <label className="flex items-center gap-2 pb-2.5 text-sm text-neutral-600">
-                                    <input type="checkbox" checked={allDay} onChange={(event) => setAllDay(event.target.checked)} className="h-4 w-4 accent-[#4287f5]" />
+                                <label className="flex items-center gap-2 pb-2.5 text-xs font-semibold text-[var(--app-text-muted)] cursor-pointer">
+                                    <input type="checkbox" checked={allDay} onChange={(event) => setAllDay(event.target.checked)} className="h-4 w-4 accent-[var(--accent-color)] rounded" />
                                     All day
                                 </label>
                             </div>
                         </>
                     ) : (
                         <div className="flex gap-4">
-                            <label className="flex flex-1 flex-col gap-1.5 text-sm text-neutral-500">
+                            <label className="flex flex-1 flex-col gap-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                                 Start
                                 <input type="time" value={start} onChange={(event) => setStart(event.target.value)} className={fieldClass} />
                             </label>
-                            <label className="flex flex-1 flex-col gap-1.5 text-sm text-neutral-500">
+                            <label className="flex flex-1 flex-col gap-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                                 End
                                 <input type="time" value={end} onChange={(event) => setEnd(event.target.value)} className={fieldClass} />
                             </label>
@@ -491,19 +491,19 @@ function ItemDialog({
                     )}
 
                     {!isDeadline && start && end && start >= end && (
-                        <p className="text-sm text-amber-700">The end time must be after the start time.</p>
+                        <p className="text-xs font-semibold text-amber-500">The end time must be after the start time.</p>
                     )}
-                    {error && <p className="text-sm text-red-600">{error}</p>}
+                    {error && <p className="text-xs font-medium text-red-500">{error}</p>}
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2">
-                    <button onClick={onCancel} className={`rounded-xl border border-neutral-300 px-4 py-2.5 text-sm text-neutral-600 transition-colors hover:border-[#151414] hover:text-[#151414] ${focusRing}`}>
+                <div className="mt-6 flex justify-end gap-2 border-t border-[var(--app-border)] pt-4">
+                    <button onClick={onCancel} className={`rounded-xl border border-[var(--app-border)] px-4 py-2.5 text-xs font-semibold text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)] cursor-pointer ${focusRing}`}>
                         Cancel
                     </button>
                     <button
                         onClick={() => onSubmit({ title, urgency, time, allDay, start, end })}
                         disabled={!canSubmit}
-                        className={`rounded-xl bg-[#151414] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}`}
+                        className={`rounded-xl bg-[var(--accent-color)] px-5 py-2.5 text-xs font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer shadow-md ${focusRing}`}
                     >
                         {saving ? 'Saving…' : 'Save'}
                     </button>
@@ -775,38 +775,38 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const shift = (amount: number) => setSelected((current) => addDays(current, amount));
 
     return (
-        <div className="min-h-full p-3 text-[#151414] sm:p-4">
-            <div className="mx-auto flex max-w-[1400px] flex-col gap-3">
-                <header className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white px-3 py-3 shadow-sm sm:px-4">
+        <div className="min-h-[calc(100vh-4.5rem)] p-3 sm:p-6 bg-[var(--app-bg)] text-[var(--app-text)] transition-colors duration-200">
+            <div className="mx-auto flex max-w-[1400px] flex-col gap-4">
+                <header className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-4 py-3 shadow-md">
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setSelected(fromKey(toKey(new Date())))}
-                            className={`rounded-xl border border-neutral-300 px-4 py-2.5 text-sm text-neutral-700 transition-colors hover:border-[#151414] hover:text-[#151414] ${focusRing}`}
+                            className={`rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-4 py-2 text-xs font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] ${focusRing}`}
                         >
                             Today
                         </button>
                         <button
                             onClick={() => shift(-1)}
                             aria-label="Previous day"
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-300 text-neutral-700 transition-colors hover:border-[#151414] hover:text-[#151414] ${focusRing}`}
+                            className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)] ${focusRing}`}
                         >
                             <ChevronIcon direction="left" className="h-4 w-4" />
                         </button>
                     </div>
 
-                    <h1 className="text-center text-base font-semibold text-[#151414]">{formatTopDate(selected)}</h1>
+                    <h1 className="text-center text-sm sm:text-base font-bold text-[var(--app-text)]">{formatTopDate(selected)}</h1>
 
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => shift(1)}
                             aria-label="Next day"
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-300 text-neutral-700 transition-colors hover:border-[#151414] hover:text-[#151414] ${focusRing}`}
+                            className={`flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)] ${focusRing}`}
                         >
                             <ChevronIcon direction="right" className="h-4 w-4" />
                         </button>
                         <button
                             onClick={onStudyNow}
-                            className={`flex items-center gap-2 rounded-xl bg-[#151414] px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85 ${focusRing}`}
+                            className={`flex items-center gap-2 rounded-xl bg-[var(--accent-color)] px-4 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90 shadow-md ${focusRing}`}
                         >
                             <PlayIcon className="h-3.5 w-3.5" />
                             Study now
@@ -815,14 +815,14 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                             onClick={() => openDialog('session')}
                             aria-label="Schedule session"
                             title="Schedule session"
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-[#151414] ${focusRing}`}
+                            className={`flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-500/10 border border-[var(--app-border)] text-[var(--app-text)] transition-colors hover:bg-neutral-500/20 ${focusRing}`}
                         >
                             <PlusIcon className="h-4 w-4" />
                         </button>
                     </div>
                 </header>
 
-                <nav aria-label="Week" className="grid grid-cols-7 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                <nav aria-label="Week" className="grid grid-cols-7 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] shadow-md">
                     {week.map((day) => {
                         const active = toKey(day) === selectedKey;
                         return (
@@ -830,14 +830,14 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                 key={toKey(day)}
                                 onClick={() => setSelected(day)}
                                 aria-current={active ? 'date' : undefined}
-                                className={`flex items-baseline justify-center gap-1.5 border-r border-neutral-200 py-3.5 transition-colors last:border-r-0 ${focusRing} ${
-                                    active ? 'bg-[#4287f5]/10' : 'hover:bg-neutral-50'
+                                className={`flex items-baseline justify-center gap-1.5 border-r border-[var(--app-border)] py-3.5 transition-colors last:border-r-0 cursor-pointer ${focusRing} ${
+                                    active ? 'bg-[var(--accent-color)]/15' : 'hover:bg-neutral-500/10'
                                 }`}
                             >
-                                <span className={`text-xs ${active ? 'text-[#1d5fd1]' : 'text-neutral-600'}`}>
+                                <span className={`text-xs ${active ? 'text-[var(--accent-color)] font-bold' : 'text-[var(--app-text-muted)] font-medium'}`}>
                                     {WEEKDAYS_SHORT[day.getDay()]}
                                 </span>
-                                <span className={`text-lg font-semibold ${active ? 'text-[#4287f5]' : 'text-[#151414]'}`}>
+                                <span className={`text-base sm:text-lg font-bold ${active ? 'text-[var(--accent-color)]' : 'text-[var(--app-text)]'}`}>
                                     {day.getDate()}
                                 </span>
                             </button>
@@ -847,18 +847,18 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
                 <div aria-live="polite">
                     {error && (
-                        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+                        <p role="alert" className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-semibold text-red-500">
                             {error}
                         </p>
                     )}
                 </div>
 
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-                    <section className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
-                        <h2 className="border-b border-neutral-200 pb-4 text-lg font-semibold">{formatLongDate(selected)}</h2>
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                    <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-5 shadow-xl sm:p-6">
+                        <h2 className="border-b border-[var(--app-border)] pb-4 text-lg font-bold text-[var(--app-text)]">{formatLongDate(selected)}</h2>
 
                         <div className="mt-6">
-                            <label htmlFor="day-planning" className="text-sm text-neutral-500">
+                            <label htmlFor="day-planning" className="text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                                 Planning
                             </label>
                             <input
@@ -870,12 +870,12 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                     if (event.key === 'Enter') event.currentTarget.blur();
                                 }}
                                 placeholder="What is the plan for this day?"
-                                className="mt-3 w-full rounded-xl border border-neutral-300 bg-transparent px-4 py-3.5 text-[15px] text-[#151414] placeholder:text-neutral-400 focus:border-[#4287f5] focus:outline-none"
+                                className={`mt-2.5 ${fieldClass}`}
                             />
                         </div>
 
                         <div className="mt-6 flex items-center justify-between gap-3">
-                            <p className="text-sm text-neutral-500">
+                            <p className="text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                                 To-dos <span aria-hidden>•</span> {todosDone}/{todos.length} completed ({todos.length - todosDone} remaining)
                             </p>
                             <button onClick={() => setAddingTodo(true)} className={outlineButton}>
@@ -887,20 +887,20 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                             <InlineAdd placeholder="New to-do, then press Enter" onSubmit={addTodo} onCancel={() => setAddingTodo(false)} />
                         )}
 
-                        <ul className="mt-3">
-                            {loading && todos.length === 0 && <li className="py-6 text-center text-sm text-neutral-400">Loading…</li>}
+                        <ul className="mt-3 divide-y divide-[var(--app-border)]/50">
+                            {loading && todos.length === 0 && <li className="py-6 text-center text-xs text-[var(--app-text-muted)]">Loading…</li>}
                             {!loading && todos.length === 0 && !addingTodo && (
-                                <li className="py-6 text-center text-sm text-neutral-400">No to-dos for this day</li>
+                                <li className="py-6 text-center text-xs text-[var(--app-text-muted)]">No to-dos for this day</li>
                             )}
                             {todos.map((todo) => (
                                 <li key={todo.id} className="flex items-center gap-3 px-1 py-3.5">
                                     <CheckCircle done={todo.isCompleted} onClick={() => toggleTodo(todo)} label={`Mark "${todo.text}" as done`} />
-                                    <p className={`min-w-0 flex-1 truncate text-[15px] font-medium ${todo.isCompleted ? 'text-neutral-500 line-through' : ''}`}>
+                                    <p className={`min-w-0 flex-1 truncate text-sm font-semibold ${todo.isCompleted ? 'text-[var(--app-text-muted)] line-through' : 'text-[var(--app-text)]'}`}>
                                         {todo.text}
                                     </p>
                                     <button
                                         onClick={() => startStudy({ title: todo.text })}
-                                        className={`rounded-full border border-neutral-300 px-3 py-1 text-xs text-neutral-600 transition-colors hover:border-[#151414] hover:text-[#151414] ${focusRing}`}
+                                        className={`rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] px-3 py-1 text-xs font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] ${focusRing}`}
                                     >
                                         Study
                                     </button>
@@ -914,20 +914,20 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                             ))}
                         </ul>
 
-                        <div className="mt-4 flex items-center justify-between gap-3">
-                            <p className="text-sm text-neutral-500">
+                        <div className="mt-6 flex items-center justify-between gap-3 border-t border-[var(--app-border)] pt-5">
+                            <p className="text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
                                 Deadlines <span aria-hidden>•</span> {deadlinesDone}/{deadlines.length} completed (
                                 {deadlines.length - deadlinesDone} remaining)
                             </p>
-                            <button onClick={() => openDialog('deadline')} className={`${outlineButton} px-4 py-2.5 text-sm`}>
+                            <button onClick={() => openDialog('deadline')} className={`${outlineButton} px-4 py-2`}>
                                 + Add deadline
                             </button>
                         </div>
 
-                        <ul className="mt-3">
-                            {loading && deadlines.length === 0 && <li className="py-6 text-center text-sm text-neutral-400">Loading…</li>}
+                        <ul className="mt-3 divide-y divide-[var(--app-border)]/50">
+                            {loading && deadlines.length === 0 && <li className="py-6 text-center text-xs text-[var(--app-text-muted)]">Loading…</li>}
                             {!loading && deadlines.length === 0 && (
-                                <li className="py-6 text-center text-sm text-neutral-400">No deadlines for this day</li>
+                                <li className="py-6 text-center text-xs text-[var(--app-text-muted)]">No deadlines for this day</li>
                             )}
                             {sortedDeadlines.map((deadline) => {
                                 const due = new Date(deadline.dueAt);
@@ -938,7 +938,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                 return (
                                     <li key={deadline.id} className="flex items-center gap-3 px-1 py-3.5">
                                         <span
-                                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
                                             style={{ backgroundColor: subject?.color || '#d4d4d4', color: readableText(subject?.color || '#d4d4d4') }}
                                         >
                                             <DocIcon className="h-4 w-4" />
@@ -949,26 +949,26 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                             label={`Mark "${deadline.title}" as done`}
                                         />
                                         <div className={`min-w-0 flex-1 ${deadline.isCompleted ? 'opacity-60' : ''}`}>
-                                            <p className={`truncate text-[15px] font-medium ${deadline.isCompleted ? 'line-through' : ''}`}>
+                                            <p className={`truncate text-sm font-semibold ${deadline.isCompleted ? 'line-through text-[var(--app-text-muted)]' : 'text-[var(--app-text)]'}`}>
                                                 {deadline.title}
                                             </p>
-                                            <p className="truncate text-[13px] text-neutral-500">{topic?.name || subject?.name || 'Study'}</p>
+                                            <p className="truncate text-xs text-[var(--app-text-muted)] mt-0.5">{topic?.name || subject?.name || 'Study'}</p>
                                         </div>
                                         <span
                                             className={`hidden whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold sm:inline ${
                                                 urgent
-                                                    ? 'border-red-200 bg-red-50 text-red-600'
-                                                    : 'border-neutral-300 text-neutral-600'
+                                                    ? 'border-red-500/30 bg-red-500/15 text-red-500'
+                                                    : 'border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)]'
                                             }`}
                                         >
                                             {formatShortDay(due)} <span aria-hidden>•</span> {deadline.allDay ? 'All day' : formatClock(due)}
                                         </span>
-                                        <span className={`hidden rounded-full border px-2.5 py-1 text-xs font-medium sm:inline ${urgencyStyle(deadline.urgency)}`}>
+                                        <span className={`hidden rounded-full border px-2.5 py-1 text-xs font-semibold sm:inline ${urgencyStyle(deadline.urgency)}`}>
                                             {urgencyLabel(deadline.urgency)}
                                         </span>
                                         <button
                                             onClick={() => startStudy({ title: deadline.title, topic })}
-                                            className={`rounded-full border border-neutral-300 px-3 py-1 text-xs text-neutral-600 transition-colors hover:border-[#151414] hover:text-[#151414] ${focusRing}`}
+                                            className={`rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] px-3 py-1 text-xs font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] ${focusRing}`}
                                         >
                                             Study
                                         </button>
@@ -984,28 +984,28 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                         </ul>
                     </section>
 
-                    <section className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
-                        <p className="pt-3 text-sm text-neutral-500">
+                    <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-5 shadow-xl sm:p-6">
+                        <p className="pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
                             Day <span aria-hidden>•</span>{' '}
-                            <span className="text-[#1d5fd1]">
+                            <span className="text-[var(--accent-color)] font-bold">
                                 {eventsDone}/{events.length} completed ({events.length - eventsDone} remaining)
                             </span>
                         </p>
 
-                        <div className="mt-6 overflow-hidden rounded-xl border border-neutral-200">
+                        <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)]">
                             <div className="relative" style={{ height: GRID_HEIGHT }}>
                                 {HOURS.map((hour, index) => (
                                     <div
                                         key={hour}
-                                        className="absolute left-0 right-0 border-b border-neutral-200"
+                                        className="absolute left-0 right-0 border-b border-[var(--app-border)]/60"
                                         style={{ top: index * HOUR_HEIGHT, height: HOUR_HEIGHT }}
                                     >
-                                        <span className="absolute left-0 top-0 flex w-[60px] justify-center pt-3 text-xs text-neutral-600">
+                                        <span className="absolute left-0 top-0 flex w-[60px] justify-center pt-3 text-xs font-semibold text-[var(--app-text-muted)]">
                                             {pad(hour)}:00
                                         </span>
                                     </div>
                                 ))}
-                                <div className="absolute bottom-0 left-[60px] top-0 border-l border-neutral-200" aria-hidden />
+                                <div className="absolute bottom-0 left-[60px] top-0 border-l border-[var(--app-border)]/60" aria-hidden />
 
                                 <div className="absolute bottom-0 left-[60px] right-0 top-0">
                                     {placedEvents.map((event) => {
@@ -1017,7 +1017,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                         return (
                                             <article
                                                 key={event.key}
-                                                className="group absolute overflow-hidden rounded-[3px] px-1.5 py-1 leading-tight"
+                                                className="group absolute overflow-hidden rounded-lg px-2 py-1 leading-tight shadow-md"
                                                 style={{
                                                     top: ((start - GRID_START) / 60) * HOUR_HEIGHT,
                                                     height: (height / 60) * HOUR_HEIGHT,
@@ -1027,16 +1027,16 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                                     color: textColor,
                                                 }}
                                             >
-                                                <p className="truncate pr-4 text-[11px] font-bold">{event.title}</p>
-                                                <p className="truncate text-[11px] font-medium">
+                                                <p className="truncate pr-4 text-xs font-bold">{event.title}</p>
+                                                <p className="truncate text-[11px] font-semibold opacity-90">
                                                     {event.startLabel} - {event.endLabel}
                                                 </p>
-                                                <p className="truncate text-[10px]">{event.subtitle}</p>
+                                                <p className="truncate text-[10px] opacity-80">{event.subtitle}</p>
                                                 {event.kind === 'scheduled' && (
                                                     <button
                                                         onClick={() => deleteScheduled(event.id)}
                                                         aria-label={`Delete ${event.title}`}
-                                                        className="absolute right-0.5 top-0.5 hidden cursor-pointer rounded p-0.5 hover:bg-black/20 focus-visible:block group-hover:block"
+                                                        className="absolute right-1 top-1 hidden cursor-pointer rounded p-0.5 hover:bg-black/20 focus-visible:block group-hover:block"
                                                     >
                                                         <CloseIcon className="h-3 w-3" />
                                                     </button>
@@ -1046,7 +1046,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                     })}
                                     {showNowLine && (
                                         <div
-                                            className="pointer-events-none absolute left-0 right-0 z-10 border-t-2 border-[#ef4444]"
+                                            className="pointer-events-none absolute left-0 right-0 z-10 border-t-2 border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"
                                             style={{ top: ((nowMinutes - GRID_START) / 60) * HOUR_HEIGHT }}
                                             aria-hidden
                                         />

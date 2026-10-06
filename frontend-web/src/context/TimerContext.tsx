@@ -12,6 +12,14 @@ export interface TimerContextType {
     completedSessions: number;
     totalSeconds: number;
     formattedTime: string;
+    workMinutes: number;
+    shortBreakMinutes: number;
+    longBreakMinutes: number;
+    countdownMinutes: number;
+    sessionsUntilLongBreak: number;
+    autoStartBreaks: boolean;
+    autoStartWork: boolean;
+    countBreakTime: boolean;
     start: () => void;
     pause: () => void;
     toggle: () => void;
