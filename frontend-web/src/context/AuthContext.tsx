@@ -23,12 +23,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const initAuth = async () => {
             const token = authService.getToken();
-            if (token) {
+            const refreshToken = authService.getRefreshToken();
+            if (token || refreshToken) {
                 try {
                     const userData = await authService.getMe();
                     setUser(userData);
                     localStorage.setItem('studyzen_user', JSON.stringify(userData));
-                } catch (err) {
+                } catch {
                     authService.logout();
                     setUser(null);
                 }
@@ -44,7 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
         try {
             await authService.register(credentials);
-            // Get user data after successful registration
             const userData = await authService.getMe();
             setUser(userData);
             localStorage.setItem('studyzen_user', JSON.stringify(userData));
@@ -62,7 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
         try {
             await authService.login(credentials);
-            // Get user data after successful login
             const userData = await authService.getMe();
             setUser(userData);
             localStorage.setItem('studyzen_user', JSON.stringify(userData));

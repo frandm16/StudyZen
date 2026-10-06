@@ -17,13 +17,19 @@ export interface User {
     id: number;
     email: string;
     displayName: string;
+    username?: string;
+    bio?: string;
+    avatarUrl?: string;
     createdAt?: string;
     updatedAt?: string;
 }
 
 export interface UpdateProfileDTO {
     displayName?: string;
+    username?: string;
+    bio?: string;
     email?: string;
+    avatarUrl?: string;
     currentPassword?: string;
     newPassword?: string;
 }

@@ -8,9 +8,12 @@ export const authService = {
             password: credentials.password,
             displayName: credentials.displayName,
         });
-        const { accessToken } = response.data;
+        const { accessToken, refreshToken } = response.data;
         if (accessToken) {
             localStorage.setItem('studyzen_token', accessToken);
+        }
+        if (refreshToken) {
+            localStorage.setItem('studyzen_refresh_token', refreshToken);
         }
         return response.data;
     },
@@ -20,26 +23,44 @@ export const authService = {
             email: credentials.email,
             password: credentials.password,
         });
-        const { accessToken } = response.data;
+        const { accessToken, refreshToken } = response.data;
         if (accessToken) {
             localStorage.setItem('studyzen_token', accessToken);
+        }
+        if (refreshToken) {
+            localStorage.setItem('studyzen_refresh_token', refreshToken);
         }
         return response.data;
     },
 
     logout: async (): Promise<void> => {
-        localStorage.removeItem('studyzen_token');
-        localStorage.removeItem('studyzen_refresh_token');
-        localStorage.removeItem('studyzen_user');
+        const refreshToken = localStorage.getItem('studyzen_refresh_token');
+        try {
+            if (refreshToken) {
+                await api.post('/auth/logout', { refreshToken });
+            }
+        } catch {
+        } finally {
+            localStorage.removeItem('studyzen_token');
+            localStorage.removeItem('studyzen_refresh_token');
+            localStorage.removeItem('studyzen_user');
+        }
     },
 
-    refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
+    refreshToken: async (refreshTokenParam?: string): Promise<AuthResponse> => {
+        const currentToken = refreshTokenParam || localStorage.getItem('studyzen_refresh_token');
+        if (!currentToken) {
+            throw new Error('No refresh token available');
+        }
         const response = await api.post<AuthResponse>('/auth/refresh', {
-            refreshToken,
+            refreshToken: currentToken,
         });
-        const { accessToken } = response.data;
+        const { accessToken, refreshToken } = response.data;
         if (accessToken) {
             localStorage.setItem('studyzen_token', accessToken);
+        }
+        if (refreshToken) {
+            localStorage.setItem('studyzen_refresh_token', refreshToken);
         }
         return response.data;
     },
@@ -55,11 +76,15 @@ export const authService = {
     },
 
     isAuthenticated: (): boolean => {
-        return !!localStorage.getItem('studyzen_token');
+        return !!localStorage.getItem('studyzen_token') || !!localStorage.getItem('studyzen_refresh_token');
     },
 
     getToken: (): string | null => {
         return localStorage.getItem('studyzen_token');
+    },
+
+    getRefreshToken: (): string | null => {
+        return localStorage.getItem('studyzen_refresh_token');
     },
 
     getGoogleAuthUrl: (): string => {
