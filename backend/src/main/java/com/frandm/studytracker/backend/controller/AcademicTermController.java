@@ -40,8 +40,8 @@ public class AcademicTermController {
                 (String) body.get("name"),
                 parseDate(body.get("startDate")),
                 parseDate(body.get("endDate")),
-                (Boolean) body.get("isCurrent"),
-                (Boolean) body.get("isArchived")
+                parseBoolean(body.get("isCurrent"), body.get("current")),
+                parseBoolean(body.get("isArchived"), body.get("archived"))
         );
     }
 
@@ -52,8 +52,8 @@ public class AcademicTermController {
                 (String) body.get("name"),
                 parseDate(body.get("startDate")),
                 parseDate(body.get("endDate")),
-                (Boolean) body.get("isCurrent"),
-                (Boolean) body.get("isArchived")
+                parseBoolean(body.get("isCurrent"), body.get("current")),
+                parseBoolean(body.get("isArchived"), body.get("archived"))
         );
     }
 
@@ -64,8 +64,8 @@ public class AcademicTermController {
                 (String) body.get("name"),
                 parseDate(body.get("startDate")),
                 parseDate(body.get("endDate")),
-                (Boolean) body.get("isCurrent"),
-                (Boolean) body.get("isArchived")
+                parseBoolean(body.get("isCurrent"), body.get("current")),
+                parseBoolean(body.get("isArchived"), body.get("archived"))
         );
     }
 
@@ -77,5 +77,12 @@ public class AcademicTermController {
 
     private LocalDate parseDate(Object value) {
         return value != null ? LocalDate.parse((String) value) : null;
+    }
+
+    private Boolean parseBoolean(Object v1, Object v2) {
+        Object val = v1 != null ? v1 : v2;
+        if (val instanceof Boolean b) return b;
+        if (val instanceof String s) return Boolean.parseBoolean(s);
+        return null;
     }
 }

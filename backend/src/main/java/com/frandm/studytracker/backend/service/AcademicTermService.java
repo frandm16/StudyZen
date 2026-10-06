@@ -102,12 +102,7 @@ public class AcademicTermService {
 
     private void clearCurrentTerm(Long exceptId) {
         UUID userId = CurrentUser.id();
-        academicTermRepository.findAllByUserIdAndIsCurrentTrue(userId).forEach(current -> {
-            if (exceptId == null || !exceptId.equals(current.getId())) {
-                current.setCurrent(false);
-                current.setUpdatedAt(OffsetDateTime.now());
-                academicTermRepository.save(current);
-            }
-        });
+        academicTermRepository.clearCurrentTerms(userId, exceptId);
+        academicTermRepository.flush();
     }
 }

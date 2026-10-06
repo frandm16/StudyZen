@@ -109,10 +109,12 @@ public class SubjectService {
             requireTerm(termId);
             return termId;
         }
-        return academicTermRepository.findByUserIdAndIsCurrentTrue(userId)
+        return academicTermRepository.findFirstByUserIdAndIsCurrentTrueOrderByStartDateDesc(userId)
                 .map(AcademicTerm::getId)
                 .or(() -> academicTermRepository.findByUserIdAndIsArchivedFalseOrderByStartDateDesc(userId).stream().findFirst().map(AcademicTerm::getId))
                 .orElseGet(() -> {
+                    academicTermRepository.clearCurrentTerms(userId, null);
+                    academicTermRepository.flush();
                     AcademicTerm defaultTerm = new AcademicTerm();
                     defaultTerm.setUserId(userId);
                     defaultTerm.setName("General");

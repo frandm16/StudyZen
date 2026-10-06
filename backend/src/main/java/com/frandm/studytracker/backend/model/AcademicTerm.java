@@ -1,5 +1,6 @@
 package com.frandm.studytracker.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -63,10 +64,16 @@ public class AcademicTerm {
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
+    @JsonProperty("isCurrent")
     public boolean isCurrent() { return isCurrent; }
+
+    @JsonProperty("isCurrent")
     public void setCurrent(boolean current) { isCurrent = current; }
 
+    @JsonProperty("isArchived")
     public boolean isArchived() { return isArchived; }
+
+    @JsonProperty("isArchived")
     public void setArchived(boolean archived) { isArchived = archived; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
