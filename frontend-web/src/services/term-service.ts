@@ -17,4 +17,18 @@ export const termService = {
         const res = await api.post<unknown>('/terms', data);
         return normalizeAcademicTerm(res.data);
     },
+
+    update: async (id: number, data: { name: string; startDate: string; endDate: string; isCurrent?: boolean }): Promise<AcademicTerm> => {
+        const res = await api.put<unknown>(`/terms/${id}`, data);
+        return normalizeAcademicTerm(res.data);
+    },
+
+    setCurrent: async (id: number): Promise<AcademicTerm> => {
+        const res = await api.patch<unknown>(`/terms/${id}`, { isCurrent: true });
+        return normalizeAcademicTerm(res.data);
+    },
+
+    delete: async (id: number): Promise<void> => {
+        await api.delete(`/terms/${id}`);
+    },
 };

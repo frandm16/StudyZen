@@ -5,6 +5,7 @@ import { useBackground } from '../hooks/useBackground';
 import { useTheme, THEME_PRESETS, type ColorTheme } from '../context/ThemeContext';
 import { AVATAR_PRESETS, getRandomAvatarPreset, type AvatarPreset } from '../lib/avatar-presets';
 import { settingsService } from '../services/settings-service';
+import { TermsSection } from '../components/settings/TermsSection';
 import type { UpdateProfileDTO } from '../types/auth';
 import type { SoundCategory } from '../hooks/useSound';
 import {
@@ -28,6 +29,7 @@ import {
     X,
     Sun,
     Moon,
+    BookOpen,
 } from 'lucide-react';
 
 type TabType =
@@ -39,6 +41,7 @@ type TabType =
     | 'appearance'
     | 'calendar'
     | 'grades'
+    | 'terms'
     | 'sound'
     | 'developer';
 
@@ -127,6 +130,13 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
                 breadcrumb: 'Settings / Grades',
                 description: 'Configure academic grade scale limits and pass score thresholds.',
                 icon: Award,
+            },
+            {
+                id: 'terms',
+                label: 'Terms',
+                breadcrumb: 'Settings / Terms',
+                description: 'Create, edit, and delete academic terms, and choose the default term.',
+                icon: BookOpen,
             },
         ],
     },
@@ -1012,6 +1022,8 @@ export const SettingsPage: React.FC = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {activeTab === 'terms' && <TermsSection />}
 
                             {activeTab === 'sound' && (
                                 <div className="space-y-6 max-w-2xl">
