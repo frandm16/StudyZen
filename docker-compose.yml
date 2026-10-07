@@ -29,11 +29,29 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-key-studyzen-at-least-32-bytes!}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-dummy-google-client-id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-dummy-google-client-secret}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:7777}
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "${BACKEND_PUBLIC_PORT:-8082}:${BACKEND_PRIVATE_PORT:-8080}"
+
+  frontend:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-}
+    container_name: studytracker-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-7777}:80"
 
 volumes:
   postgres_data:

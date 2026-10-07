@@ -25,8 +25,8 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-id: ${GOOGLE_CLIENT_ID:dummy-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dummy-google-client-secret}
             scope:
               - email
               - profile
@@ -40,11 +40,11 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
-    access-token-expiry-ms: ${JWT_ACCESS_EXPIRY_MS:900000}       # 15 min default
-    refresh-token-expiry-ms: ${JWT_REFRESH_EXPIRY_MS:604800000}  # 7 days default
-  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+    secret: ${JWT_SECRET:local-dev-jwt-secret-key-studyzen-at-least-32-bytes!}
+    access-token-expiry-ms: ${JWT_ACCESS_EXPIRY_MS:900000}
+    refresh-token-expiry-ms: ${JWT_REFRESH_EXPIRY_MS:604800000}
+  frontend-url: ${FRONTEND_URL:http://localhost:7777}
 
 server:
-  port: ${BACKEND_PRIVATE_PORT}
+  port: ${BACKEND_PRIVATE_PORT:8080}
   forward-headers-strategy: framework
