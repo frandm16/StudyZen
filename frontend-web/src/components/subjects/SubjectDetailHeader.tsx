@@ -118,7 +118,7 @@ export function SubjectDetailHeader({
                         }`}
                     >
                         <BookOpen className="h-4 w-4" />
-                        <span>Syllabus Topics</span>
+                        <span>Topics</span>
                         <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                             activeTab === 'topics' ? 'bg-white/20 text-white' : 'bg-[var(--app-card-bg)] text-[var(--app-text-muted)]'
                         }`}>

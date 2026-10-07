@@ -36,7 +36,7 @@ export function SubjectStatsBanner({
             <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4 shadow-sm">
                 <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
-                        Syllabus Progress
+                        Topic Progress
                     </span>
                     <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
                         <CheckCircle2 className="h-4 w-4" />

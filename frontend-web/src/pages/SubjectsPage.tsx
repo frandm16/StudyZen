@@ -243,7 +243,7 @@ export function SubjectsPage() {
     };
 
     const handleDeleteTopic = async (topicId: number) => {
-        if (!window.confirm('Delete this topic from syllabus?')) return;
+        if (!window.confirm('Delete this topic?')) return;
         try {
             await topicService.delete(topicId);
             setTopics((prev) => prev.filter((t) => t.id !== topicId));
@@ -392,7 +392,7 @@ export function SubjectsPage() {
                                 Academic Subjects
                             </h1>
                             <p className="mt-1 text-xs text-[var(--app-text-muted)]">
-                                Organize courses, track syllabus mastery, and manage evaluation grades.
+                                Organize courses, track topic progress, and manage evaluation grades.
                             </p>
                         </div>
 

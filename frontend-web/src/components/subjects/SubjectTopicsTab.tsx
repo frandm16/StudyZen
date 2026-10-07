@@ -44,7 +44,7 @@ export function SubjectTopicsTab({
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search syllabus topics..."
+                            placeholder="Search topics..."
                             className="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-card-bg)] text-xs text-[var(--app-text)] placeholder-[var(--app-text-muted)] focus:outline-none focus:border-[var(--accent-color)]"
                         />
                     </div>
@@ -83,7 +83,7 @@ export function SubjectTopicsTab({
                     <p className="mt-1 text-xs text-[var(--app-text-muted)] max-w-sm">
                         {query || statusFilter !== 'all'
                             ? 'No topics match your search criteria. Try resetting filters.'
-                            : 'Start breaking down your syllabus into topics, units or chapters.'}
+                            : 'Organize this subject into topics, units or chapters.'}
                     </p>
                     {!query && statusFilter === 'all' && (
                         <button

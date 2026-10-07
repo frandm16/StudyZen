@@ -138,7 +138,7 @@ export function SubjectModal({ isOpen, onClose, editingSubject, terms, onSave }:
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         rows={3}
-                        placeholder="Professor name, office hours, links to syllabus or resources..."
+                                placeholder="Professor name, office hours, course materials or resources..."
                         className={fieldClass}
                     />
                 </div>

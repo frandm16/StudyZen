@@ -77,7 +77,7 @@ public class AssessmentService {
 
     public Assessment partialUpdate(Long id, Long subjectId, String type, String title, String description,
                                     BigDecimal grade, BigDecimal maxGrade, BigDecimal weightPercent,
-                                    OffsetDateTime dueAt, Boolean isCompleted, boolean dueAtPresent) {
+                                    OffsetDateTime dueAt, Boolean isCompleted, boolean dueAtPresent, boolean gradePresent) {
         Assessment assessment = getById(id);
         Long targetSubjectId = subjectId != null ? subjectId : assessment.getSubjectId();
         if (subjectId != null) {
@@ -91,7 +91,7 @@ public class AssessmentService {
         if (type != null && !type.isBlank()) assessment.setType(type.trim());
         if (title != null) assessment.setTitle(title);
         if (description != null) assessment.setDescription(description);
-        if (grade != null) assessment.setGrade(grade);
+        if (gradePresent) assessment.setGrade(grade);
         if (maxGrade != null) assessment.setMaxGrade(maxGrade);
         if (weightPercent != null) assessment.setWeightPercent(weightPercent);
         if (dueAtPresent) assessment.setDueAt(dueAt);

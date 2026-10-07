@@ -68,7 +68,7 @@ export function TopicModal({ isOpen, onClose, editingTopic, subjectId, onSave }:
             title={editingTopic ? 'Edit Topic' : 'New Topic'}
         >
             <p className="text-xs text-[var(--app-text-muted)] -mt-4 mb-4">
-                {editingTopic ? 'Update syllabus topic details and progress.' : 'Add a new topic or unit to the subject syllabus.'}
+                {editingTopic ? 'Update topic details and progress.' : 'Add a new topic or unit to this subject.'}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (

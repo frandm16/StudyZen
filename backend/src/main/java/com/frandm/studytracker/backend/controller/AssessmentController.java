@@ -76,7 +76,8 @@ public class AssessmentController {
                         ? DateTimeUtils.parseFlexibleOffset(body.get("dueAt") != null ? body.get("dueAt").toString() : null)
                         : null,
                 (Boolean) body.get("isCompleted"),
-                body.containsKey("dueAt")
+                body.containsKey("dueAt"),
+                body.containsKey("grade")
         );
     }
 
