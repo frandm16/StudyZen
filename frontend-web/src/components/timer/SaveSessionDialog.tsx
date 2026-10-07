@@ -78,10 +78,10 @@ export function SaveSessionDialog({ topic, minutes, saving, error, onPickTopic, 
                 </label>
 
                 <label className="flex flex-col gap-1.5 text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
-                    Focus (1-5)
+                    Focus (0-5)
                     <input
                         type="number"
-                        min="1"
+                        min="0"
                         max="5"
                         value={rating}
                         onChange={(e) => setRating(Number(e.target.value))}

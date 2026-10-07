@@ -78,7 +78,7 @@ export function normalizeTopic(value: unknown): Topic {
         subjectId: Number(data.subjectId),
         description: typeof data.description === 'string' ? data.description : undefined,
         status: String(data.status ?? 'not_started') as any,
-        confidence: data.confidence ? Number(data.confidence) : undefined,
+        confidence: data.confidence !== undefined && data.confidence !== null ? Number(data.confidence) : undefined,
         sortOrder: Number(data.sortOrder ?? 0),
         createdAt: typeof data.createdAt === 'string' ? data.createdAt : undefined,
         updatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : undefined,
@@ -108,7 +108,7 @@ export function normalizeStudySession(value: unknown): Session {
         totalMinutes: Number(data.totalMinutes ?? 0),
         startedAt: parseApiTimestamp(String(data.startedAt ?? '')) ?? '',
         endedAt: parseApiTimestamp(String(data.endedAt ?? '')) ?? '',
-        focusRating: data.focusRating ? Number(data.focusRating) : undefined,
+        focusRating: data.focusRating !== undefined && data.focusRating !== null ? Number(data.focusRating) : undefined,
         pausedMinutes: data.pausedMinutes ? Number(data.pausedMinutes) : undefined,
         scheduledSessionId: data.scheduledSessionId ? Number(data.scheduledSessionId) : undefined,
     };

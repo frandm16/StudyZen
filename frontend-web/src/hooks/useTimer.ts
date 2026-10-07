@@ -54,6 +54,7 @@ function resolveConfig(options: TimerOptions, internal: TimerConfig): TimerConfi
 }
 
 const TIMER_STORAGE_KEY = 'studyzen_timer_config';
+const TIME_SPEED_MULTIPLIER = 1000;
 
 function loadPersistedTimerConfig(): TimerConfig {
     try {
@@ -157,7 +158,7 @@ export function useTimer(options: TimerOptions = {}) {
 
     const snapshotElapsed = () => {
         if (elapsedStartedAtRef.current === null) return;
-        const elapsed = elapsedBaseRef.current + Math.floor((Date.now() - elapsedStartedAtRef.current) / 1000);
+        const elapsed = elapsedBaseRef.current + Math.floor(((Date.now() - elapsedStartedAtRef.current) * TIME_SPEED_MULTIPLIER) / 1000);
         elapsedBaseRef.current = elapsed;
         elapsedRef.current = elapsed;
         setSecondsElapsed(elapsed);
@@ -166,7 +167,7 @@ export function useTimer(options: TimerOptions = {}) {
 
     const snapshotDeadline = () => {
         if (deadlineRef.current === null) return;
-        const remaining = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
+        const remaining = Math.max(0, Math.ceil(((deadlineRef.current - Date.now()) * TIME_SPEED_MULTIPLIER) / 1000));
         remainingRef.current = remaining;
         setSecondsRemaining(remaining);
         deadlineRef.current = null;
@@ -200,7 +201,7 @@ export function useTimer(options: TimerOptions = {}) {
             elapsedBaseRef.current = elapsedRef.current;
             elapsedStartedAtRef.current = Date.now();
         } else {
-            deadlineRef.current = Date.now() + remainingRef.current * 1000;
+            deadlineRef.current = Date.now() + (remainingRef.current * 1000) / TIME_SPEED_MULTIPLIER;
             if (modeRef.current !== 'pomodoro' || phaseRef.current === 'work' || configRef.current.countBreakTime) {
                 elapsedBaseRef.current = elapsedRef.current;
                 elapsedStartedAtRef.current = Date.now();
@@ -261,7 +262,7 @@ export function useTimer(options: TimerOptions = {}) {
         setSecondsRemaining(nextDuration);
 
         if (shouldAutoStart(nextPhase, configRef.current)) {
-            deadlineRef.current = Date.now() + nextDuration * 1000;
+            deadlineRef.current = Date.now() + (nextDuration * 1000) / TIME_SPEED_MULTIPLIER;
             if (nextPhase === 'work' || configRef.current.countBreakTime) {
                 elapsedBaseRef.current = elapsedRef.current;
                 elapsedStartedAtRef.current = Date.now();
@@ -299,7 +300,7 @@ export function useTimer(options: TimerOptions = {}) {
             if (currentMode === 'stopwatch') {
                 const startedAt = elapsedStartedAtRef.current;
                 if (startedAt === null) return;
-                const elapsed = elapsedBaseRef.current + Math.floor((Date.now() - startedAt) / 1000);
+                const elapsed = elapsedBaseRef.current + Math.floor(((Date.now() - startedAt) * TIME_SPEED_MULTIPLIER) / 1000);
                 elapsedRef.current = elapsed;
                 setSecondsElapsed(elapsed);
                 return;
@@ -307,14 +308,14 @@ export function useTimer(options: TimerOptions = {}) {
 
             const countsElapsed = currentMode !== 'pomodoro' || currentPhase === 'work' || currentConfig.countBreakTime;
             if (countsElapsed && elapsedStartedAtRef.current !== null) {
-                const elapsed = elapsedBaseRef.current + Math.floor((Date.now() - elapsedStartedAtRef.current) / 1000);
+                const elapsed = elapsedBaseRef.current + Math.floor(((Date.now() - elapsedStartedAtRef.current) * TIME_SPEED_MULTIPLIER) / 1000);
                 elapsedRef.current = elapsed;
                 setSecondsElapsed(elapsed);
             }
 
             const deadline = deadlineRef.current;
             if (deadline === null) return;
-            const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+            const remaining = Math.max(0, Math.ceil(((deadline - Date.now()) * TIME_SPEED_MULTIPLIER) / 1000));
             remainingRef.current = remaining;
             setSecondsRemaining(remaining);
             if (remaining > 0) return;
@@ -333,7 +334,7 @@ export function useTimer(options: TimerOptions = {}) {
                 statusRef.current = 'paused';
                 setStatus('paused');
             }
-        }, 200);
+        }, 100);
 
         return () => window.clearInterval(timerId);
     }, [status, advancePomodoro]);

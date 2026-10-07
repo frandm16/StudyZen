@@ -1,13 +1,4 @@
-export type AssessmentType =
-    | 'assignment'
-    | 'exam'
-    | 'quiz'
-    | 'project'
-    | 'presentation'
-    | 'lab'
-    | 'midterm'
-    | 'final_exam'
-    | 'other';
+export type AssessmentType = string;
 
 export interface Assessment {
     id: number;

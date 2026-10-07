@@ -43,7 +43,7 @@ public class TopicService {
         topic.setSubjectId(subjectId);
         topic.setDescription(description);
         topic.setStatus(status != null ? status : TopicStatus.not_started);
-        topic.setConfidence(confidence);
+        topic.setConfidence(confidence != null ? confidence : (short) 0);
         topic.setSortOrder(sortOrder != null ? sortOrder : 0);
         topic.setUpdatedAt(OffsetDateTime.now());
         return topicRepository.save(topic);

@@ -154,7 +154,7 @@ export function TimerPage() {
                 totalMinutes: minutes,
                 startedAt: formatRequiredApiTimestamp(start),
                 endedAt: formatRequiredApiTimestamp(end),
-                focusRating: rating || undefined,
+                focusRating: rating !== undefined && rating !== null ? rating : undefined,
                 topicId: selectedTopic.id,
             });
             setSaveOpen(false);
