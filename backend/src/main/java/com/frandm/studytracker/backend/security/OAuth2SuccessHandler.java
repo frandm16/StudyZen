@@ -27,6 +27,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final AuthIdentityRepository authIdentityRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenService tokenService;
+    private final com.frandm.studytracker.backend.security.AuthCookies authCookies;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -34,11 +35,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     public OAuth2SuccessHandler(UserRepository userRepository,
                                 AuthIdentityRepository authIdentityRepository,
                                 JwtTokenProvider jwtTokenProvider,
-                                TokenService tokenService) {
+                                TokenService tokenService,
+                                com.frandm.studytracker.backend.security.AuthCookies authCookies) {
         this.userRepository = userRepository;
         this.authIdentityRepository = authIdentityRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.tokenService = tokenService;
+        this.authCookies = authCookies;
     }
 
     @Override
@@ -51,10 +54,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String providerUserId = oAuth2User.getAttribute("sub");
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
-        String picture = Objects.requireNonNull(
-                (String) Optional.ofNullable(oAuth2User.getAttribute("picture"))
-                        .orElse(oAuth2User.getAttribute("avatar_url"))
-        );
+        String picture = Optional.ofNullable((String) oAuth2User.getAttribute("picture"))
+                .orElse((String) oAuth2User.getAttribute("avatar_url"));
         
         // Find or create user
         User user = authIdentityRepository
@@ -81,17 +82,16 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     return u;
                 });
 
+        if (!user.isActive()) throw new IllegalStateException("Account is inactive");
         user.setLastLoginAt(OffsetDateTime.now());
         userRepository.save(user);
 
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
         String refreshToken = tokenService.createRefreshToken(user.getId(), request);
 
+        authCookies.setTokens(response, accessToken, refreshToken);
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/auth/callback")
-                .queryParam("access_token", accessToken)
-                .queryParam("refresh_token", refreshToken)
                 .build().toUriString();
-
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }

@@ -49,6 +49,7 @@ public class TokenService {
 
     public record TokenPair(String accessToken, String refreshToken) {}
 
+    @org.springframework.transaction.annotation.Transactional
     public TokenPair rotateRefreshToken(String rawRefreshToken,
                                         UserRepository userRepository,
                                         HttpServletRequest request) {
@@ -56,15 +57,19 @@ public class TokenService {
         RefreshToken existing = refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(hash)
                 .orElseThrow(() -> new RuntimeException("Invalid or revoked refresh token"));
 
-        if (existing.getExpiresAt().isBefore(OffsetDateTime.now())) {
-            throw new RuntimeException("Refresh token expired");
+        OffsetDateTime now = OffsetDateTime.now();
+        if (existing.getExpiresAt().isBefore(now)) {
+            throw new IllegalArgumentException("Refresh token expired");
+        }
+        if (refreshTokenRepository.claimForRotation(existing.getId(), now) != 1) {
+            throw new IllegalArgumentException("Invalid or revoked refresh token");
         }
 
         var user = userRepository.findById(existing.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .filter(com.frandm.studytracker.backend.model.User::isActive)
+                .orElseThrow(() -> new IllegalArgumentException("User is not active"));
 
-        // Revoke old token
-        existing.setRevokedAt(OffsetDateTime.now());
+        existing.setRevokedAt(now);
 
         // Create new refresh token
         String newRaw = generateSecureToken();
@@ -84,6 +89,7 @@ public class TokenService {
         return new TokenPair(newAccess, newRaw);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void revokeToken(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) return;
         String hash = sha256(rawRefreshToken);

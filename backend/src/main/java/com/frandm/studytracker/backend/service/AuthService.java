@@ -29,7 +29,8 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Map<String, String> register(String email, String password,
+    @org.springframework.transaction.annotation.Transactional
+    public TokenService.TokenPair register(String email, String password,
                                          String displayName, HttpServletRequest request) {
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
             throw new IllegalArgumentException("Email and password are required");
@@ -45,10 +46,11 @@ public class AuthService {
 
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), email);
         String refreshToken = tokenService.createRefreshToken(user.getId(), request);
-        return Map.of("accessToken", accessToken, "refreshToken", refreshToken);
+        return new TokenService.TokenPair(accessToken, refreshToken);
     }
 
-    public Map<String, String> login(String email, String password,
+    @org.springframework.transaction.annotation.Transactional
+    public TokenService.TokenPair login(String email, String password,
                                       HttpServletRequest request) {
         if (email == null || password == null) {
             throw new IllegalArgumentException("Invalid credentials");
@@ -61,21 +63,23 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid credentials");
         }
 
+        if (!user.isActive()) throw new IllegalArgumentException("Account is inactive");
         user.setLastLoginAt(OffsetDateTime.now());
         userRepository.save(user);
 
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
         String refreshToken = tokenService.createRefreshToken(user.getId(), request);
-        return Map.of("accessToken", accessToken, "refreshToken", refreshToken);
+        return new TokenService.TokenPair(accessToken, refreshToken);
     }
 
-    public Map<String, String> refresh(String rawRefreshToken, HttpServletRequest request) {
+    @org.springframework.transaction.annotation.Transactional
+    public TokenService.TokenPair refresh(String rawRefreshToken, HttpServletRequest request) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new IllegalArgumentException("Refresh token is required");
         }
         TokenService.TokenPair pair = tokenService.rotateRefreshToken(rawRefreshToken,
                 userRepository, request);
-        return Map.of("accessToken", pair.accessToken(), "refreshToken", pair.refreshToken());
+        return pair;
     }
 
     public void logout(String refreshToken, UUID userId) {

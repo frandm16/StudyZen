@@ -9,7 +9,10 @@ public final class CurrentUser {
     private CurrentUser() {}
 
     public static UUID id() {
-        return UserPrincipal.fromAuthentication(
-                SecurityContextHolder.getContext().getAuthentication());
+        return UserPrincipal.fromAuthentication(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    public static UUID optionalId() {
+        try { return id(); } catch (IllegalStateException ignored) { return null; }
     }
 }
