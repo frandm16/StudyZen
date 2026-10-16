@@ -1,9 +1,3 @@
-export interface AuthResponse {
-    accessToken: string;
-    refreshToken?: string;
-    expiresIn?: number;
-}
-
 export interface AuthCredentials {
     email: string;
     password: string;

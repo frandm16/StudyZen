@@ -1,31 +1,29 @@
 import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { authService } from '../services/auth-service';
 
 export function OAuthCallbackPage() {
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        const error = params.get('error');
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
+    useEffect(() => {
+        const error = searchParams.get('error');
         if (error) {
-            window.location.href = `/login?error=${encodeURIComponent(error)}`;
+            navigate(`/login?error=${encodeURIComponent(error)}`, { replace: true });
             return;
         }
-
-        if (accessToken) {
-            localStorage.setItem('studyzen_token', accessToken);
-            if (refreshToken) {
-                localStorage.setItem('studyzen_refresh_token', refreshToken);
-            }
-            window.location.href = '/timer';
-        } else {
-            window.location.href = '/login?error=oauth_failed';
-        }
-    }, []);
+        let active = true;
+        void authService.getMe().then(() => {
+            if (active) navigate('/timer', { replace: true });
+        }).catch(() => {
+            if (active) navigate('/login', { replace: true });
+        });
+        return () => { active = false; };
+    }, [navigate, searchParams]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4287f5] to-[#1d4ed8]">
-            <div className="text-center">
+            <div className="text-center" role="status" aria-live="polite">
                 <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white/10 mb-4">
                     <div className="h-6 w-6 bg-gradient-to-r from-[#4287f5] to-[#7c3aed] rounded-full animate-spin" />
                 </div>

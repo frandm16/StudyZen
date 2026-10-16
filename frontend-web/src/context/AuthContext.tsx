@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { authService } from '../services/auth-service';
+import { getApiErrorMessage } from '../services/api';
 import type { User, AuthCredentials, RegisterCredentials, UpdateProfileDTO } from '../types/auth';
 
 interface AuthContextType {
@@ -14,6 +15,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AUTH_CHANNEL = 'studyzen-auth';
+type AuthMessage = { type: 'logout' | 'session-expired' };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -21,35 +24,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const initAuth = async () => {
-            const token = authService.getToken();
-            const refreshToken = authService.getRefreshToken();
-            if (token || refreshToken) {
-                try {
-                    const userData = await authService.getMe();
-                    setUser(userData);
-                    localStorage.setItem('studyzen_user', JSON.stringify(userData));
-                } catch {
-                    authService.logout();
-                    setUser(null);
-                }
-            }
-            setIsLoading(false);
+        const channel = typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(AUTH_CHANNEL);
+        const clearSession = () => setUser(null);
+        const handleMessage = (event: MessageEvent<AuthMessage>) => {
+            if (event.data?.type === 'logout' || event.data?.type === 'session-expired') clearSession();
         };
-
-        initAuth();
+        const handleSessionExpired = () => {
+            clearSession();
+            channel?.postMessage({ type: 'session-expired' } satisfies AuthMessage);
+        };
+        channel?.addEventListener('message', handleMessage);
+        window.addEventListener('studyzen:session-expired', handleSessionExpired);
+        void authService.getMe().then(setUser).catch(() => setUser(null)).finally(() => setIsLoading(false));
+        return () => {
+            channel?.removeEventListener('message', handleMessage);
+            channel?.close();
+            window.removeEventListener('studyzen:session-expired', handleSessionExpired);
+        };
     }, []);
 
-    const register = async (credentials: RegisterCredentials) => {
+    const authenticate = async (operation: () => Promise<void>, fallback: string) => {
         setIsLoading(true);
         setError(null);
         try {
-            await authService.register(credentials);
-            const userData = await authService.getMe();
-            setUser(userData);
-            localStorage.setItem('studyzen_user', JSON.stringify(userData));
+            await operation();
+            setUser(await authService.getMe());
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Registration failed';
+            setUser(null);
+            const message = getApiErrorMessage(err) || fallback;
             setError(message);
             throw err;
         } finally {
@@ -57,30 +59,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const login = async (credentials: AuthCredentials) => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            await authService.login(credentials);
-            const userData = await authService.getMe();
-            setUser(userData);
-            localStorage.setItem('studyzen_user', JSON.stringify(userData));
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Login failed';
-            setError(message);
-            throw err;
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const register = (credentials: RegisterCredentials) => authenticate(() => authService.register(credentials), 'Registration failed');
+    const login = (credentials: AuthCredentials) => authenticate(() => authService.login(credentials), 'Login failed');
 
     const logout = async () => {
         setIsLoading(true);
         try {
             await authService.logout();
-            setUser(null);
         } finally {
+            setUser(null);
             setIsLoading(false);
+            if (typeof BroadcastChannel !== 'undefined') {
+                const channel = new BroadcastChannel(AUTH_CHANNEL);
+                channel.postMessage({ type: 'logout' } satisfies AuthMessage);
+                channel.close();
+            }
         }
     };
 
@@ -88,11 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(true);
         setError(null);
         try {
-            const updatedUser = await authService.updateProfile(data);
-            setUser(updatedUser);
-            localStorage.setItem('studyzen_user', JSON.stringify(updatedUser));
+            setUser(await authService.updateProfile(data));
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Update failed';
+            const message = getApiErrorMessage(err) || 'Update failed';
             setError(message);
             throw err;
         } finally {
@@ -101,18 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                isLoading,
-                error,
-                register,
-                login,
-                logout,
-                updateProfile,
-                isAuthenticated: !!user,
-            }}
-        >
+        <AuthContext.Provider value={{ user, isLoading, error, register, login, logout, updateProfile, isAuthenticated: !!user }}>
             {children}
         </AuthContext.Provider>
     );
@@ -120,8 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
     const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
+    if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
     return context;
 }
