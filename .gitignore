@@ -50,3 +50,6 @@ jre/
 jdk/
 
 settings_dev.properties
+.claude/
+CLAUDE.md
+AGENTS.md
