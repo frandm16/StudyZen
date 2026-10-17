@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, fieldClass, primaryButton, ghostButton } from '../../ui/Modal';
 import { TOPIC_STATUS_CONFIG } from '../helpers';
+import { useToast } from '../../../context/ToastContext';
+import { getApiErrorMessage } from '../../../services/api';
 import type { Topic, CreateTopicDTO, TopicStatus } from '../../../types/topic';
 
 interface TopicModalProps {
@@ -14,12 +16,12 @@ interface TopicModalProps {
 const STATUS_KEYS: TopicStatus[] = ['not_started', 'in_progress', 'reviewing', 'completed', 'mastered', 'skipped'];
 
 export function TopicModal({ isOpen, onClose, editingTopic, subjectId, onSave }: TopicModalProps) {
+    const notify = useToast();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState<TopicStatus>('not_started');
     const [confidence, setConfidence] = useState<number>(0);
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (editingTopic) {
@@ -33,17 +35,15 @@ export function TopicModal({ isOpen, onClose, editingTopic, subjectId, onSave }:
             setStatus('not_started');
             setConfidence(0);
         }
-        setError(null);
     }, [editingTopic, isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim()) {
-            setError('Topic name is required');
+            notify({ title: 'Topic name is required', tone: 'warning', persist: false });
             return;
         }
         setSubmitting(true);
-        setError(null);
         try {
             await onSave({
                 name: name.trim(),
@@ -53,8 +53,8 @@ export function TopicModal({ isOpen, onClose, editingTopic, subjectId, onSave }:
                 confidence,
             });
             onClose();
-        } catch (err: any) {
-            setError(err?.message || 'Failed to save topic');
+        } catch (err) {
+            notify({ title: editingTopic ? 'Could not update topic' : 'Could not create topic', description: getApiErrorMessage(err), tone: 'error' });
         } finally {
             setSubmitting(false);
         }
@@ -71,12 +71,6 @@ export function TopicModal({ isOpen, onClose, editingTopic, subjectId, onSave }:
                 {editingTopic ? 'Update topic details and progress.' : 'Add a new topic or unit to this subject.'}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                    <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
-                        {error}
-                    </div>
-                )}
-
                 <div>
                     <label className="block text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider mb-1.5">
                         Topic Name

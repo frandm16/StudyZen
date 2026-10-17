@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, fieldClass, primaryButton, ghostButton } from '../../ui/Modal';
 import { PALETTE } from '../helpers';
+import { useToast } from '../../../context/ToastContext';
+import { getApiErrorMessage } from '../../../services/api';
 import type { Subject, CreateSubjectDTO } from '../../../types/subject';
 import type { AcademicTerm } from '../../../types/academic-term';
 
@@ -13,12 +15,12 @@ interface SubjectModalProps {
 }
 
 export function SubjectModal({ isOpen, onClose, editingSubject, terms, onSave }: SubjectModalProps) {
+    const notify = useToast();
     const [name, setName] = useState('');
     const [color, setColor] = useState(PALETTE[0]);
     const [termId, setTermId] = useState<number | ''>('');
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (editingSubject) {
@@ -33,17 +35,15 @@ export function SubjectModal({ isOpen, onClose, editingSubject, terms, onSave }:
             setTermId(currentTerm ? currentTerm.id : (terms[0]?.id ?? ''));
             setNotes('');
         }
-        setError(null);
     }, [editingSubject, terms, isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim()) {
-            setError('Subject name is required');
+            notify({ title: 'Subject name is required', tone: 'warning', persist: false });
             return;
         }
         setSubmitting(true);
-        setError(null);
         try {
             await onSave({
                 name: name.trim(),
@@ -52,8 +52,8 @@ export function SubjectModal({ isOpen, onClose, editingSubject, terms, onSave }:
                 notes: notes.trim() || undefined,
             });
             onClose();
-        } catch (err: any) {
-            setError(err?.message || 'Failed to save subject');
+        } catch (err) {
+            notify({ title: editingSubject ? 'Could not update subject' : 'Could not create subject', description: getApiErrorMessage(err), tone: 'error' });
         } finally {
             setSubmitting(false);
         }
@@ -70,12 +70,6 @@ export function SubjectModal({ isOpen, onClose, editingSubject, terms, onSave }:
                 {editingSubject ? 'Update subject information and settings.' : 'Create a new course or subject to organize topics and evaluations.'}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                    <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
-                        {error}
-                    </div>
-                )}
-
                 <div>
                     <label className="block text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider mb-1.5">
                         Subject Name

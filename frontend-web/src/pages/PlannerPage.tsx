@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
-import { notificationService } from '../services/notification-service';
-import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3, RotateCcw } from 'lucide-react';
+import { getApiErrorMessage } from '../services/api';
+import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3 } from 'lucide-react';
 import { assessmentService } from '../services/assessment-service';
 import { deadlineService } from '../services/deadline-service';
 import { scheduledSessionService } from '../services/scheduled-session-service';
@@ -39,12 +39,10 @@ export const PlannerPage = () => {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const [busyId, setBusyId] = useState<number | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
-        setError('');
         try {
             const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
             const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
@@ -68,8 +66,8 @@ export const PlannerPage = () => {
             setSessions(progressSessions);
             setWeekStartsOn(nextWeekStartsOn);
             setTodoMonthDates(visibleDates);
-        } catch {
-            setError('We could not load your planner. Check your connection and try again.');
+        } catch (failure) {
+            notify({ title: 'Could not load planner', description: getApiErrorMessage(failure), tone: 'error', persist: false });
         } finally {
             setLoading(false);
         }
@@ -105,11 +103,10 @@ export const PlannerPage = () => {
         setBusyId(item.id);
         try {
             await scheduledSessionService.patch(item.id, { startedAt: target.toISOString(), endedAt: targetEnd.toISOString() });
-            notify({ title: 'Study session rescheduled', tone: 'success' });
-            void notificationService.create({ type: 'success', title: 'Study session rescheduled', body: `Your session was moved to ${target.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.` }).then(() => window.dispatchEvent(new Event('studyzen:notifications-changed'))).catch(() => undefined);
+            notify({ title: 'Study session rescheduled', description: `Your session was moved to ${target.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.`, tone: 'success' });
             await load();
-        } catch {
-            notify({ title: 'Could not reschedule session', description: 'Please try again.', tone: 'error' });
+        } catch (failure) {
+            notify({ title: 'Could not reschedule session', description: getApiErrorMessage(failure), tone: 'error' });
         } finally {
             setBusyId(null);
         }
@@ -119,7 +116,7 @@ export const PlannerPage = () => {
 
     return <main className="min-h-full bg-[var(--app-bg)] px-4 py-6 text-[var(--app-text)] sm:px-6 lg:px-10 lg:py-9"><div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent-color)]">The bigger picture</p><h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Planning</h1><p className="mt-1 text-sm text-[var(--app-text-muted)]">See what is coming and make space for what matters.</p></div><div className="flex items-center gap-2"><button className={button} onClick={() => { const current = new Date(); setMonth(new Date(current.getFullYear(), current.getMonth(), 1)); setSelected(current); }}>Today</button><button className={`${button} h-10 w-10 p-0`} aria-label="Previous month" onClick={() => setMonth((value) => moveMonth(value, -1))}><ArrowLeft size={17} /></button><span className="min-w-36 text-center font-semibold">{monthLabel}</span><button className={`${button} h-10 w-10 p-0`} aria-label="Next month" onClick={() => setMonth((value) => moveMonth(value, 1))}><ArrowRight size={17} /></button></div></header>
-        {error && <div role="alert" className={`${card} flex flex-wrap items-center justify-between gap-3 p-4`}><p className="text-sm">{error}</p><button className={button} onClick={() => void load()}><RotateCcw size={15} /> Try again</button></div>}
+        {loading && <span role="status" className="sr-only">Loading planner data</span>}
         <div className="grid items-start gap-6 xl:grid-cols-[1.4fr_0.8fr]"><div className="space-y-5"><MonthCalendar month={month} selectedDate={selected} weekStartsOn={weekStartsOn} markers={markers} onSelect={selectDate} /><section className={`${card} p-5 sm:p-6`}><div className="flex items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--accent-color)]">Selected date</p><h2 className="mt-1 text-xl font-bold">{selected.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h2></div><div className="flex items-center gap-2"><Link to={`/day?date=${selectedKey}`} className={`${button} px-3 py-1.5 text-xs`}>Open day</Link><Link to={`/week?date=${selectedKey}`} className={`${button} px-3 py-1.5 text-xs`}>Open week</Link></div></div>{loading ? <p className="py-8 text-sm text-[var(--app-text-muted)]">Loading calendar…</p> : <div className="mt-4 space-y-2">{selectedSessions.map((item) => <div key={`session-${item.id}`} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[var(--app-bg)] p-3"><div className="flex items-center gap-3"><Clock3 size={16} className="text-[var(--accent-color)]" /><div><p className="text-sm font-semibold">{item.title || 'Study session'}</p><p className="text-xs text-[var(--app-text-muted)]">Scheduled study</p></div></div><button className={button} disabled={busyId === item.id} onClick={() => void moveSession(item)}>{busyId === item.id ? 'Moving…' : 'Move here'}</button></div>)}{selectedDeadlines.map((item) => <div key={`deadline-${item.id}`} className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--app-bg)] p-3"><div><p className="text-sm font-semibold">{item.title}</p><p className="text-xs capitalize text-[var(--app-text-muted)]">{item.type} · {item.allDay ? 'All day' : new Date(item.dueAt.replace(' ', 'T')).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</p></div><span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs">{item.isCompleted ? 'Done' : item.urgency}</span></div>)}{selectedAssessments.map((item) => <div key={`assessment-${item.id}`} className="rounded-2xl bg-[var(--app-bg)] p-3"><p className="text-sm font-semibold">{item.title}</p><p className="text-xs capitalize text-[var(--app-text-muted)]">{item.type} · {subjectById.get(item.subjectId)?.name ?? 'Subject'}{item.completed ? ' · Completed' : ''}</p></div>)}{selectedTodos.map((item) => <div key={`todo-${item.id}`} className="flex items-center gap-3 rounded-2xl bg-[var(--app-bg)] p-3"><Check size={16} className={item.isCompleted ? 'text-emerald-500' : 'text-[var(--app-text-muted)]'} /><p className={`text-sm ${item.isCompleted ? 'text-[var(--app-text-muted)] line-through' : ''}`}>{item.text}</p></div>)}{!selectedSessions.length && !selectedDeadlines.length && !selectedAssessments.length && !selectedTodos.length && <p className="rounded-2xl border border-dashed border-[var(--app-border)] p-5 text-sm text-[var(--app-text-muted)]">No items planned for this date. Choose a small next step or enjoy the open space.</p>}</div>}</section></div>
             <div className="space-y-5"><GoalPanel goals={goals} subjects={subjects} sessions={sessions} weekStartsOn={weekStartsOn} onChange={() => void load()} />
                 <section className={`${card} p-5`}><div className="flex items-center gap-2"><CalendarDays size={16} className="text-[var(--accent-color)]" /><h2 className="font-bold">Upcoming deadlines</h2></div>{upcomingDeadlines.length ? <ul className="mt-4 space-y-3">{upcomingDeadlines.map((item) => <li key={item.id} className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-semibold">{item.title}</p><p className="mt-0.5 text-xs text-[var(--app-text-muted)]">{new Date(item.dueAt.replace(' ', 'T')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {item.type}</p></div><span className="rounded-full bg-amber-500/10 px-2 py-1 text-[10px] font-semibold capitalize">{item.urgency}</span></li>)}</ul> : <p className="mt-3 text-sm text-[var(--app-text-muted)]">No upcoming deadlines in this month.</p>}</section>

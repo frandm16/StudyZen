@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Percent, AlertCircle } from 'lucide-react';
+import { Percent } from 'lucide-react';
 import { Modal, fieldClass, primaryButton, ghostButton } from '../../ui/Modal';
 import { GradeWheel } from '../GradeWheel';
 import { ASSESSMENT_TYPE_PRESETS, formatGrade } from '../helpers';
 import type { Assessment, CreateAssessmentDTO, UpdateAssessmentDTO } from '../../../types/assessment';
+import { useToast } from '../../../context/ToastContext';
+import { getApiErrorMessage } from '../../../services/api';
 
 interface EvaluationModalProps {
     isOpen: boolean;
@@ -22,6 +24,7 @@ export function EvaluationModal({
     existingEvaluations = [],
     onSave,
 }: EvaluationModalProps) {
+    const notify = useToast();
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
@@ -33,7 +36,6 @@ export function EvaluationModal({
     const [maxGrade, setMaxGrade] = useState<number>(100);
     const [grade, setGrade] = useState<string>('');
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const otherWeight = useMemo(() => {
         return existingEvaluations
@@ -64,7 +66,6 @@ export function EvaluationModal({
             setMaxGrade(100);
             setGrade('');
         }
-        setError(null);
     }, [editingEvaluation, isOpen, today, maxAvailableWeight]);
 
     const parsedGrade = grade.trim() !== '' ? Number(grade) : null;
@@ -75,37 +76,36 @@ export function EvaluationModal({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title.trim()) {
-            setError('Evaluation title is required');
+            notify({ title: 'Evaluation title is required', tone: 'warning', persist: false });
             return;
         }
         if (!type.trim()) {
-            setError('Evaluation type is required');
+            notify({ title: 'Evaluation type is required', tone: 'warning', persist: false });
             return;
         }
 
         const numericWeight = Number(weightPercent) || 0;
         if (numericWeight < 0) {
-            setError('Weight percentage cannot be negative');
+            notify({ title: 'Weight percentage cannot be negative', tone: 'warning', persist: false });
             return;
         }
 
         if (otherWeight + numericWeight > 100) {
-            setError(`Total weight cannot exceed 100%. Currently used: ${otherWeight}%. Max available: ${maxAvailableWeight}%.`);
+            notify({ title: 'Evaluation weight exceeds 100%', description: `Currently used: ${otherWeight}%. Max available: ${maxAvailableWeight}%.`, tone: 'warning', persist: false });
             return;
         }
 
         if (maxGrade <= 0) {
-            setError('Max grade must be greater than 0');
+            notify({ title: 'Maximum grade must be greater than zero', tone: 'warning', persist: false });
             return;
         }
 
         if (parsedGrade !== null && (parsedGrade < 0 || parsedGrade > maxGrade)) {
-            setError(`Grade received must be between 0 and ${maxGrade}`);
+            notify({ title: 'Grade is outside the allowed range', description: `Enter a grade between 0 and ${maxGrade}.`, tone: 'warning', persist: false });
             return;
         }
 
         setSubmitting(true);
-        setError(null);
         try {
             const dueAt = dueDate ? `${dueDate}T23:59:59` : null;
 
@@ -120,8 +120,8 @@ export function EvaluationModal({
                 grade: parsedGrade,
             });
             onClose();
-        } catch (err: any) {
-            setError(err?.message || 'Failed to save evaluation');
+        } catch (err) {
+            notify({ title: editingEvaluation ? 'Could not update evaluation' : 'Could not create evaluation', description: getApiErrorMessage(err), tone: 'error' });
         } finally {
             setSubmitting(false);
         }
@@ -136,13 +136,6 @@ export function EvaluationModal({
             title={editingEvaluation ? 'Edit Evaluation' : 'New Evaluation'}
         >
             <form onSubmit={handleSubmit} className="space-y-5">
-                {error && (
-                    <div className="flex items-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-400">
-                        <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
-                        <span>{error}</span>
-                    </div>
-                )}
-
                 <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)]/50 p-4">
                     <div className="flex items-center justify-between text-xs mb-2">
                         <span className="font-semibold text-[var(--app-text-muted)] flex items-center gap-1.5">

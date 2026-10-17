@@ -6,7 +6,6 @@ import { topicService } from '../../services/topic-service';
 import { sessionService } from '../../services/session-service';
 import { fieldClass, primaryButton } from '../ui/Modal';
 import { useToast } from '../../context/ToastContext';
-import { notificationService } from '../../services/notification-service';
 import type { StudyGoal } from '../../types/study-goal';
 import type { Subject } from '../../types/subject';
 import type { Session } from '../../types/session';
@@ -26,7 +25,6 @@ export function GoalPanel({ goals, subjects, sessions, weekStartsOn, onChange }:
     const [subjectId, setSubjectId] = useState('');
     const [minutes, setMinutes] = useState('300');
     const [busy, setBusy] = useState(false);
-    const [error, setError] = useState('');
     const subjectById = useMemo(() => new Map(subjects.map((subject) => [subject.id, subject])), [subjects]);
     const [topicToSubject, setTopicToSubject] = useState<Map<number, number>>(new Map());
     const [removingId, setRemovingId] = useState<number | null>(null);
@@ -39,16 +37,14 @@ export function GoalPanel({ goals, subjects, sessions, weekStartsOn, onChange }:
         event.preventDefault();
         const targetMinutes = Number(minutes);
         if (!Number.isInteger(targetMinutes) || targetMinutes < 1 || targetMinutes > 10080) {
-            setError('Enter a target between 1 and 10,080 minutes.');
+            notify({ title: 'Target must be between 1 and 10,080 minutes', tone: 'warning', persist: false });
             return;
         }
         setBusy(true);
-        setError('');
         try {
             await studyGoalService.create({ period, targetMinutes, subjectId: subjectId ? Number(subjectId) : null });
             setAdding(false);
-            notify({ title: 'Study goal added', tone: 'success' });
-            void notificationService.create({ type: 'success', title: 'Study goal added', body: 'Your new study goal is ready to track.' }).then(() => window.dispatchEvent(new Event('studyzen:notifications-changed'))).catch(() => undefined);
+            notify({ title: 'Study goal added', description: 'Your new study goal is ready to track.', tone: 'success' });
             onChange();
         } catch (failure) {
             notify({ title: 'Could not save study goal', description: getApiErrorMessage(failure), tone: 'error' });
@@ -60,13 +56,12 @@ export function GoalPanel({ goals, subjects, sessions, weekStartsOn, onChange }:
     const remove = async (goal: StudyGoal) => {
         if (!window.confirm('Delete this study goal?')) return;
         setRemovingId(goal.id);
-        setError('');
         try {
             await studyGoalService.delete(goal.id);
             notify({ title: 'Study goal deleted', tone: 'success' });
             onChange();
         } catch (failure) {
-            notify({ title: 'Could not delete study goal', description: failure instanceof Error ? failure.message : 'Please try again.', tone: 'error' });
+            notify({ title: 'Could not delete study goal', description: getApiErrorMessage(failure), tone: 'error' });
         } finally {
             setRemovingId(null);
         }
@@ -74,7 +69,6 @@ export function GoalPanel({ goals, subjects, sessions, weekStartsOn, onChange }:
 
     return <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-5 shadow-sm sm:p-6">
         <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--accent-color)]">Consistency</p><h2 className="mt-1 text-xl font-bold">Study goals</h2></div><button onClick={() => setAdding((value) => !value)} className="flex items-center gap-1 rounded-full border border-[var(--app-border)] px-3 py-2 text-xs font-semibold hover:border-[var(--accent-color)] focus-visible:outline-2 focus-visible:outline-[var(--accent-color)]" aria-expanded={adding}><Plus size={15} /> Add goal</button></div>
-        {error && <p role="alert" className="mt-3 text-sm text-rose-500">{error}</p>}
         {adding && <form onSubmit={submit} className="mt-4 grid gap-3 rounded-2xl bg-[var(--app-bg)] p-4 sm:grid-cols-2">
             <label className="text-xs font-semibold">Period<select className={`${fieldClass} mt-1`} value={period} onChange={(event) => setPeriod(event.target.value as 'daily' | 'weekly')}><option value="daily">Daily</option><option value="weekly">Weekly</option></select></label>
             <label className="text-xs font-semibold">Target minutes<input className={`${fieldClass} mt-1`} type="number" min="1" max="10080" value={minutes} onChange={(event) => setMinutes(event.target.value)} required /></label>

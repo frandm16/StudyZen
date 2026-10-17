@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Star, Check, X, Calendar } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Check, Calendar } from 'lucide-react';
 import { termService } from '../../services/term-service';
 import { getApiErrorMessage } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import type { AcademicTerm } from '../../types/academic-term';
 
 interface TermFormState {
@@ -172,8 +173,7 @@ function TermRow({
 export function TermsSection() {
     const [terms, setTerms] = useState<AcademicTerm[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
+    const notify = useToast();
 
     const [editingId, setEditingId] = useState<number | null>(null);
     const [formState, setFormState] = useState<TermFormState>(emptyForm());
@@ -185,21 +185,10 @@ export function TermsSection() {
 
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
-    const showMsg = (msg: string, isError = false) => {
-        if (isError) {
-            setError(msg);
-            setSuccess(null);
-        } else {
-            setSuccess(msg);
-            setError(null);
-        }
-        setTimeout(() => { setError(null); setSuccess(null); }, 3500);
-    };
-
     useEffect(() => {
         termService.getAll()
             .then(setTerms)
-            .catch((e) => setError(getApiErrorMessage(e)))
+            .catch((e) => notify({ title: 'Could not load academic terms', description: getApiErrorMessage(e), tone: 'error', persist: false }))
             .finally(() => setLoading(false));
     }, []);
 
@@ -225,9 +214,9 @@ export function TermsSection() {
                 return t;
             }));
             setEditingId(null);
-            showMsg('Term updated successfully');
+            notify({ title: 'Term updated', tone: 'success' });
         } catch (e) {
-            showMsg(getApiErrorMessage(e), true);
+            notify({ title: 'Could not update term', description: getApiErrorMessage(e), tone: 'error' });
         } finally {
             setSaving(false);
         }
@@ -239,9 +228,9 @@ export function TermsSection() {
             setTerms((prev) => prev.map((t) =>
                 t.id === id ? updated : { ...t, isCurrent: false }
             ));
-            showMsg('Active term updated');
+            notify({ title: 'Active term updated', tone: 'success' });
         } catch (e) {
-            showMsg(getApiErrorMessage(e), true);
+            notify({ title: 'Could not update active term', description: getApiErrorMessage(e), tone: 'error' });
         }
     };
 
@@ -254,9 +243,9 @@ export function TermsSection() {
             await termService.delete(id);
             setTerms((prev) => prev.filter((t) => t.id !== id));
             setDeleteConfirmId(null);
-            showMsg('Term deleted');
+            notify({ title: 'Term deleted', tone: 'success' });
         } catch (e) {
-            showMsg(getApiErrorMessage(e), true);
+            notify({ title: 'Could not delete term', description: getApiErrorMessage(e), tone: 'error' });
         }
     };
 
@@ -273,9 +262,9 @@ export function TermsSection() {
             });
             setShowCreate(false);
             setCreateForm(emptyForm());
-            showMsg('Term created successfully');
+            notify({ title: 'Term created', tone: 'success' });
         } catch (e) {
-            showMsg(getApiErrorMessage(e), true);
+            notify({ title: 'Could not create term', description: getApiErrorMessage(e), tone: 'error' });
         } finally {
             setCreating(false);
         }
@@ -283,19 +272,6 @@ export function TermsSection() {
 
     return (
         <div className="space-y-6 max-w-2xl">
-            {error && (
-                <div className="flex items-center gap-3 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-medium">
-                    <X className="w-4 h-4 shrink-0" />
-                    {error}
-                </div>
-            )}
-            {success && (
-                <div className="flex items-center gap-3 p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-xs font-medium">
-                    <Check className="w-4 h-4 shrink-0" />
-                    {success}
-                </div>
-            )}
-
             <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">

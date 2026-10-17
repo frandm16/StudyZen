@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, fieldClass, primaryButton, ghostButton } from '../../ui/Modal';
 import { termService } from '../../../services/term-service';
 import { getApiErrorMessage } from '../../../services/api';
+import { useToast } from '../../../context/ToastContext';
 import type { AcademicTerm } from '../../../types/academic-term';
 
 interface TermModalProps {
@@ -11,6 +12,7 @@ interface TermModalProps {
 }
 
 export function TermModal({ isOpen, onClose, onCreated }: TermModalProps) {
+    const notify = useToast();
     const today = new Date().toISOString().slice(0, 10);
     const inFourMonths = new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -19,16 +21,14 @@ export function TermModal({ isOpen, onClose, onCreated }: TermModalProps) {
     const [endDate, setEndDate] = useState(inFourMonths);
     const [isCurrent, setIsCurrent] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim()) {
-            setError('Term name is required');
+            notify({ title: 'Term name is required', tone: 'warning', persist: false });
             return;
         }
         setLoading(true);
-        setError(null);
         try {
             const created = await termService.create({
                 name: name.trim(),
@@ -38,9 +38,10 @@ export function TermModal({ isOpen, onClose, onCreated }: TermModalProps) {
             });
             onCreated(created);
             setName('');
+            notify({ title: 'Academic term created', tone: 'success' });
             onClose();
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not create academic term', description: getApiErrorMessage(err), tone: 'error' });
         } finally {
             setLoading(false);
         }
@@ -57,12 +58,6 @@ export function TermModal({ isOpen, onClose, onCreated }: TermModalProps) {
                 Add a new academic term or semester to organize your subjects.
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                    <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
-                        {error}
-                    </div>
-                )}
-
                 <div>
                     <label className="block text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider mb-1.5">
                         Term Name

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { RotateCcw } from 'lucide-react';
 import { CreateScheduledSessionDialog } from '../components/planner/CreateScheduledSessionDialog';
 import { TaskTagDialog } from '../components/timer/TaskTagDialog';
 import { addDays as addPlannerDays, localDateFromTimestamp, startOfWeek as plannerStartOfWeek } from '../lib/planner-dates';
@@ -532,7 +531,6 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const [notes, setNotes] = useState<Record<string, DayNote>>({});
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [weekStartsOn, setWeekStartsOn] = useState(1);
     const [reloadToken, setReloadToken] = useState(0);
     const [gridSelection, setGridSelection] = useState<GridSelection | null>(null);
@@ -570,7 +568,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                 setWeekStartsOn(Number.isInteger(settings.weekStartsOn) ? settings.weekStartsOn : 1);
             })
             .catch((failure) => {
-                if (active) setError(getApiErrorMessage(failure));
+                if (active) notify({ title: 'Could not load day details', description: getApiErrorMessage(failure), tone: 'error', persist: false });
             });
         return () => {
             active = false;
@@ -598,10 +596,9 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                 setDeadlines(loadedDeadlines);
                 setScheduled(loadedScheduled);
                 setSessions(loadedSessions);
-                setError(null);
             })
             .catch((failure) => {
-                if (active) setError(getApiErrorMessage(failure));
+                if (active) notify({ title: 'Could not load day schedule', description: getApiErrorMessage(failure), tone: 'error', persist: false });
             })
             .finally(() => {
                 if (active) setLoading(false);
@@ -944,16 +941,6 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     })}
                 </nav>
 
-                <div aria-live="polite">
-                    {error && (
-                        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-semibold text-red-500">
-                            <span>{error}</span>
-                            <button type="button" onClick={() => setReloadToken((current) => current + 1)} className={`inline-flex items-center gap-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-card-bg)] px-3 py-1.5 text-[var(--app-text)] ${focusRing}`}>
-                                <RotateCcw size={14} /> Try again
-                            </button>
-                        </div>
-                    )}
-                </div>
 
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
                     <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-5 shadow-xl sm:p-6">

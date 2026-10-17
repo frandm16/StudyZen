@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Search, BookOpen, AlertCircle } from 'lucide-react';
+import { Plus, Search, BookOpen } from 'lucide-react';
 import { useTimerContext } from '../context/TimerContext';
 import { getApiErrorMessage } from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { subjectService } from '../services/subject-service';
 import { topicService } from '../services/topic-service';
 import { assessmentService } from '../services/assessment-service';
@@ -31,6 +32,7 @@ export function SubjectsPage() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const timer = useTimerContext();
+    const notify = useToast();
 
     const selectedSubjectId = useMemo(() => {
         const idParam = searchParams.get('id');
@@ -44,7 +46,6 @@ export function SubjectsPage() {
     const [terms, setTerms] = useState<AcademicTerm[]>([]);
 
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTermFilter, setSelectedTermFilter] = useState<number | 'all'>('all');
@@ -63,7 +64,6 @@ export function SubjectsPage() {
 
     const loadData = useCallback(async () => {
         setLoading(true);
-        setError(null);
         try {
             const [loadedSubjects, loadedTopics, loadedAssessments, loadedSessions, loadedTerms] = await Promise.all([
                 subjectService.getAll(),
@@ -78,11 +78,11 @@ export function SubjectsPage() {
             setSessions(loadedSessions);
             setTerms(loadedTerms);
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not load subjects', description: getApiErrorMessage(err), tone: 'error', persist: false });
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [notify]);
 
     useEffect(() => {
         void loadData();
@@ -190,8 +190,9 @@ export function SubjectsPage() {
         try {
             const updated = await subjectService.toggleFavorite(subjectId);
             setSubjects((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+            notify({ title: updated.isFavorite ? 'Subject added to favorites' : 'Subject removed from favorites', tone: 'success' });
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not update favorite', description: getApiErrorMessage(err), tone: 'error' });
         }
     };
 
@@ -207,8 +208,9 @@ export function SubjectsPage() {
             if (selectedSubjectId === subjectId) {
                 setSearchParams({});
             }
+            notify({ title: 'Subject deleted', tone: 'success' });
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not delete subject', description: getApiErrorMessage(err), tone: 'error' });
         }
     };
 
@@ -216,10 +218,12 @@ export function SubjectsPage() {
         if (editingSubject) {
             const updated = await subjectService.update(editingSubject.id, dto);
             setSubjects((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+            notify({ title: 'Subject updated', tone: 'success' });
         } else {
             const created = await subjectService.create(dto);
             setSubjects((prev) => [...prev, created]);
             setSearchParams({ id: String(created.id) });
+            notify({ title: 'Subject created', tone: 'success' });
         }
     };
 
@@ -227,9 +231,11 @@ export function SubjectsPage() {
         if (editingTopic) {
             const updated = await topicService.update(editingTopic.id, dto);
             setTopics((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+            notify({ title: 'Topic updated', tone: 'success' });
         } else {
             const created = await topicService.create(dto);
             setTopics((prev) => [...prev, created]);
+            notify({ title: 'Topic created', tone: 'success' });
         }
     };
 
@@ -237,8 +243,9 @@ export function SubjectsPage() {
         try {
             const updated = await topicService.update(topicId, { status });
             setTopics((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+            notify({ title: 'Topic status updated', tone: 'success' });
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not update topic status', description: getApiErrorMessage(err), tone: 'error' });
         }
     };
 
@@ -247,8 +254,9 @@ export function SubjectsPage() {
         try {
             await topicService.delete(topicId);
             setTopics((prev) => prev.filter((t) => t.id !== topicId));
+            notify({ title: 'Topic deleted', tone: 'success' });
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not delete topic', description: getApiErrorMessage(err), tone: 'error' });
         }
     };
 
@@ -263,9 +271,11 @@ export function SubjectsPage() {
         if (editingEvaluation) {
             const updated = await assessmentService.update(editingEvaluation.id, dto);
             setAssessments((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+            notify({ title: 'Evaluation updated', tone: 'success' });
         } else {
             const created = await assessmentService.create(dto as CreateAssessmentDTO);
             setAssessments((prev) => [...prev, created]);
+            notify({ title: 'Evaluation created', tone: 'success' });
         }
     };
 
@@ -273,8 +283,9 @@ export function SubjectsPage() {
         try {
             const updated = await assessmentService.toggleComplete(evaluation);
             setAssessments((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+            notify({ title: updated.completed ? 'Evaluation completed' : 'Evaluation reopened', tone: 'success' });
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not update evaluation', description: getApiErrorMessage(err), tone: 'error' });
         }
     };
 
@@ -283,8 +294,9 @@ export function SubjectsPage() {
         try {
             await assessmentService.delete(evaluationId);
             setAssessments((prev) => prev.filter((a) => a.id !== evaluationId));
+            notify({ title: 'Evaluation deleted', tone: 'success' });
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not delete evaluation', description: getApiErrorMessage(err), tone: 'error' });
         }
     };
 
@@ -303,20 +315,6 @@ export function SubjectsPage() {
 
     return (
         <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8 space-y-6">
-            {error && (
-                <div className="flex items-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-xs font-semibold text-red-400 shadow-sm">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span className="flex-1">{error}</span>
-                    <button
-                        type="button"
-                        onClick={() => setError(null)}
-                        className="text-red-400 hover:text-red-300 font-bold"
-                    >
-                        Dismiss
-                    </button>
-                </div>
-            )}
-
             {selectedSubject ? (
                 <div className="space-y-6">
                     <SubjectDetailHeader

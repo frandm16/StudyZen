@@ -340,7 +340,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const setColorMode = (colorMode: ColorMode) => {
         setTheme((prev) => {
             const next: ThemeConfig = { ...prev, colorMode };
-            void settingsService.patchSettings({ colorMode, theme: colorMode }).catch(() => {});
+            void settingsService.patchSettings({ colorMode, theme: colorMode }).then(() => {
+                window.dispatchEvent(new Event('studyzen:theme-save-success'));
+            }).catch((error: unknown) => {
+                window.dispatchEvent(new CustomEvent('studyzen:theme-save-error', { detail: error }));
+            });
             return next;
         });
     };
@@ -348,7 +352,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const setColorTheme = (colorTheme: ColorTheme) => {
         setTheme((prev) => {
             const next: ThemeConfig = { ...prev, colorTheme };
-            void settingsService.patchSettings({ colorTheme }).catch(() => {});
+            void settingsService.patchSettings({ colorTheme }).then(() => {
+                window.dispatchEvent(new Event('studyzen:theme-save-success'));
+            }).catch((error: unknown) => {
+                window.dispatchEvent(new CustomEvent('studyzen:theme-save-error', { detail: error }));
+            });
             return next;
         });
     };

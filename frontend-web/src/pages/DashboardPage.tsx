@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Activity, ArrowUpRight, BookOpen, CalendarDays, Clock3, Flame, RotateCcw, Star, TrendingUp } from 'lucide-react';
+import { Activity, ArrowUpRight, BookOpen, CalendarDays, Clock3, Flame, Star, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { statsService, type Heatmap, type WeeklyStats } from '../services/stats-service';
 import { sessionService } from '../services/session-service';
 import type { Session } from '../types/session';
 import { addDays, dateKey, parseDateKey } from '../lib/planner-dates';
+import { useToast } from '../context/ToastContext';
+import { getApiErrorMessage } from '../services/api';
 
 const card = 'rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] shadow-sm';
 const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -16,25 +18,24 @@ function StatCard({ label, value, detail, icon: Icon, tint }: { label: string; v
 }
 
 export function DashboardPage() {
+    const notify = useToast();
     const [heatmap, setHeatmap] = useState<Heatmap>({});
     const [weekly, setWeekly] = useState<WeeklyStats>({});
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const load = useCallback(async () => {
         setLoading(true);
-        setError('');
         try {
             const [heatmapData, weeklyData, sessionData] = await Promise.all([statsService.getHeatmap(), statsService.getWeekly(), sessionService.getAll()]);
             setHeatmap(heatmapData);
             setWeekly(weeklyData);
             setSessions(sessionData);
-        } catch {
-            setError('We could not load your study stats. Check your connection and try again.');
+        } catch (failure) {
+            notify({ title: 'Could not load study stats', description: getApiErrorMessage(failure), tone: 'error', persist: false });
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [notify]);
     useEffect(() => { void load(); }, [load]);
 
     const now = new Date();
@@ -63,7 +64,6 @@ export function DashboardPage() {
 
     return <main className="min-h-full bg-[var(--app-bg)] px-4 py-6 text-[var(--app-text)] sm:px-6 lg:px-10 lg:py-9"><div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent-color)]">Your progress, in focus</p><h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Study stats</h1><p className="mt-1 text-sm text-[var(--app-text-muted)]">A clear view of your consistency and focused time.</p></div><Link to="/planner" className="inline-flex items-center gap-2 rounded-full border border-[var(--app-border)] px-4 py-2 text-sm font-semibold transition-colors hover:border-[var(--accent-color)] focus-visible:outline-2 focus-visible:outline-[var(--accent-color)]">Open planning <ArrowUpRight size={16} /></Link></header>
-        {error && <div role="alert" className={`${card} flex flex-wrap items-center justify-between gap-3 p-4`}><p className="text-sm">{error}</p><button onClick={() => void load()} className="inline-flex items-center gap-2 rounded-full border border-[var(--app-border)] px-4 py-2 text-sm font-semibold"><RotateCcw size={15} /> Try again</button></div>}
         {loading ? <div className={`${card} p-12 text-center text-sm text-[var(--app-text-muted)]`} role="status">Gathering your study activity…</div> : <>
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Study summary"><StatCard label="Focused time" value={formatMinutes(totalMinutes)} detail="Across completed sessions" icon={Clock3} tint="bg-[var(--accent-color)]/10 text-[var(--accent-color)]" /><StatCard label="Sessions" value={String(sessions.length)} detail="Logged study sessions" icon={BookOpen} tint="bg-sky-500/10 text-sky-500" /><StatCard label="Active days" value={String(activeDayCount)} detail="Days with recorded study" icon={Flame} tint="bg-amber-500/10 text-amber-500" /><StatCard label="Average focus" value={ratedCount ? `${avgFocus.toFixed(1)} / 5` : '—'} detail={ratedCount ? `${ratedCount} rated sessions` : 'No ratings yet'} icon={Star} tint="bg-violet-500/10 text-violet-500" /></section>
             <section className={`${card} p-5 sm:p-7`} aria-labelledby="activity-title"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--accent-color)]">Keep showing up</p><h2 id="activity-title" className="mt-1 text-xl font-bold">Study activity</h2></div><span className="inline-flex items-center gap-2 text-xs text-[var(--app-text-muted)]"><CalendarDays size={15} /> Last 12 weeks</span></div><div className="mt-5 overflow-x-auto pb-2"><div className="grid min-w-[620px] grid-cols-[2rem_repeat(12,minmax(0,1fr))] gap-1.5"><span aria-hidden="true" className="h-5" />{Array.from({ length: 12 }, (_, weekIndex) => <span key={`week-${weekIndex}`} className="h-5 text-center text-[9px] text-[var(--app-text-muted)]">{weeks[weekIndex]?.toLocaleDateString('en-US', { month: 'short' })}</span>)}{dayNames.map((day, dayIndex) => <div key={`row-${day}`} className="contents"><span className="flex h-4 items-center text-[9px] text-[var(--app-text-muted)]">{day}</span>{Array.from({ length: 12 }, (_, weekIndex) => {

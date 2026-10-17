@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { authService } from '../services/auth-service';
 
 export function LoginPage() {
+    const notify = useToast();
     const navigate = useNavigate();
-    const { login, isLoading, error: contextError } = useAuth();
+    const { login, isLoading } = useAuth();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null);
     const [touched, setTouched] = useState({ email: false, password: false });
 
     const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -19,13 +20,12 @@ export function LoginPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
-
         try {
             await login({ email, password });
+            notify({ title: 'Signed in', tone: 'success', persist: false });
             navigate('/');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Login failed');
+            notify({ title: 'Login failed', description: err instanceof Error ? err.message : 'Login failed', tone: 'error' });
         }
     };
 
@@ -66,12 +66,6 @@ export function LoginPage() {
                             />
                             {passwordError && <p className="text-red-600 text-xs mt-1">{passwordError}</p>}
                         </div>
-
-                        {(error || contextError) && (
-                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                <p className="text-red-700 text-sm">{error || contextError}</p>
-                            </div>
-                        )}
 
                         <button
                             type="submit"

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { useTimerContext } from '../context/TimerContext';
 import { useBackground } from '../hooks/useBackground';
 import { useTheme, THEME_PRESETS, type ColorTheme } from '../context/ThemeContext';
@@ -220,11 +221,13 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ checked, onChange, label, d
 
 export const SettingsPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('profile-details');
-    const { user, updateProfile, isLoading, error: authContextError } = useAuth();
+    const { user, updateProfile, isLoading } = useAuth();
     const timer = useTimerContext();
     const bg = useBackground();
     const sound = timer.sound;
     const { colorMode, colorTheme, setColorMode, setColorTheme } = useTheme();
+    const notify = useToast();
+    const autosaveErrors = React.useRef(new Set<string>());
 
     const [displayName, setDisplayName] = useState(user?.displayName || '');
     const [username, setUsername] = useState(user?.username || (user?.email ? user.email.split('@')[0] : ''));
@@ -244,7 +247,6 @@ export const SettingsPage: React.FC = () => {
     const [stopwatchTargetHours, setStopwatchTargetHours] = useState(2);
     const [enableLapRecording, setEnableLapRecording] = useState(true);
 
-    const [accountSuccess, setAccountSuccess] = useState<string | null>(null);
     const [accountError, setAccountError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -260,6 +262,22 @@ export const SettingsPage: React.FC = () => {
             }
         }
     }, [user]);
+
+    useEffect(() => {
+        const onThemeSaveError = (event: Event) => {
+            const error = (event as CustomEvent<unknown>).detail;
+            if (autosaveErrors.current.has('theme')) return;
+            autosaveErrors.current.add('theme');
+            notify({ title: 'Could not save theme', description: error instanceof Error ? error.message : undefined, tone: 'error', persist: false });
+        };
+        const onThemeSaveSuccess = () => autosaveErrors.current.delete('theme');
+        window.addEventListener('studyzen:theme-save-error', onThemeSaveError);
+        window.addEventListener('studyzen:theme-save-success', onThemeSaveSuccess);
+        return () => {
+            window.removeEventListener('studyzen:theme-save-error', onThemeSaveError);
+            window.removeEventListener('studyzen:theme-save-success', onThemeSaveSuccess);
+        };
+    }, [notify]);
 
     useEffect(() => {
         const fetchBackendSettings = async () => {
@@ -287,7 +305,8 @@ export const SettingsPage: React.FC = () => {
                 if (s.autoStartBreaks !== undefined) timer.setAutoStartBreaks(s.autoStartBreaks);
                 if (s.autoStartWork !== undefined) timer.setAutoStartWork(s.autoStartWork);
                 if (s.countBreakTime !== undefined) timer.setCountBreakTime(s.countBreakTime);
-            } catch {
+            } catch (err) {
+                notify({ title: 'Could not load settings', description: err instanceof Error ? err.message : undefined, tone: 'error', persist: false });
             }
         };
 
@@ -301,9 +320,9 @@ export const SettingsPage: React.FC = () => {
         setAvatarTitle(title);
         try {
             await updateProfile({ avatarUrl: nextUrl });
-            setAccountSuccess('Avatar updated successfully');
+            notify({ title: 'Avatar updated', tone: 'success' });
         } catch {
-            setAccountError('Could not save avatar');
+            notify({ title: 'Could not save avatar', tone: 'error' });
         }
     };
 
@@ -334,7 +353,6 @@ export const SettingsPage: React.FC = () => {
     const handleProfileSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setAccountError(null);
-        setAccountSuccess(null);
 
         try {
             const updateData: UpdateProfileDTO = {
@@ -355,13 +373,23 @@ export const SettingsPage: React.FC = () => {
             }
 
             await updateProfile(updateData);
-            setAccountSuccess('Profile updated successfully');
+            notify({ title: 'Profile updated', tone: 'success' });
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
         } catch (err) {
-            setAccountError(err instanceof Error ? err.message : 'Failed to update profile');
+            notify({ title: 'Failed to update profile', description: err instanceof Error ? err.message : undefined, tone: 'error' });
         }
+    };
+
+    const saveAutosetting = (key: string, payload: Record<string, unknown>) => {
+        void settingsService.patchSettings(payload).then(() => {
+            autosaveErrors.current.delete(key);
+        }).catch((err: unknown) => {
+            if (autosaveErrors.current.has(key)) return;
+            autosaveErrors.current.add(key);
+            notify({ title: 'Could not save setting', description: err instanceof Error ? err.message : undefined, tone: 'error', persist: false });
+        });
     };
 
     const handleTimerChange = (key: string, value: number | boolean) => {
@@ -384,7 +412,7 @@ export const SettingsPage: React.FC = () => {
         if (key === 'autoStartWork') payload.autoStartWork = value;
         if (key === 'countBreakTime') payload.countBreakTime = value;
 
-        void settingsService.patchSettings(payload).catch(() => {});
+        saveAutosetting(key, payload);
     };
 
     const handleAcademicSave = async () => {
@@ -394,9 +422,9 @@ export const SettingsPage: React.FC = () => {
                 gradeScaleMax: Number(gradeScaleMax),
                 passGrade: Number(passGrade),
             });
-            setAccountSuccess('Academic settings saved successfully');
-        } catch {
-            setAccountError('Failed to save academic settings');
+            notify({ title: 'Academic settings saved', tone: 'success' });
+        } catch (err) {
+            notify({ title: 'Failed to save academic settings', description: err instanceof Error ? err.message : undefined, tone: 'error' });
         }
     };
 
@@ -585,17 +613,10 @@ export const SettingsPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {(accountError || authContextError) && (
+                                    {accountError && (
                                         <div className="flex items-center gap-3 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-medium">
                                             <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
-                                            <span>{accountError || authContextError}</span>
-                                        </div>
-                                    )}
-
-                                    {accountSuccess && (
-                                        <div className="flex items-center gap-3 p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-500 text-xs font-medium">
-                                            <Check className="w-4 h-4 shrink-0 text-emerald-500" />
-                                            <span>{accountSuccess}</span>
+                                            <span>{accountError}</span>
                                         </div>
                                     )}
 
@@ -758,7 +779,7 @@ export const SettingsPage: React.FC = () => {
                                                 onChange={(e) => {
                                                     const val = Number(e.target.value);
                                                     setStopwatchTargetHours(val);
-                                                    void settingsService.patchSettings({ stopwatchTargetHours: val }).catch(() => {});
+                                                    saveAutosetting('stopwatchTargetHours', { stopwatchTargetHours: val });
                                                 }}
                                                 className="w-full px-4 py-2.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-sm text-[var(--app-text)] focus:outline-none focus:border-[var(--accent-color)] cursor-pointer"
                                             >
@@ -1051,7 +1072,7 @@ export const SettingsPage: React.FC = () => {
                                                                 if (cat === 'alarm') payload.alarmVolume = val;
                                                                 if (cat === 'notification') payload.notificationVolume = val;
                                                                 if (cat === 'background') payload.backgroundVolume = val;
-                                                                void settingsService.patchSettings(payload).catch(() => {});
+                                                                saveAutosetting(`${cat}Volume`, payload);
                                                             }}
                                                             className="w-full cursor-pointer"
                                                         />

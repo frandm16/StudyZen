@@ -2,16 +2,17 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/auth-service';
+import { useToast } from '../context/ToastContext';
 
 export function RegisterPage() {
     const navigate = useNavigate();
-    const { register, isLoading, error: contextError } = useAuth();
+    const { register, isLoading } = useAuth();
+    const notify = useToast();
 
     const [displayName, setDisplayName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState<string | null>(null);
     const [touched, setTouched] = useState({
         displayName: false,
         email: false,
@@ -42,13 +43,12 @@ export function RegisterPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
-
         try {
             await register({ email, password, displayName });
+            notify({ title: 'Account created', tone: 'success', persist: false });
             navigate('/');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Registration failed');
+            notify({ title: 'Registration failed', description: err instanceof Error ? err.message : 'Registration failed', tone: 'error' });
         }
     };
 
@@ -119,12 +119,6 @@ export function RegisterPage() {
                             />
                             {confirmPasswordError && <p className="text-red-600 text-xs mt-1">{confirmPasswordError}</p>}
                         </div>
-
-                        {(error || contextError) && (
-                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                <p className="text-red-700 text-sm">{error || contextError}</p>
-                            </div>
-                        )}
 
                         <button
                             type="submit"

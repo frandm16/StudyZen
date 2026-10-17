@@ -8,6 +8,7 @@ import {
     type KeyboardEvent,
 } from 'react';
 import { getApiErrorMessage } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import { subjectService } from '../../services/subject-service';
 import { termService } from '../../services/term-service';
 import { topicService } from '../../services/topic-service';
@@ -126,6 +127,7 @@ export function TaskTagDialog({
     onSubjectCreated,
     onTopicCreated,
 }: Props) {
+    const notify = useToast();
     const dialogRef = useRef<HTMLDialogElement>(null);
     const topicInputRef = useRef<HTMLInputElement>(null);
     const subjectNameRef = useRef<HTMLInputElement>(null);
@@ -158,7 +160,6 @@ export function TaskTagDialog({
     const [newTermIsCurrent, setNewTermIsCurrent] = useState(true);
 
     const [busy, setBusy] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const dialog = dialogRef.current;
@@ -195,9 +196,9 @@ export function TaskTagDialog({
                 });
                 setTerms(sanitized);
             })
-            .catch(() => {})
+            .catch((failure) => notify({ title: 'Could not load academic terms', description: getApiErrorMessage(failure), tone: 'error', persist: false }))
             .finally(() => setTermsLoading(false));
-    }, []);
+    }, [notify]);
 
     useEffect(() => {
         loadTerms();
@@ -252,7 +253,6 @@ export function TaskTagDialog({
             setSubjectId(s.id);
             if (selectedTopic && selectedTopic.subjectId !== s.id) setTopicId(null);
             setTopicQuery('');
-            setError(null);
         },
         [selectedTopic],
     );
@@ -261,7 +261,6 @@ export function TaskTagDialog({
         e.preventDefault();
         if (busy || !newTermName.trim()) return;
         setBusy(true);
-        setError(null);
         try {
             const created = await termService.create({
                 name: newTermName.trim(),
@@ -282,8 +281,9 @@ export function TaskTagDialog({
             setView('new-subject');
             setNewTermName('');
             setNewTermIsCurrent(false);
+            notify({ title: 'Academic term created', tone: 'success' });
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not create academic term', description: getApiErrorMessage(err), tone: 'error' });
         } finally {
             setBusy(false);
         }
@@ -303,7 +303,6 @@ export function TaskTagDialog({
         }
 
         setBusy(true);
-        setError(null);
         try {
             const termIdToUse = newSubjectTermId !== null ? newSubjectTermId : (activeTerm?.id ?? undefined);
             const created = await subjectService.create({
@@ -317,8 +316,9 @@ export function TaskTagDialog({
             setView('main');
             setNewSubjectName('');
             setNewSubjectTermId(null);
+            notify({ title: 'Subject created', tone: 'success' });
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not create subject', description: getApiErrorMessage(err), tone: 'error' });
         } finally {
             setBusy(false);
         }
@@ -328,15 +328,15 @@ export function TaskTagDialog({
         const targetName = (name ?? cleanQuery).trim();
         if (!selectedSubject || !targetName || busy) return;
         setBusy(true);
-        setError(null);
         try {
             const created = await topicService.create({ name: targetName, subjectId: selectedSubject.id });
             setLocalTopics((prev) => [...prev, created]);
             onTopicCreated?.(created);
             setTopicId(created.id);
             setTopicQuery('');
+            notify({ title: 'Topic created', tone: 'success' });
         } catch (err) {
-            setError(getApiErrorMessage(err));
+            notify({ title: 'Could not create topic', description: getApiErrorMessage(err), tone: 'error' });
         } finally {
             setBusy(false);
         }
@@ -358,7 +358,6 @@ export function TaskTagDialog({
     };
 
     const goBack = () => {
-        setError(null);
         setView(view === 'new-term' ? 'new-subject' : 'main');
     };
 
@@ -407,18 +406,6 @@ export function TaskTagDialog({
                     </button>
                 </div>
 
-                {error && (
-                    <div role="alert" className="mx-6 mt-4 flex shrink-0 items-start justify-between gap-3 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-xs text-red-500">
-                        <div className="flex items-start gap-2">
-                            <span className="font-bold">Error:</span>
-                            <span>{error}</span>
-                        </div>
-                        <button type="button" onClick={() => setError(null)} className="shrink-0 cursor-pointer font-semibold underline underline-offset-2 hover:no-underline">
-                            Dismiss
-                        </button>
-                    </div>
-                )}
-
                 <div className="min-h-0 flex-1 overflow-hidden flex flex-col">
                     {view === 'main' && (
                         <div className="grid flex-1 h-full min-h-0 md:grid-cols-[24rem_1fr]">
@@ -435,7 +422,7 @@ export function TaskTagDialog({
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => { setView('new-subject'); setError(null); }}
+                                        onClick={() => setView('new-subject')}
                                         className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-[var(--accent-color)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--accent-color)] transition-colors hover:bg-[var(--accent-color)]/20"
                                     >
                                         <PlusIcon size={11} />
@@ -476,7 +463,7 @@ export function TaskTagDialog({
                                             {!subjectFilter && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => { setView('new-subject'); setError(null); }}
+                                                    onClick={() => setView('new-subject')}
                                                     className="cursor-pointer rounded-full bg-[var(--accent-color)] px-4 py-2 text-xs font-semibold text-white shadow hover:opacity-90"
                                                 >
                                                     Create Subject
@@ -723,7 +710,7 @@ export function TaskTagDialog({
                                             </label>
                                             <button
                                                 type="button"
-                                                onClick={() => { setView('new-term'); setError(null); }}
+                                                onClick={() => setView('new-term')}
                                                 className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-[var(--accent-color)] hover:underline"
                                             >
                                                 <PlusIcon size={12} />
@@ -804,7 +791,7 @@ export function TaskTagDialog({
                             <div className="flex shrink-0 justify-end gap-3 border-t border-[var(--app-border)] px-6 py-4 bg-[var(--app-card-bg)]">
                                 <button
                                     type="button"
-                                    onClick={() => { setView('main'); setError(null); setNewSubjectName(''); }}
+                                    onClick={() => { setView('main'); setNewSubjectName(''); }}
                                     className="cursor-pointer rounded-full border border-[var(--app-border)] px-5 py-2.5 text-sm font-semibold text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)]"
                                 >
                                     Cancel
@@ -885,7 +872,7 @@ export function TaskTagDialog({
                             <div className="flex shrink-0 justify-end gap-3 border-t border-[var(--app-border)] px-6 py-4 bg-[var(--app-card-bg)]">
                                 <button
                                     type="button"
-                                    onClick={() => { setView('new-subject'); setError(null); }}
+                                    onClick={() => setView('new-subject')}
                                     className="cursor-pointer rounded-full border border-[var(--app-border)] px-5 py-2.5 text-sm font-semibold text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)]"
                                 >
                                     Cancel

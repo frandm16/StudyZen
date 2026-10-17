@@ -7,6 +7,7 @@ import { useShortcuts } from '../hooks/useShortcuts';
 import type { TimerMode, TimerPhase } from '../hooks/useTimer';
 import { formatRequiredApiTimestamp } from '../lib/api-datetime';
 import { getApiErrorMessage } from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { sessionService } from '../services/session-service';
 import { subjectService } from '../services/subject-service';
 import { topicService } from '../services/topic-service';
@@ -71,8 +72,7 @@ export function TimerPage() {
     const [saveOpen, setSaveOpen] = useState(false);
     const [endedAt, setEndedAt] = useState<Date | null>(null);
     const [saving, setSaving] = useState(false);
-    const [saveError, setSaveError] = useState<string | null>(null);
-    const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null);
+    const notify = useToast();
 
     useEffect(() => {
         let active = true;
@@ -83,12 +83,12 @@ export function TimerPage() {
                 setTopics(loadedTopics);
             })
             .catch((error) => {
-                if (active) setMessage({ type: 'error', text: getApiErrorMessage(error) });
+                if (active) notify({ title: 'Could not load study focus', description: getApiErrorMessage(error), tone: 'error', persist: false });
             });
         return () => {
             active = false;
         };
-    }, []);
+    }, [notify]);
 
     useEffect(() => {
         document.title = timer.isRunning ? `${timer.formattedTime} · StudyZen` : 'StudyZen';
@@ -96,10 +96,6 @@ export function TimerPage() {
             document.title = 'StudyZen';
         };
     }, [timer.isRunning, timer.formattedTime]);
-
-    useEffect(() => {
-        if (timer.isRunning) setMessage(null);
-    }, [timer.isRunning]);
 
     const countdownDone =
         timer.mode === 'countdown' &&
@@ -111,7 +107,6 @@ export function TimerPage() {
         if (countdownDone && !promptedRef.current) {
             promptedRef.current = true;
             setEndedAt(new Date());
-            setSaveError(null);
             setSaveOpen(true);
         }
         if (!countdownDone) promptedRef.current = false;
@@ -127,7 +122,6 @@ export function TimerPage() {
         if (timer.secondsElapsed < 60) return;
         if (timer.isRunning) timer.pause();
         setEndedAt(new Date());
-        setSaveError(null);
         setSaveOpen(true);
     };
 
@@ -142,7 +136,6 @@ export function TimerPage() {
     const handleSave = async ({ title, description, rating }: SaveValues) => {
         if (!selectedTopic) return;
         setSaving(true);
-        setSaveError(null);
 
         const end = endedAt ?? new Date();
         const start = new Date(end.getTime() - timer.secondsElapsed * 1000);
@@ -159,9 +152,9 @@ export function TimerPage() {
             });
             setSaveOpen(false);
             timer.reset();
-            setMessage({ type: 'ok', text: 'Session saved.' });
+            notify({ title: 'Session saved', tone: 'success' });
         } catch (error) {
-            setSaveError(getApiErrorMessage(error));
+            notify({ title: 'Could not save session', description: getApiErrorMessage(error), tone: 'error' });
         } finally {
             setSaving(false);
         }
@@ -327,16 +320,6 @@ export function TimerPage() {
                     </div>
                 </section>
 
-                <div aria-live="polite" className="min-h-5">
-                    {message && (
-                        <p
-                            role="status"
-                            className={`text-sm font-semibold ${message.type === 'ok' ? 'text-emerald-500' : 'text-red-500'}`}
-                        >
-                            {message.text}
-                        </p>
-                    )}
-                </div>
             </div>
 
             <aside className="w-full max-w-2xl xl:absolute xl:right-6 xl:top-6 xl:w-72">
@@ -366,7 +349,6 @@ export function TimerPage() {
                     topic={selectedTopic}
                     minutes={minutes}
                     saving={saving}
-                    error={saveError}
                     onPickTopic={() => setPickerOpen(true)}
                     onCancel={() => setSaveOpen(false)}
                     onSave={handleSave}

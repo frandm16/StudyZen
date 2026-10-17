@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RotateCcw } from 'lucide-react';
 import { useTimerContext } from '../context/TimerContext';
 import { useToast } from '../context/ToastContext';
 import { AiPlannerPlaceholder } from '../components/planner/AiPlannerPlaceholder';
@@ -51,7 +50,6 @@ export const WeekPage = () => {
     const [selection, setSelection] = useState<GridSelection | null>(null);
     const [editingSession, setEditingSession] = useState<ScheduledSession | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
 
     const dates = useMemo(() => weekGridDates(anchor, weekStartsOn), [anchor, weekStartsOn]);
     const range = useMemo(() => weekRange(anchor, weekStartsOn), [anchor, weekStartsOn]);
@@ -60,7 +58,6 @@ export const WeekPage = () => {
 
     const load = useCallback(async () => {
         setLoading(true);
-        setError('');
         try {
             const [year, month, day] = startKey.split('-').map(Number);
             const previous = addDays(new Date(year, month - 1, day), -1);
@@ -77,8 +74,8 @@ export const WeekPage = () => {
             setTopics(topicItems);
             const nextWeekStartsOn = Number.isInteger(settings.weekStartsOn) ? settings.weekStartsOn : 1;
             setWeekStartsOn(nextWeekStartsOn);
-        } catch {
-            setError('We could not load this week. Check your connection and try again.');
+        } catch (failure) {
+            notify({ title: 'Could not load week', description: getApiErrorMessage(failure), tone: 'error', persist: false });
         } finally {
             setLoading(false);
         }
@@ -138,7 +135,6 @@ export const WeekPage = () => {
                     <button onClick={() => setSelection({ date: selectedDate, startMinutes: 540, endMinutes: 600 })} aria-label="Schedule session" title="Schedule session" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--app-border)] bg-neutral-500/10 text-[var(--app-text)] transition-colors hover:bg-neutral-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"><PlusIcon className="h-4 w-4" /></button>
                 </div>
             </header>
-            {error && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4" role="alert"><p className="text-sm">{error}</p><button className={button} onClick={() => void load()}><RotateCcw size={15} /> Try again</button></div>}
             {loading && scheduled.length === 0 ? <div className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-10 text-center text-sm text-[var(--app-text-muted)]" role="status">Loading your week…</div> : <>
                 <AiPlannerPlaceholder />
                 <WeeklyTimeGrid dates={dates} scheduled={scheduled} subjects={subjects} topics={topics} onCreate={setSelection} onEdit={setEditingSession} onMove={moveSession} />

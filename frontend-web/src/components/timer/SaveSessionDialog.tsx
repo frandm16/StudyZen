@@ -12,13 +12,12 @@ interface Props {
     topic: Topic | null;
     minutes: number;
     saving: boolean;
-    error: string | null;
     onPickTopic: () => void;
     onCancel: () => void;
     onSave: (values: SaveValues) => void;
 }
 
-export function SaveSessionDialog({ topic, minutes, saving, error, onPickTopic, onCancel, onSave }: Props) {
+export function SaveSessionDialog({ topic, minutes, saving, onPickTopic, onCancel, onSave }: Props) {
     const [title, setTitle] = useState('');
     const [titleTouched, setTitleTouched] = useState(false);
     const [description, setDescription] = useState('');
@@ -89,7 +88,6 @@ export function SaveSessionDialog({ topic, minutes, saving, error, onPickTopic, 
                     />
                 </label>
 
-                {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
 
                 <div className="flex justify-end gap-2 border-t border-[var(--app-border)] pt-5">
                     <button type="button" onClick={onCancel} className={ghostButton}>
