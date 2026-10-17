@@ -5,6 +5,7 @@ import { TaskTagDialog } from '../components/timer/TaskTagDialog';
 import { addDays as addPlannerDays, localDateFromTimestamp, startOfWeek as plannerStartOfWeek } from '../lib/planner-dates';
 import { buildGridSelection, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, type GridSelection } from '../lib/week-grid';
 import { useTimerContext } from '../context/TimerContext';
+import { useToast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../services/api';
 import { dayNoteService } from '../services/day-note-service';
 import { deadlineService } from '../services/deadline-service';
@@ -383,7 +384,6 @@ function ItemDialog({
     kind,
     topic,
     saving,
-    error,
     onPickTopic,
     onCancel,
     onSubmit,
@@ -391,7 +391,6 @@ function ItemDialog({
     kind: DialogKind;
     topic: Topic | null;
     saving: boolean;
-    error: string | null;
     onPickTopic: () => void;
     onCancel: () => void;
     onSubmit: (values: ItemValues) => void;
@@ -492,7 +491,6 @@ function ItemDialog({
                     {!isDeadline && start && end && start >= end && (
                         <p className="text-xs font-semibold text-amber-500">The end time must be after the start time.</p>
                     )}
-                    {error && <p className="text-xs font-medium text-red-500">{error}</p>}
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2 border-t border-[var(--app-border)] pt-4">
@@ -514,6 +512,7 @@ function ItemDialog({
 
 export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const timer = useTimerContext();
+    const notify = useToast();
     const { selectedTaskId, setSelectedTagId, setSelectedTaskId } = timer;
 
     const [selected, setSelected] = useState(() => {
@@ -549,7 +548,6 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const [dialog, setDialog] = useState<DialogKind | null>(null);
     const [dialogTopic, setDialogTopic] = useState<Topic | null>(null);
     const [dialogSaving, setDialogSaving] = useState(false);
-    const [dialogError, setDialogError] = useState<string | null>(null);
     const [pickerOpen, setPickerOpen] = useState(false);
 
     const selectedKey = toKey(selected);
@@ -634,7 +632,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     const showNowLine = selectedKey === toKey(now) && nowMinutes >= GRID_START && nowMinutes <= GRID_END;
 
-    const fail = (failure: unknown) => setError(getApiErrorMessage(failure));
+    const fail = (failure: unknown, title = 'Action failed') => notify({ title, description: getApiErrorMessage(failure), tone: 'error' });
 
     const savePlan = async () => {
         const draft = drafts[selectedKey];
@@ -654,6 +652,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                 }
                 if (!draft.trim()) {
                     await dayNoteService.delete(existing.id);
+                    notify({ title: 'Day plan deleted', tone: 'success' });
                     setNotes((current) => {
                         const next = { ...current };
                         delete next[selectedKey];
@@ -662,14 +661,16 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                 } else {
                     const updated = await dayNoteService.patch(existing.id, { content: draft });
                     setNotes((current) => ({ ...current, [selectedKey]: updated }));
+                    notify({ title: 'Day plan saved', tone: 'success' });
                 }
             } else if (draft.trim()) {
                 const created = await dayNoteService.create({ date: selectedKey, content: draft });
                 setNotes((current) => ({ ...current, [selectedKey]: created }));
+                notify({ title: 'Day plan saved', tone: 'success' });
             }
             clearDraft();
         } catch (failure) {
-            fail(failure);
+            fail(failure, 'Could not save day plan');
         }
     };
 
@@ -678,8 +679,9 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         try {
             const created = await todoService.create({ date: selectedKey, text });
             setTodos((current) => [...current, created]);
+            notify({ title: 'To-do added', tone: 'success' });
         } catch (failure) {
-            fail(failure);
+            fail(failure, 'Could not add to-do');
         }
     };
 
@@ -687,8 +689,9 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         try {
             const updated = await todoService.patch(todo.id, { isCompleted: !todo.isCompleted });
             setTodos((current) => current.map((item) => (item.id === todo.id ? updated : item)));
+            notify({ title: updated.isCompleted ? 'To-do completed' : 'To-do reopened', tone: 'success' });
         } catch (failure) {
-            fail(failure);
+            fail(failure, 'Could not update to-do');
         }
     };
 
@@ -697,8 +700,9 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         try {
             await todoService.delete(id);
             setTodos((current) => current.filter((item) => item.id !== id));
+            notify({ title: 'To-do deleted', tone: 'success' });
         } catch (failure) {
-            fail(failure);
+            fail(failure, 'Could not delete to-do');
         }
     };
 
@@ -706,8 +710,9 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         try {
             const updated = await deadlineService.patch(deadline.id, { isCompleted: !deadline.isCompleted });
             setDeadlines((current) => current.map((item) => (item.id === deadline.id ? updated : item)));
+            notify({ title: updated.isCompleted ? 'Deadline completed' : 'Deadline reopened', tone: 'success' });
         } catch (failure) {
-            fail(failure);
+            fail(failure, 'Could not update deadline');
         }
     };
 
@@ -716,8 +721,9 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         try {
             await deadlineService.delete(id);
             setDeadlines((current) => current.filter((item) => item.id !== id));
+            notify({ title: 'Deadline deleted', tone: 'success' });
         } catch (failure) {
-            fail(failure);
+            fail(failure, 'Could not delete deadline');
         }
     };
 
@@ -725,8 +731,9 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         try {
             await scheduledSessionService.delete(id);
             setScheduled((current) => current.filter((item) => item.id !== id));
+            notify({ title: 'Study session deleted', tone: 'success' });
         } catch (failure) {
-            fail(failure);
+            fail(failure, 'Could not delete study session');
         }
     };
 
@@ -788,8 +795,9 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
             try {
                 await scheduledSessionService.patch(moving.item.id, { startedAt: `${toKey(startAt)}T${formatClock(startAt)}:00`, endedAt: `${toKey(endAt)}T${formatClock(endAt)}:00` });
                 setScheduled((current) => current.map((item) => item.id === moving.item.id ? { ...item, startedAt: `${toKey(startAt)}T${formatClock(startAt)}:00`, endedAt: `${toKey(endAt)}T${formatClock(endAt)}:00` } : item));
+                notify({ title: 'Study session rescheduled', tone: 'success' });
             } catch (failure) {
-                fail(failure);
+                fail(failure, 'Could not reschedule study session');
             }
         }
     };
@@ -814,7 +822,6 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
     const openDialog = (kind: DialogKind) => {
         setDialogTopic(topics.find((topic) => topic.id === selectedTaskId) ?? null);
-        setDialogError(null);
         setDialog(kind);
     };
 
@@ -826,7 +833,6 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const submitDialog = async (values: ItemValues) => {
         if (!dialog || !dialogTopic) return;
         setDialogSaving(true);
-        setDialogError(null);
         try {
             if (dialog === 'deadline') {
                 const created = await deadlineService.create({
@@ -838,6 +844,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     topicId: dialogTopic.id,
                 });
                 setDeadlines((current) => [...current, created]);
+                notify({ title: 'Deadline created', tone: 'success' });
             } else {
                 const created = await scheduledSessionService.create({
                     title: values.title.trim() || undefined,
@@ -846,10 +853,12 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     topicId: dialogTopic.id,
                 });
                 setScheduled((current) => [...current, created]);
+                notify({ title: 'Study session created', tone: 'success' });
             }
             closeDialog();
         } catch (failure) {
-            setDialogError(getApiErrorMessage(failure));
+            const message = getApiErrorMessage(failure);
+            notify({ title: dialog === 'deadline' ? 'Could not create deadline' : 'Could not create study session', description: message, tone: 'error' });
         } finally {
             setDialogSaving(false);
         }
@@ -1187,7 +1196,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     subjects={subjects}
                     topics={topics}
                     onClose={() => { setGridSelection(null); setEditingSession(null); }}
-                    onCreated={() => { setGridSelection(null); setEditingSession(null); setReloadToken((current) => current + 1); }}
+                    onCreated={() => { notify({ title: editingSession ? 'Study session updated' : 'Study session created', tone: 'success' }); setGridSelection(null); setEditingSession(null); setReloadToken((current) => current + 1); }}
                     onSubjectCreated={(subject) => { setSubjects((current) => current.some((item) => item.id === subject.id) ? current : [...current, subject]); setSubjectsMap((current) => new Map(current).set(subject.id, subject)); }}
                     onTopicCreated={(topic) => { setTopics((current) => current.some((item) => item.id === topic.id) ? current : [...current, topic]); setTopicsMap((current) => new Map(current).set(topic.id, topic)); }}
                 />
@@ -1198,7 +1207,6 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     kind={dialog}
                     topic={dialogTopic}
                     saving={dialogSaving}
-                    error={dialogError}
                     onPickTopic={() => setPickerOpen(true)}
                     onCancel={closeDialog}
                     onSubmit={submitDialog}

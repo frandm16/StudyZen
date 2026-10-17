@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { studyGoalService } from '../../services/study-goal-service';
+import { getApiErrorMessage } from '../../services/api';
 import { topicService } from '../../services/topic-service';
 import { sessionService } from '../../services/session-service';
 import { fieldClass, primaryButton } from '../ui/Modal';
@@ -49,8 +50,8 @@ export function GoalPanel({ goals, subjects, sessions, weekStartsOn, onChange }:
             notify({ title: 'Study goal added', tone: 'success' });
             void notificationService.create({ type: 'success', title: 'Study goal added', body: 'Your new study goal is ready to track.' }).then(() => window.dispatchEvent(new Event('studyzen:notifications-changed'))).catch(() => undefined);
             onChange();
-        } catch {
-            setError('Could not save this goal. Please try again.');
+        } catch (failure) {
+            notify({ title: 'Could not save study goal', description: getApiErrorMessage(failure), tone: 'error' });
         } finally {
             setBusy(false);
         }
@@ -62,9 +63,10 @@ export function GoalPanel({ goals, subjects, sessions, weekStartsOn, onChange }:
         setError('');
         try {
             await studyGoalService.delete(goal.id);
+            notify({ title: 'Study goal deleted', tone: 'success' });
             onChange();
-        } catch {
-            setError('Could not delete this goal. Please try again.');
+        } catch (failure) {
+            notify({ title: 'Could not delete study goal', description: failure instanceof Error ? failure.message : 'Please try again.', tone: 'error' });
         } finally {
             setRemovingId(null);
         }

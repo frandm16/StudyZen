@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { useTimerContext } from '../context/TimerContext';
+import { useToast } from '../context/ToastContext';
 import { AiPlannerPlaceholder } from '../components/planner/AiPlannerPlaceholder';
 import { CreateScheduledSessionDialog } from '../components/planner/CreateScheduledSessionDialog';
 import { WeeklyTimeGrid } from '../components/planner/WeeklyTimeGrid';
@@ -37,6 +38,7 @@ function PlusIcon({ className = '' }: { className?: string }) {
 
 export const WeekPage = () => {
     const timer = useTimerContext();
+    const notify = useToast();
     const requestedDate = new URLSearchParams(window.location.search).get('date');
     const parsedDate = requestedDate ? new Date(`${requestedDate}T12:00:00`) : new Date();
     const initialDate = requestedDate && !Number.isNaN(parsedDate.getTime()) && dateKey(parsedDate) === requestedDate ? parsedDate : new Date();
@@ -50,7 +52,6 @@ export const WeekPage = () => {
     const [editingSession, setEditingSession] = useState<ScheduledSession | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [notice, setNotice] = useState('');
 
     const dates = useMemo(() => weekGridDates(anchor, weekStartsOn), [anchor, weekStartsOn]);
     const range = useMemo(() => weekRange(anchor, weekStartsOn), [anchor, weekStartsOn]);
@@ -94,30 +95,29 @@ export const WeekPage = () => {
         const duration = oldEnd.getTime() - oldStart.getTime();
         const durationMinutes = Math.ceil(duration / 60000 / 15) * 15;
         if (durationMinutes > WEEK_GRID_MINUTES) {
-            setNotice('This session is longer than one day and cannot be rescheduled here.');
+            notify({ title: 'Could not reschedule session', description: 'This session is longer than one day.', tone: 'error' });
             return;
         }
         const boundedStart = Math.max(0, Math.min(startMinutes, WEEK_GRID_MINUTES - durationMinutes));
         const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), WEEK_GRID_START_HOUR, 0);
         start.setMinutes(start.getMinutes() + boundedStart);
         const end = new Date(start.getTime() + duration);
-        setNotice('');
         try {
             await scheduledSessionService.patch(session.id, {
                 startedAt: localTimestamp(start),
                 endedAt: localTimestamp(end),
             });
-            setNotice('Study session rescheduled.');
+            notify({ title: 'Study session rescheduled', tone: 'success' });
             await load();
         } catch (failure) {
-            setNotice(`Could not reschedule this session: ${getApiErrorMessage(failure)}`);
+            notify({ title: 'Could not reschedule session', description: getApiErrorMessage(failure), tone: 'error' });
         }
     };
 
     const handleSaved = async () => {
         setSelection(null);
         setEditingSession(null);
-        setNotice(editingSession ? 'Study session updated.' : 'Study session added to your week.');
+        notify({ title: editingSession ? 'Study session updated' : 'Study session created', tone: 'success' });
         await load();
     };
 
@@ -139,7 +139,6 @@ export const WeekPage = () => {
                 </div>
             </header>
             {error && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4" role="alert"><p className="text-sm">{error}</p><button className={button} onClick={() => void load()}><RotateCcw size={15} /> Try again</button></div>}
-            {notice && <p role="status" className="rounded-2xl border border-[var(--accent-color)]/30 bg-[var(--accent-color)]/10 px-4 py-3 text-sm">{notice}</p>}
             {loading && scheduled.length === 0 ? <div className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-10 text-center text-sm text-[var(--app-text-muted)]" role="status">Loading your week…</div> : <>
                 <AiPlannerPlaceholder />
                 <WeeklyTimeGrid dates={dates} scheduled={scheduled} subjects={subjects} topics={topics} onCreate={setSelection} onEdit={setEditingSession} onMove={moveSession} />
