@@ -37,8 +37,11 @@ function PlusIcon({ className = '' }: { className?: string }) {
 
 export const WeekPage = () => {
     const timer = useTimerContext();
-    const [anchor, setAnchor] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const requestedDate = new URLSearchParams(window.location.search).get('date');
+    const parsedDate = requestedDate ? new Date(`${requestedDate}T12:00:00`) : new Date();
+    const initialDate = requestedDate && !Number.isNaN(parsedDate.getTime()) && dateKey(parsedDate) === requestedDate ? parsedDate : new Date();
+    const [anchor, setAnchor] = useState(initialDate);
+    const [selectedDate, setSelectedDate] = useState(initialDate);
     const [weekStartsOn, setWeekStartsOn] = useState(1);
     const [scheduled, setScheduled] = useState<ScheduledSession[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);

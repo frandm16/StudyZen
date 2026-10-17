@@ -23,7 +23,7 @@ interface DragState {
     current: number;
 }
 
-const hourLabel = (hour: number) => hour === WEEK_GRID_END_HOUR ? '24:00' : new Date(2000, 0, 1, hour).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+const hourLabel = (hour: number) => `${String(hour).padStart(2, '0')}:00`;
 
 export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, onEdit, onMove }: WeeklyTimeGridProps) {
     const [drag, setDrag] = useState<DragState | null>(null);

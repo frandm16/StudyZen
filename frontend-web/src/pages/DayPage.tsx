@@ -516,7 +516,11 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const timer = useTimerContext();
     const { selectedTaskId, setSelectedTagId, setSelectedTaskId } = timer;
 
-    const [selected, setSelected] = useState(() => fromKey(toKey(new Date())));
+    const [selected, setSelected] = useState(() => {
+        const requested = new URLSearchParams(window.location.search).get('date');
+        const parsed = requested ? fromKey(requested) : null;
+        return parsed && toKey(parsed) === requested ? parsed : fromKey(toKey(new Date()));
+    });
     const [now, setNow] = useState(() => new Date());
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [topics, setTopics] = useState<Topic[]>([]);

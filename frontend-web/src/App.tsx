@@ -15,6 +15,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 
 const PUBLIC_ROUTES = ['/login', '/register', '/auth/callback'];
 
@@ -118,6 +119,7 @@ function AppContent() {
 export function App() {
     return (
         <ThemeProvider>
+            <ToastProvider>
             <AuthProvider>
                 <TimerProvider>
                     <BrowserRouter>
@@ -125,6 +127,7 @@ export function App() {
                     </BrowserRouter>
                 </TimerProvider>
             </AuthProvider>
+            </ToastProvider>
         </ThemeProvider>
     );
 }

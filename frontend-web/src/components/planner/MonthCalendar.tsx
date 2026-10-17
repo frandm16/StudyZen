@@ -11,7 +11,7 @@ interface MonthCalendarProps {
 const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function MonthCalendar({ month, selectedDate, weekStartsOn, markers, onSelect }: MonthCalendarProps) {
-    const days = monthDates(month);
+    const days = monthDates(month, weekStartsOn);
     const labels = Array.from({ length: 7 }, (_, index) => weekdays[(weekStartsOn + index) % 7]);
     return (
         <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4 shadow-sm sm:p-6" aria-label="Monthly calendar">

@@ -4,6 +4,7 @@ import { studyGoalService } from '../../services/study-goal-service';
 import { topicService } from '../../services/topic-service';
 import { sessionService } from '../../services/session-service';
 import { fieldClass, primaryButton } from '../ui/Modal';
+import { useToast } from '../../context/ToastContext';
 import type { StudyGoal } from '../../types/study-goal';
 import type { Subject } from '../../types/subject';
 import type { Session } from '../../types/session';
@@ -17,6 +18,7 @@ interface GoalPanelProps {
 }
 
 export function GoalPanel({ goals, subjects, sessions, weekStartsOn, onChange }: GoalPanelProps) {
+    const notify = useToast();
     const [adding, setAdding] = useState(false);
     const [period, setPeriod] = useState<'daily' | 'weekly'>('weekly');
     const [subjectId, setSubjectId] = useState('');
@@ -43,6 +45,7 @@ export function GoalPanel({ goals, subjects, sessions, weekStartsOn, onChange }:
         try {
             await studyGoalService.create({ period, targetMinutes, subjectId: subjectId ? Number(subjectId) : null });
             setAdding(false);
+            notify({ title: 'Study goal added', tone: 'success' });
             onChange();
         } catch {
             setError('Could not save this goal. Please try again.');
