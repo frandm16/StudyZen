@@ -38,7 +38,7 @@ export function LoginPage() {
         try {
             await login({ email, password });
             notify({ title: 'Signed in', tone: 'success', persist: false });
-            navigate('/');
+            navigate('/timer');
         } catch (error) {
             notify({ title: 'Login failed', description: error instanceof Error ? error.message : 'Login failed', tone: 'error' });
         }

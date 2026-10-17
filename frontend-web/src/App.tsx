@@ -14,10 +14,11 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
+import { LandingPage } from './pages/LandingPage';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 
-const PUBLIC_ROUTES = ['/login', '/register', '/auth/callback'];
+const PUBLIC_ROUTES = ['/', '/login', '/register', '/auth/callback'];
 
 function AppContent() {
     const { pathname } = useLocation();
@@ -33,14 +34,7 @@ function AppContent() {
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
-                    <Route
-                        path="/"
-                        element={
-                            <ProtectedRoute>
-                                <Navigate to="/timer" replace />
-                            </ProtectedRoute>
-                        }
-                    />
+                    <Route path="/" element={<LandingPage />} />
                     <Route
                         path="/timer"
                         element={

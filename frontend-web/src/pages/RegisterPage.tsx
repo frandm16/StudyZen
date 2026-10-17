@@ -40,7 +40,7 @@ export function RegisterPage() {
         try {
             await register({ email, password, displayName });
             notify({ title: 'Account created', tone: 'success', persist: false });
-            navigate('/');
+            navigate('/timer');
         } catch (error) {
             notify({ title: 'Registration failed', description: error instanceof Error ? error.message : 'Registration failed', tone: 'error' });
         }
