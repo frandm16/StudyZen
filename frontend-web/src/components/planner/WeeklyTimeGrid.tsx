@@ -133,15 +133,15 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEdit(item); }
     };
 
-    return <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4 shadow-sm sm:p-6" aria-label="Weekly study calendar">
-        <div className="overflow-x-auto pb-2">
+    return <section className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-0 pb-3 pt-1 shadow-sm sm:pb-4 sm:pt-2" aria-label="Weekly study calendar">
+        <div className="overflow-x-auto">
             <div className="min-w-[900px]">
                 <div className="grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)]">
                     <div className="pb-3" />
-                    {dates.map((date) => <div key={dateKey(date)} className="px-2 py-3 text-center"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p><p className="mt-1 text-sm font-bold">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>)}
+                    {dates.map((date) => <div key={dateKey(date)} className="px-2 pb-2 pt-1 text-center"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p><p className="mt-1 text-sm font-bold">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>)}
                 </div>
                 <div ref={gridRef} className="grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))]" onPointerMove={updateMove} onPointerUp={finishMove} onPointerCancel={() => { movingRef.current = null; setMoving(null); }}>
-                    <div className="relative" style={{ height: WEEK_GRID_HEIGHT }}>{Array.from({ length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR + 1 }, (_, index) => { const hour = WEEK_GRID_START_HOUR + index; return <span key={hour} className="absolute right-2 -translate-y-1/2 text-[10px] leading-none text-[var(--app-text-muted)]" style={{ top: index === WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR ? '100%' : index * WEEK_GRID_HOUR_HEIGHT, transform: index === 0 ? 'translateY(2px)' : index === WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR ? 'translateY(-100%)' : 'translateY(-50%)' }}>{hourLabel(hour)}</span>; })}</div>
+                    <div className="relative" style={{ height: WEEK_GRID_HEIGHT }}>{Array.from({ length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR + 1 }, (_, index) => { const hour = WEEK_GRID_START_HOUR + index; return <span key={hour} className="absolute right-2 -translate-y-1/2 text-[10px] leading-none text-[var(--app-text-muted)]" style={{ top: index === WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR ? '100%' : index * WEEK_GRID_HOUR_HEIGHT, transform: index === 0 ? 'translateY(6px)' : index === WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR ? 'translateY(calc(-100% + 4px))' : 'translateY(calc(-50% + 4px))' }}>{hourLabel(hour)}</span>; })}</div>
                     {dates.map((date) => {
                         const key = dateKey(date);
                         const daySlots = slots.filter((slot) => slot.date === key);
@@ -168,6 +168,5 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
                 </div>
             </div>
         </div>
-        <p className="mt-2 text-[11px] text-[var(--app-text-muted)]">Calendar hours: 8 AM–9 PM. On a keyboard or touch screen, use the add-session button on a day.</p>
     </section>;
 }
