@@ -30,11 +30,11 @@ export function weekDates(date: Date, weekStartsOn: number): Date[] {
     return Array.from({ length: 7 }, (_, index) => addDays(start, index));
 }
 
-export function monthDates(date: Date): Date[] {
+export function monthDates(date: Date, weekStartsOn = 0): Date[] {
     const first = new Date(date.getFullYear(), date.getMonth(), 1);
-    const start = startOfWeek(first, 0);
+    const start = startOfWeek(first, weekStartsOn);
     const last = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    const end = addDays(last, 6 - last.getDay());
+    const end = addDays(startOfWeek(last, weekStartsOn), 6);
     const result: Date[] = [];
     for (let day = start; day <= end; day = addDays(day, 1)) result.push(day);
     return result;
