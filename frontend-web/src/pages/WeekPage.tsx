@@ -15,6 +15,11 @@ import type { ScheduledSession } from '../types/scheduled-session';
 import type { Subject } from '../types/subject';
 import type { Topic } from '../types/topic';
 
+const localTimestamp = (value: Date) => {
+    const pad = (part: number) => String(part).padStart(2, '0');
+    return `${dateKey(value)}T${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`;
+};
+
 const button = 'inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]';
 const iconButton = 'flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]';
 
@@ -89,8 +94,8 @@ export const WeekPage = () => {
         setNotice('');
         try {
             await scheduledSessionService.patch(session.id, {
-                startedAt: start.toISOString(),
-                endedAt: end.toISOString(),
+                startedAt: localTimestamp(start),
+                endedAt: localTimestamp(end),
             });
             setNotice('Study session rescheduled.');
             await load();
