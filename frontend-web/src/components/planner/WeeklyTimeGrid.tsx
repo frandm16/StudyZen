@@ -23,7 +23,7 @@ interface DragState {
     current: number;
 }
 
-const hourLabel = (hour: number) => new Date(2000, 0, 1, hour).toLocaleTimeString('en-US', { hour: 'numeric' });
+const hourLabel = (hour: number) => new Date(2000, 0, 1, hour).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
 
 export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, onEdit, onMove }: WeeklyTimeGridProps) {
     const [drag, setDrag] = useState<DragState | null>(null);
@@ -49,8 +49,9 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
 
     const updateDrag = (event: PointerEvent<HTMLDivElement>) => {
         const current = dragRef.current;
-        if (!current || current.pointerId !== event.pointerId) return;
-        const value = gridMinutesFromPointer(event.clientY, event.currentTarget.getBoundingClientRect());
+        const column = event.currentTarget.closest('[data-calendar-day]');
+        if (!current || current.pointerId !== event.pointerId || !(column instanceof HTMLElement)) return;
+        const value = gridMinutesFromPointer(event.clientY, column.getBoundingClientRect());
         const next = { ...current, current: value };
         dragRef.current = next;
         setDrag(next);
@@ -61,8 +62,10 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
         const target = event.target;
         if (target instanceof Element && target.closest('[data-calendar-event="true"]')) return;
         event.preventDefault();
+        const column = event.currentTarget.closest('[data-calendar-day]');
+        if (!(column instanceof HTMLElement)) return;
         event.currentTarget.setPointerCapture(event.pointerId);
-        const value = gridMinutesFromPointer(event.clientY, event.currentTarget.getBoundingClientRect());
+        const value = gridMinutesFromPointer(event.clientY, column.getBoundingClientRect());
         const next = { date, pointerId: event.pointerId, start: value, current: value };
         dragRef.current = next;
         setDrag(next);
@@ -71,7 +74,9 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
     const finishDrag = (event: PointerEvent<HTMLDivElement>) => {
         const current = dragRef.current;
         if (!current || current.pointerId !== event.pointerId) return;
-        const value = gridMinutesFromPointer(event.clientY, event.currentTarget.getBoundingClientRect());
+        const column = event.currentTarget.closest('[data-calendar-day]');
+        if (!(column instanceof HTMLElement)) return;
+        const value = gridMinutesFromPointer(event.clientY, column.getBoundingClientRect());
         const selection = buildGridSelection(current.date, current.start, value);
         dragRef.current = null;
         setDrag(null);
@@ -95,10 +100,9 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
         const grid = gridRef.current;
         if (!current || current.pointerId !== event.pointerId || !grid) return;
         const bounds = grid.getBoundingClientRect();
-        const labelWidth = 68;
-        const dayWidth = (bounds.width - labelWidth) / dates.length;
-        const dayIndex = Math.max(0, Math.min(dates.length - 1, Math.floor((event.clientX - bounds.left - labelWidth) / dayWidth)));
-        const columnBounds = { ...bounds, top: bounds.top, height: WEEK_GRID_HEIGHT } as DOMRect;
+        const dayIndex = Math.max(0, Math.min(dates.length - 1, Math.floor((event.clientX - bounds.left) / (bounds.width / dates.length))));
+        const column = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-calendar-day]');
+        const columnBounds = column instanceof HTMLElement ? column.getBoundingClientRect() : { ...bounds, top: bounds.top, height: WEEK_GRID_HEIGHT } as DOMRect;
         const next = { ...current, currentDate: dateKey(dates[dayIndex]), current: gridMinutesFromPointer(event.clientY, columnBounds), didMove: current.didMove || Math.abs(event.clientX - current.originX) > 4 || Math.abs(event.clientY - current.originY) > 4 };
         movingRef.current = next;
         setMoving(next);
@@ -110,11 +114,11 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
         const grid = gridRef.current;
         if (grid) {
             const bounds = grid.getBoundingClientRect();
-            const labelWidth = 68;
-            const dayWidth = (bounds.width - labelWidth) / dates.length;
-            const dayIndex = Math.max(0, Math.min(dates.length - 1, Math.floor((event.clientX - bounds.left - labelWidth) / dayWidth)));
+            const dayIndex = Math.max(0, Math.min(dates.length - 1, Math.floor((event.clientX - bounds.left) / (bounds.width / dates.length))));
             const date = dates[dayIndex];
-            const start = gridMinutesFromPointer(event.clientY, { ...bounds, height: WEEK_GRID_HEIGHT } as DOMRect);
+            const column = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-calendar-day]');
+            const columnBounds = column instanceof HTMLElement ? column.getBoundingClientRect() : { ...bounds, top: bounds.top, height: WEEK_GRID_HEIGHT } as DOMRect;
+            const start = gridMinutesFromPointer(event.clientY, columnBounds);
             movingRef.current = null;
             setMoving(null);
             if (current.didMove) {
@@ -130,20 +134,19 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
     };
 
     return <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4 shadow-sm sm:p-6" aria-label="Weekly study calendar">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--accent-color)]">Make time for it</p><h2 className="mt-1 text-xl font-bold">Weekly calendar</h2></div><p className="text-xs text-[var(--app-text-muted)]">Drag across an open time to schedule a study session</p></div>
         <div className="overflow-x-auto pb-2">
             <div className="min-w-[900px]">
                 <div className="grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)]">
                     <div className="pb-3" />
-                    {dates.map((date) => <div key={dateKey(date)} className="px-2 pb-3 text-center"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p><p className="mt-1 text-sm font-bold">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>)}
+                    {dates.map((date) => <div key={dateKey(date)} className="px-2 py-3 text-center"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p><p className="mt-1 text-sm font-bold">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>)}
                 </div>
                 <div ref={gridRef} className="grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))]" onPointerMove={updateMove} onPointerUp={finishMove} onPointerCancel={() => { movingRef.current = null; setMoving(null); }}>
-                    <div className="relative" style={{ height: WEEK_GRID_HEIGHT }}>{Array.from({ length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR + 1 }, (_, index) => { const hour = WEEK_GRID_START_HOUR + index; return <span key={hour} className="absolute right-2 -translate-y-1/2 text-[10px] text-[var(--app-text-muted)]" style={{ top: index * WEEK_GRID_HOUR_HEIGHT }}>{hourLabel(hour)}</span>; })}</div>
+                    <div className="relative" style={{ height: WEEK_GRID_HEIGHT }}>{Array.from({ length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR + 1 }, (_, index) => { const hour = WEEK_GRID_START_HOUR + index; return <span key={hour} className="absolute right-2 -translate-y-1/2 text-[10px] leading-none text-[var(--app-text-muted)]" style={{ top: index === WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR ? '100%' : index * WEEK_GRID_HOUR_HEIGHT, transform: index === 0 ? 'translateY(2px)' : index === WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR ? 'translateY(-100%)' : 'translateY(-50%)' }}>{hourLabel(hour)}</span>; })}</div>
                     {dates.map((date) => {
                         const key = dateKey(date);
                         const daySlots = slots.filter((slot) => slot.date === key);
                         const range = drag && dateKey(drag.date) === key ? buildGridSelection(drag.date, drag.start, drag.current) : null;
-                        return <div key={key} className="group relative border-l border-[var(--app-border)]" style={{ height: WEEK_GRID_HEIGHT }}>
+                        return <div key={key} data-calendar-day="true" className="group relative border-l border-[var(--app-border)]" style={{ height: WEEK_GRID_HEIGHT }}>
                             <div className="absolute inset-0 grid" style={{ gridTemplateRows: `repeat(${WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR}, ${WEEK_GRID_HOUR_HEIGHT}px)` }} aria-hidden="true">{Array.from({ length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR }, (_, index) => <div key={index} className="border-t border-[var(--app-border)]/70" />)}</div>
                             <div className="absolute inset-0 touch-none select-none cursor-crosshair" onPointerDown={(event) => startDrag(event, date)} onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={() => { dragRef.current = null; setDrag(null); }} role="presentation" aria-hidden="true" />
                             {daySlots.map(({ item, top, height, topic, subject }) => {
