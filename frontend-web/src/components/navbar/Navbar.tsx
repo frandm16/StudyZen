@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { NavbarDesktop } from "./NavbarDesktop";
 import { NavbarMobile } from "./NavbarMobile";
 import { UserProfile } from "./UserProfile";
+import { NotificationCenter } from "./NotificationCenter";
 import {
     Logo,
     MenuIcon,
@@ -92,6 +93,7 @@ export const Navbar: React.FC = () => {
                     />
 
                     <div className="col-start-3 flex items-center justify-end gap-1.5">
+                        <NotificationCenter />
                         <UserProfile focusRing={focusRing} />
 
                         <button

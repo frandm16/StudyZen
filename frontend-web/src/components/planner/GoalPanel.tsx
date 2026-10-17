@@ -5,6 +5,7 @@ import { topicService } from '../../services/topic-service';
 import { sessionService } from '../../services/session-service';
 import { fieldClass, primaryButton } from '../ui/Modal';
 import { useToast } from '../../context/ToastContext';
+import { notificationService } from '../../services/notification-service';
 import type { StudyGoal } from '../../types/study-goal';
 import type { Subject } from '../../types/subject';
 import type { Session } from '../../types/session';
@@ -46,6 +47,7 @@ export function GoalPanel({ goals, subjects, sessions, weekStartsOn, onChange }:
             await studyGoalService.create({ period, targetMinutes, subjectId: subjectId ? Number(subjectId) : null });
             setAdding(false);
             notify({ title: 'Study goal added', tone: 'success' });
+            void notificationService.create({ type: 'success', title: 'Study goal added', body: 'Your new study goal is ready to track.' }).then(() => window.dispatchEvent(new Event('studyzen:notifications-changed'))).catch(() => undefined);
             onChange();
         } catch {
             setError('Could not save this goal. Please try again.');

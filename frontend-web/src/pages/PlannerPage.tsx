@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
+import { notificationService } from '../services/notification-service';
 import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3, RotateCcw } from 'lucide-react';
 import { assessmentService } from '../services/assessment-service';
 import { deadlineService } from '../services/deadline-service';
@@ -105,6 +106,7 @@ export const PlannerPage = () => {
         try {
             await scheduledSessionService.patch(item.id, { startedAt: target.toISOString(), endedAt: targetEnd.toISOString() });
             notify({ title: 'Study session rescheduled', tone: 'success' });
+            void notificationService.create({ type: 'success', title: 'Study session rescheduled', body: `Your session was moved to ${target.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.` }).then(() => window.dispatchEvent(new Event('studyzen:notifications-changed'))).catch(() => undefined);
             await load();
         } catch {
             notify({ title: 'Could not reschedule session', description: 'Please try again.', tone: 'error' });
