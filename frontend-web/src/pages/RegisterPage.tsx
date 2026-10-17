@@ -1,174 +1,99 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, type FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthLayout } from '../components/auth/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/auth-service';
 import { useToast } from '../context/ToastContext';
+
+function GoogleMark() {
+    return (
+        <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84z" />
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+        </svg>
+    );
+}
 
 export function RegisterPage() {
     const navigate = useNavigate();
     const { register, isLoading } = useAuth();
     const notify = useToast();
-
     const [displayName, setDisplayName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [touched, setTouched] = useState({
-        displayName: false,
-        email: false,
-        password: false,
-        confirmPassword: false,
-    });
+    const [touched, setTouched] = useState({ displayName: false, email: false, password: false, confirmPassword: false });
 
-    const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    const displayNameError = touched.displayName && (!displayName ? 'Name is required' : displayName.length < 2 ? 'Name must be at least 2 characters' : '');
+    const emailError = touched.email && (!email ? 'Email is required' : !isValidEmail(email) ? 'Enter a valid email address' : '');
+    const passwordError = touched.password && (!password ? 'Password is required' : password.length < 6 ? 'Password must be at least 6 characters' : '');
+    const confirmPasswordError = touched.confirmPassword && (!confirmPassword ? 'Confirm password is required' : password !== confirmPassword ? 'Passwords do not match' : '');
+    const canSubmit = Boolean(displayName && email && password && confirmPassword && !displayNameError && !emailError && !passwordError && !confirmPasswordError && !isLoading);
 
-    const displayNameError =
-        touched.displayName && (!displayName ? 'Name is required' : displayName.length < 2 ? 'Name must be at least 2 characters' : '');
-    const emailError = touched.email && (!email ? 'Email is required' : !isValidEmail(email) ? 'Invalid email' : '');
-    const passwordError =
-        touched.password && (!password ? 'Password is required' : password.length < 6 ? 'Password must be at least 6 characters' : '');
-    const confirmPasswordError =
-        touched.confirmPassword && (!confirmPassword ? 'Confirm password is required' : password !== confirmPassword ? 'Passwords do not match' : '');
-
-    const canSubmit =
-        displayName &&
-        email &&
-        password &&
-        confirmPassword &&
-        !displayNameError &&
-        !emailError &&
-        !passwordError &&
-        !confirmPasswordError &&
-        !isLoading;
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setTouched({ displayName: true, email: true, password: true, confirmPassword: true });
+        if (!canSubmit) return;
         try {
             await register({ email, password, displayName });
             notify({ title: 'Account created', tone: 'success', persist: false });
             navigate('/');
-        } catch (err) {
-            notify({ title: 'Registration failed', description: err instanceof Error ? err.message : 'Registration failed', tone: 'error' });
+        } catch (error) {
+            notify({ title: 'Registration failed', description: error instanceof Error ? error.message : 'Registration failed', tone: 'error' });
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] px-4">
-            <div className="w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-2xl p-8">
-                    <h1 className="text-3xl font-bold text-center text-[#151414] mb-2">StudyZen</h1>
-                    <p className="text-center text-neutral-500 text-sm mb-8">Create your account</p>
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-[#151414] mb-1.5">Full Name</label>
-                            <input
-                                type="text"
-                                value={displayName}
-                                onChange={(e) => setDisplayName(e.target.value)}
-                                onBlur={() => setTouched({ ...touched, displayName: true })}
-                                placeholder="Your name"
-                                className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-                                    displayNameError ? 'border-red-500 bg-red-50' : 'border-neutral-300 bg-white hover:border-neutral-400'
-                                } text-[#151414] placeholder:text-neutral-400 focus:outline-none focus:border-[#7c3aed]`}
-                            />
-                            {displayNameError && <p className="text-red-600 text-xs mt-1">{displayNameError}</p>}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-[#151414] mb-1.5">Email</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                onBlur={() => setTouched({ ...touched, email: true })}
-                                placeholder="you@example.com"
-                                className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-                                    emailError ? 'border-red-500 bg-red-50' : 'border-neutral-300 bg-white hover:border-neutral-400'
-                                } text-[#151414] placeholder:text-neutral-400 focus:outline-none focus:border-[#7c3aed]`}
-                            />
-                            {emailError && <p className="text-red-600 text-xs mt-1">{emailError}</p>}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-[#151414] mb-1.5">Password</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                onBlur={() => setTouched({ ...touched, password: true })}
-                                placeholder="••••••••"
-                                className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-                                    passwordError ? 'border-red-500 bg-red-50' : 'border-neutral-300 bg-white hover:border-neutral-400'
-                                } text-[#151414] placeholder:text-neutral-400 focus:outline-none focus:border-[#7c3aed]`}
-                            />
-                            {passwordError && <p className="text-red-600 text-xs mt-1">{passwordError}</p>}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-[#151414] mb-1.5">Confirm Password</label>
-                            <input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                onBlur={() => setTouched({ ...touched, confirmPassword: true })}
-                                placeholder="••••••••"
-                                className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-                                    confirmPasswordError ? 'border-red-500 bg-red-50' : 'border-neutral-300 bg-white hover:border-neutral-400'
-                                } text-[#151414] placeholder:text-neutral-400 focus:outline-none focus:border-[#7c3aed]`}
-                            />
-                            {confirmPasswordError && <p className="text-red-600 text-xs mt-1">{confirmPasswordError}</p>}
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={!canSubmit}
-                            className={`w-full py-2.5 rounded-lg font-medium transition-all duration-200 ${
-                                canSubmit
-                                    ? 'bg-[#7c3aed] text-white hover:bg-[#6d28d9] active:scale-95 cursor-pointer'
-                                    : 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
-                            }`}
-                        >
-                            {isLoading ? 'Creating account...' : 'Create Account'}
-                        </button>
-                    </form>
-
-                    <div className="mt-6 relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-neutral-300" />
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white text-neutral-500">Or continue with</span>
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() => {
-                            window.location.href = authService.getGoogleAuthUrl();
-                        }}
-                        className="w-full mt-4 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-[#151414] font-medium hover:bg-neutral-50 transition-colors flex items-center justify-center gap-2"
-                    >
-                        <svg className="w-5 h-5" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Sign up with Google
-                    </button>
-
-                    <div className="mt-6 pt-6 border-t border-neutral-200">
-                        <p className="text-center text-sm text-neutral-600">
-                            Already have an account?{' '}
-                            <button onClick={() => navigate('/login')} className="text-[#7c3aed] font-medium hover:underline">
-                                Login here
-                            </button>
-                        </p>
-                    </div>
-                </div>
+        <AuthLayout mode="register">
+            <div className="mb-6">
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--accent-color)]">Start with a small step</p>
+                <h2 className="font-pt text-[2.45rem] leading-none tracking-[-0.045em]">Find your rhythm.</h2>
+                <p className="mt-3 text-sm leading-6 text-[var(--app-text-muted)]">Create your account and make space for what matters.</p>
             </div>
-        </div>
+
+            <form onSubmit={handleSubmit} noValidate className="space-y-4">
+                <div className="auth-field auth-delay-1">
+                    <label htmlFor="register-name" className="mb-2 block text-xs font-semibold tracking-wide">Full name</label>
+                    <input id="register-name" name="name" type="text" autoComplete="name" required value={displayName} onChange={(event) => setDisplayName(event.target.value)} onBlur={() => setTouched((current) => ({ ...current, displayName: true }))} placeholder="Your name" aria-invalid={Boolean(displayNameError)} aria-describedby={displayNameError ? 'register-name-error' : undefined} className={`auth-input ${displayNameError ? 'auth-input-error' : ''}`} />
+                    {displayNameError && <p id="register-name-error" className="auth-error" role="alert">{displayNameError}</p>}
+                </div>
+                <div className="auth-field auth-delay-2">
+                    <label htmlFor="register-email" className="mb-2 block text-xs font-semibold tracking-wide">Email address</label>
+                    <input id="register-email" name="email" type="email" autoComplete="email" inputMode="email" required value={email} onChange={(event) => setEmail(event.target.value)} onBlur={() => setTouched((current) => ({ ...current, email: true }))} placeholder="you@example.com" aria-invalid={Boolean(emailError)} aria-describedby={emailError ? 'register-email-error' : undefined} className={`auth-input ${emailError ? 'auth-input-error' : ''}`} />
+                    {emailError && <p id="register-email-error" className="auth-error" role="alert">{emailError}</p>}
+                </div>
+                <div className="auth-field auth-delay-3">
+                    <label htmlFor="register-password" className="mb-2 block text-xs font-semibold tracking-wide">Password</label>
+                    <input id="register-password" name="new-password" type="password" autoComplete="new-password" required value={password} onChange={(event) => setPassword(event.target.value)} onBlur={() => setTouched((current) => ({ ...current, password: true }))} placeholder="At least 6 characters" aria-invalid={Boolean(passwordError)} aria-describedby={passwordError ? 'register-password-error' : 'register-password-hint'} className={`auth-input ${passwordError ? 'auth-input-error' : ''}`} />
+                    {passwordError ? <p id="register-password-error" className="auth-error" role="alert">{passwordError}</p> : <p id="register-password-hint" className="mt-1.5 text-[10px] text-[var(--app-text-muted)]">Use at least 6 characters.</p>}
+                </div>
+                <div className="auth-field auth-delay-4">
+                    <label htmlFor="register-confirm" className="mb-2 block text-xs font-semibold tracking-wide">Confirm password</label>
+                    <input id="register-confirm" name="confirm-password" type="password" autoComplete="new-password" required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} onBlur={() => setTouched((current) => ({ ...current, confirmPassword: true }))} placeholder="Type your password again" aria-invalid={Boolean(confirmPasswordError)} aria-describedby={confirmPasswordError ? 'register-confirm-error' : undefined} className={`auth-input ${confirmPasswordError ? 'auth-input-error' : ''}`} />
+                    {confirmPasswordError && <p id="register-confirm-error" className="auth-error" role="alert">{confirmPasswordError}</p>}
+                </div>
+                <button type="submit" disabled={!canSubmit} className="auth-submit group auth-delay-5">
+                    <span>{isLoading ? 'Creating your space' : 'Create your account'}</span>
+                    {isLoading ? <span className="auth-spinner" aria-hidden="true" /> : <span className="text-lg transition-transform group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden="true">↗</span>}
+                </button>
+            </form>
+
+            <div className="my-5 flex items-center gap-4" aria-hidden="true">
+                <span className="h-px flex-1 bg-[var(--app-border)]" />
+                <span className="text-[10px] font-medium uppercase tracking-[0.17em] text-[var(--app-text-muted)]">or use your Google account</span>
+                <span className="h-px flex-1 bg-[var(--app-border)]" />
+            </div>
+            <button type="button" onClick={() => { window.location.href = authService.getGoogleAuthUrl(); }} className="auth-google">
+                <GoogleMark />
+                <span>Sign up with Google</span>
+            </button>
+            <p className="mt-6 text-center text-xs text-[var(--app-text-muted)]">
+                Already have an account? <Link to="/login" className="font-semibold text-[var(--accent-color)] underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]">Sign in <span aria-hidden="true">→</span></Link>
+            </p>
+        </AuthLayout>
     );
 }
 
