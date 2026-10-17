@@ -47,10 +47,10 @@ export function RegisterPage() {
     };
 
     return (
-        <AuthLayout>
+        <AuthLayout mode="register">
             <div className="mb-6">
-                <h1 className="auth-heading">Create your account</h1>
-                <p className="mt-2 text-sm text-[var(--app-text-muted)]">Start organizing your study sessions.</p>
+                <h2 className="auth-heading">Create your account</h2>
+                <p className="mt-2 text-sm text-[var(--app-text-muted)]">Set up your StudyZen account.</p>
             </div>
 
             <form onSubmit={handleSubmit} noValidate className="space-y-4">

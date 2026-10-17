@@ -45,10 +45,10 @@ export function LoginPage() {
     };
 
     return (
-        <AuthLayout>
+        <AuthLayout mode="login">
             <div className="mb-7">
-                <h1 className="auth-heading">Welcome back</h1>
-                <p className="mt-2 text-sm text-[var(--app-text-muted)]">Sign in to continue.</p>
+                <h2 className="auth-heading">Welcome back</h2>
+                <p className="mt-2 text-sm text-[var(--app-text-muted)]">Sign in to your account.</p>
             </div>
 
             {oauthError && <p className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500" role="alert">Sign-in with Google could not be completed. Please try again.</p>}
