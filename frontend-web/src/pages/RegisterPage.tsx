@@ -47,11 +47,10 @@ export function RegisterPage() {
     };
 
     return (
-        <AuthLayout mode="register">
+        <AuthLayout>
             <div className="mb-6">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--accent-color)]">Start with a small step</p>
-                <h2 className="font-pt text-[2.45rem] leading-none tracking-[-0.045em]">Find your rhythm.</h2>
-                <p className="mt-3 text-sm leading-6 text-[var(--app-text-muted)]">Create your account and make space for what matters.</p>
+                <h1 className="auth-heading">Create your account</h1>
+                <p className="mt-2 text-sm text-[var(--app-text-muted)]">Start organizing your study sessions.</p>
             </div>
 
             <form onSubmit={handleSubmit} noValidate className="space-y-4">
@@ -76,14 +75,14 @@ export function RegisterPage() {
                     {confirmPasswordError && <p id="register-confirm-error" className="auth-error" role="alert">{confirmPasswordError}</p>}
                 </div>
                 <button type="submit" disabled={!canSubmit} className="auth-submit group auth-delay-5">
-                    <span>{isLoading ? 'Creating your space' : 'Create your account'}</span>
+                    <span>{isLoading ? 'Creating account...' : 'Create account'}</span>
                     {isLoading ? <span className="auth-spinner" aria-hidden="true" /> : <span className="text-lg transition-transform group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden="true">↗</span>}
                 </button>
             </form>
 
             <div className="my-5 flex items-center gap-4" aria-hidden="true">
                 <span className="h-px flex-1 bg-[var(--app-border)]" />
-                <span className="text-[10px] font-medium uppercase tracking-[0.17em] text-[var(--app-text-muted)]">or use your Google account</span>
+                <span className="text-xs text-[var(--app-text-muted)]">or</span>
                 <span className="h-px flex-1 bg-[var(--app-border)]" />
             </div>
             <button type="button" onClick={() => { window.location.href = authService.getGoogleAuthUrl(); }} className="auth-google">

@@ -45,11 +45,10 @@ export function LoginPage() {
     };
 
     return (
-        <AuthLayout mode="login">
-            <div className="mb-8">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--accent-color)]">Welcome back</p>
-                <h2 className="font-pt text-[2.45rem] leading-none tracking-[-0.045em]">Pick up your focus.</h2>
-                <p className="mt-3 text-sm leading-6 text-[var(--app-text-muted)]">Sign in and settle into your next study session.</p>
+        <AuthLayout>
+            <div className="mb-7">
+                <h1 className="auth-heading">Welcome back</h1>
+                <p className="mt-2 text-sm text-[var(--app-text-muted)]">Sign in to continue.</p>
             </div>
 
             {oauthError && <p className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500" role="alert">Sign-in with Google could not be completed. Please try again.</p>}
@@ -69,8 +68,7 @@ export function LoginPage() {
                 <div className="auth-field auth-delay-2">
                     <div className="mb-2 flex items-center justify-between gap-3">
                         <label htmlFor="login-password" className="text-xs font-semibold tracking-wide">Password</label>
-                        <span className="text-[10px] text-[var(--app-text-muted)]">At least 6 characters</span>
-                    </div>
+                                            </div>
                     <input
                         id="login-password" name="password" type="password" autoComplete="current-password" required
                         value={password} onChange={(event) => setPassword(event.target.value)}
@@ -81,14 +79,14 @@ export function LoginPage() {
                     {passwordError && <p id="login-password-error" className="auth-error" role="alert">{passwordError}</p>}
                 </div>
                 <button type="submit" disabled={!canSubmit} className="auth-submit group auth-delay-3">
-                    <span>{isLoading ? 'Opening your study space' : 'Continue to StudyZen'}</span>
+                    <span>{isLoading ? 'Signing in...' : 'Sign in'}</span>
                     {isLoading ? <span className="auth-spinner" aria-hidden="true" /> : <span className="text-lg transition-transform group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden="true">↗</span>}
                 </button>
             </form>
 
             <div className="my-6 flex items-center gap-4" aria-hidden="true">
                 <span className="h-px flex-1 bg-[var(--app-border)]" />
-                <span className="text-[10px] font-medium uppercase tracking-[0.17em] text-[var(--app-text-muted)]">or keep it simple</span>
+                <span className="text-xs text-[var(--app-text-muted)]">or</span>
                 <span className="h-px flex-1 bg-[var(--app-border)]" />
             </div>
 
