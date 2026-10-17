@@ -6,7 +6,7 @@ import { CreateScheduledSessionDialog } from '../components/planner/CreateSchedu
 import { WeeklyTimeGrid } from '../components/planner/WeeklyTimeGrid';
 import { addDays, dateKey, localDateFromTimestamp, weekRange } from '../lib/planner-dates';
 import { getApiErrorMessage } from '../services/api';
-import { weekGridDates, type GridSelection } from '../lib/week-grid';
+import { WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, weekGridDates, type GridSelection } from '../lib/week-grid';
 import { scheduledSessionService } from '../services/scheduled-session-service';
 import { settingsService } from '../services/settings-service';
 import { subjectService } from '../services/subject-service';
@@ -58,7 +58,9 @@ export const WeekPage = () => {
         setLoading(true);
         setError('');
         try {
-            const start = `${startKey} 00:00:00`;
+            const [year, month, day] = startKey.split('-').map(Number);
+            const previous = addDays(new Date(year, month - 1, day), -1);
+            const start = `${dateKey(previous)} 00:00:00`;
             const end = `${endKey} 23:59:59`;
             const [scheduledItems, subjectItems, topicItems, settings] = await Promise.all([
                 scheduledSessionService.getAll(start, end),
@@ -87,9 +89,14 @@ export const WeekPage = () => {
         const oldEnd = localDateFromTimestamp(session.endedAt);
         if (!oldStart || !oldEnd) return;
         const duration = oldEnd.getTime() - oldStart.getTime();
-        const boundedStart = Math.min(startMinutes, 780 - Math.ceil(duration / 60000 / 15) * 15);
-        const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 8, 0);
-        start.setMinutes(start.getMinutes() + Math.max(0, boundedStart));
+        const durationMinutes = Math.ceil(duration / 60000 / 15) * 15;
+        if (durationMinutes > WEEK_GRID_MINUTES) {
+            setNotice('This session is longer than one day and cannot be rescheduled here.');
+            return;
+        }
+        const boundedStart = Math.max(0, Math.min(startMinutes, WEEK_GRID_MINUTES - durationMinutes));
+        const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), WEEK_GRID_START_HOUR, 0);
+        start.setMinutes(start.getMinutes() + boundedStart);
         const end = new Date(start.getTime() + duration);
         setNotice('');
         try {
@@ -125,7 +132,7 @@ export const WeekPage = () => {
                 <div className="flex shrink-0 items-center gap-2">
                     <button onClick={() => { const next = addDays(anchor, 7); setAnchor(next); setSelectedDate(next); }} aria-label="Next week" className={iconButton}><ChevronIcon direction="right" className="h-4 w-4" /></button>
                     <button onClick={() => { timer.start(); window.location.assign('/timer'); }} className="flex items-center gap-2 rounded-xl bg-[var(--accent-color)] px-4 py-2 text-xs font-bold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"><PlayIcon className="h-3.5 w-3.5" /><span className="hidden sm:inline">Study now</span></button>
-                    <button onClick={() => setSelection({ date: selectedDate, startMinutes: 60, endMinutes: 120 })} aria-label="Schedule session" title="Schedule session" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--app-border)] bg-neutral-500/10 text-[var(--app-text)] transition-colors hover:bg-neutral-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"><PlusIcon className="h-4 w-4" /></button>
+                    <button onClick={() => setSelection({ date: selectedDate, startMinutes: 540, endMinutes: 600 })} aria-label="Schedule session" title="Schedule session" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--app-border)] bg-neutral-500/10 text-[var(--app-text)] transition-colors hover:bg-neutral-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"><PlusIcon className="h-4 w-4" /></button>
                 </div>
             </header>
             {error && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4" role="alert"><p className="text-sm">{error}</p><button className={button} onClick={() => void load()}><RotateCcw size={15} /> Try again</button></div>}
@@ -135,6 +142,6 @@ export const WeekPage = () => {
                 <WeeklyTimeGrid dates={dates} scheduled={scheduled} subjects={subjects} topics={topics} onCreate={setSelection} onEdit={setEditingSession} onMove={moveSession} />
             </>}
         </div>
-        {(selection || editingSession) && <CreateScheduledSessionDialog selection={selection ?? { date: selectedDate, startMinutes: 60, endMinutes: 120 }} session={editingSession ?? undefined} subjects={subjects} topics={topics} onClose={() => { setSelection(null); setEditingSession(null); }} onCreated={() => void handleSaved()} onSubjectCreated={addSubject} onTopicCreated={addTopic} />}
+        {(selection || editingSession) && <CreateScheduledSessionDialog selection={selection ?? { date: selectedDate, startMinutes: 540, endMinutes: 600 }} session={editingSession ?? undefined} subjects={subjects} topics={topics} onClose={() => { setSelection(null); setEditingSession(null); }} onCreated={() => void handleSaved()} onSubjectCreated={addSubject} onTopicCreated={addTopic} />}
     </main>;
 };

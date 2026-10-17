@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { RotateCcw } from 'lucide-react';
+import { CreateScheduledSessionDialog } from '../components/planner/CreateScheduledSessionDialog';
 import { TaskTagDialog } from '../components/timer/TaskTagDialog';
+import { addDays as addPlannerDays, localDateFromTimestamp, startOfWeek as plannerStartOfWeek } from '../lib/planner-dates';
+import { buildGridSelection, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, type GridSelection } from '../lib/week-grid';
 import { useTimerContext } from '../context/TimerContext';
 import { getApiErrorMessage } from '../services/api';
 import { dayNoteService } from '../services/day-note-service';
@@ -9,6 +13,7 @@ import { sessionService } from '../services/session-service';
 import { subjectService } from '../services/subject-service';
 import { topicService } from '../services/topic-service';
 import { todoService } from '../services/todo-service';
+import { settingsService } from '../services/settings-service';
 import type { DayNote } from '../types/day-note';
 import type { Deadline } from '../types/deadline';
 import type { ScheduledSession } from '../types/scheduled-session';
@@ -41,7 +46,7 @@ interface TimelineEvent {
     done: boolean;
 }
 
-type PlacedEvent = TimelineEvent & { lane: number; lanes: number };
+type PlacedEvent = TimelineEvent & { lane: number; laneCount: number; laneSpan: number };
 type DialogKind = 'deadline' | 'session';
 
 interface ItemValues {
@@ -71,13 +76,13 @@ const MONTHS_LONG = [
     'December',
 ];
 
-const START_HOUR = 8;
-const END_HOUR = 21;
-const HOUR_HEIGHT = 60;
+const START_HOUR = WEEK_GRID_START_HOUR;
+const END_HOUR = START_HOUR + WEEK_GRID_MINUTES / 60;
+const HOUR_HEIGHT = WEEK_GRID_HOUR_HEIGHT;
 const GRID_START = START_HOUR * 60;
-const GRID_END = (END_HOUR + 1) * 60;
+const GRID_END = END_HOUR * 60;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, index) => START_HOUR + index);
-const GRID_HEIGHT = HOURS.length * HOUR_HEIGHT;
+const GRID_HEIGHT = WEEK_GRID_HEIGHT;
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
@@ -88,13 +93,8 @@ const fromKey = (key: string) => {
     return new Date(year, month - 1, day);
 };
 
-const addDays = (date: Date, amount: number) => {
-    const next = new Date(date);
-    next.setDate(next.getDate() + amount);
-    return next;
-};
+const addDays = addPlannerDays;
 
-const startOfWeek = (date: Date) => addDays(date, -((date.getDay() + 6) % 7));
 
 const formatClock = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 
@@ -126,7 +126,11 @@ const buildEvents = (
     subjectsMap: Map<number, Subject>,
 ): TimelineEvent[] => {
     const dayStart = fromKey(dayKey);
-    const fromScheduled = scheduled.map<TimelineEvent>((item) => {
+    const fromScheduled = scheduled.filter((item) => {
+        const start = new Date(item.startedAt).getTime();
+        const end = new Date(item.endedAt).getTime();
+        return start < dayStart.getTime() + 24 * 60 * 60 * 1000 && end > dayStart.getTime();
+    }).map<TimelineEvent>((item) => {
         const start = new Date(item.startedAt);
         const end = new Date(item.endedAt);
         const topic = topicsMap.get(item.topicId);
@@ -145,7 +149,11 @@ const buildEvents = (
             done: end.getTime() <= now.getTime(),
         };
     });
-    const fromSessions = sessions.map<TimelineEvent>((item) => {
+    const fromSessions = sessions.filter((item) => {
+        const start = new Date(item.startedAt).getTime();
+        const end = new Date(item.endedAt).getTime();
+        return start < dayStart.getTime() + 24 * 60 * 60 * 1000 && end > dayStart.getTime();
+    }).map<TimelineEvent>((item) => {
         const start = new Date(item.startedAt);
         const end = new Date(item.endedAt);
         const topic = topicsMap.get(item.topicId);
@@ -167,36 +175,27 @@ const buildEvents = (
     return [...fromScheduled, ...fromSessions];
 };
 
-const placeEvents = (events: TimelineEvent[]): PlacedEvent[] => {
-    const sorted = [...events].sort((a, b) => a.start - b.start || b.end - a.end);
-    const result: PlacedEvent[] = [];
-    let cluster: (TimelineEvent & { lane: number })[] = [];
-    let laneEnds: number[] = [];
-    let clusterEnd = -1;
-
-    const flush = () => {
-        const lanes = Math.max(1, laneEnds.length);
-        cluster.forEach((item) => result.push({ ...item, lanes }));
-        cluster = [];
-        laneEnds = [];
-        clusterEnd = -1;
-    };
-
-    sorted.forEach((event) => {
-        if (cluster.length > 0 && event.start >= clusterEnd) flush();
-        let lane = laneEnds.findIndex((end) => end <= event.start);
-        if (lane === -1) {
-            lane = laneEnds.length;
-            laneEnds.push(event.end);
-        } else {
-            laneEnds[lane] = event.end;
-        }
-        cluster.push({ ...event, lane });
-        clusterEnd = Math.max(clusterEnd, event.end);
-    });
-    flush();
-    return result;
-};
+const placeEvents = (events: TimelineEvent[]): PlacedEvent[] =>
+    layoutWeekGridIntervals(events.map((event) => ({
+        ...event,
+        startMinutes: Math.max(0, event.start - GRID_START),
+        endMinutes: Math.min(WEEK_GRID_MINUTES, event.end - GRID_START),
+    }))).map((event) => ({
+        key: event.key,
+        kind: event.kind,
+        id: event.id,
+        title: event.title,
+        subtitle: event.subtitle,
+        color: event.color,
+        start: event.start,
+        end: event.end,
+        startLabel: event.startLabel,
+        endLabel: event.endLabel,
+        done: event.done,
+        lane: event.lane,
+        laneCount: event.laneCount,
+        laneSpan: event.laneSpan,
+    }));
 
 const urgencyLabel = (urgency: string) => {
     const value = urgency?.trim().toLowerCase();
@@ -531,6 +530,16 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [weekStartsOn, setWeekStartsOn] = useState(1);
+    const [reloadToken, setReloadToken] = useState(0);
+    const [gridSelection, setGridSelection] = useState<GridSelection | null>(null);
+    const [dragSelection, setDragSelection] = useState<GridSelection | null>(null);
+    const [editingSession, setEditingSession] = useState<ScheduledSession | null>(null);
+    const [timelineMove, setTimelineMove] = useState<{ id: number; minutes: number } | null>(null);
+    const gridRef = useRef<HTMLDivElement>(null);
+    const dragRef = useRef<{ pointerId: number; start: number; current: number } | null>(null);
+    const movingRef = useRef<{ item: ScheduledSession; originY: number; currentMinutes: number; pointerId: number; didMove: boolean } | null>(null);
+    const suppressClickRef = useRef<number | null>(null);
     const [addingTodo, setAddingTodo] = useState(false);
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const [dialog, setDialog] = useState<DialogKind | null>(null);
@@ -548,14 +557,15 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
     useEffect(() => {
         let active = true;
-        Promise.all([subjectService.getAll(), topicService.getAll(), dayNoteService.getAll()])
-            .then(([loadedSubjects, loadedTopics, loadedNotes]) => {
+        Promise.all([subjectService.getAll(), topicService.getAll(), dayNoteService.getAll(), settingsService.getSettings()])
+            .then(([loadedSubjects, loadedTopics, loadedNotes, settings]) => {
                 if (!active) return;
                 setSubjects(loadedSubjects);
                 setTopics(loadedTopics);
                 setTopicsMap(new Map(loadedTopics.map((t) => [t.id, t])));
                 setSubjectsMap(new Map(loadedSubjects.map((s) => [s.id, s])));
                 setNotes(Object.fromEntries(loadedNotes.map((note: DayNote) => [note.date.slice(0, 10), note])));
+                setWeekStartsOn(Number.isInteger(settings.weekStartsOn) ? settings.weekStartsOn : 1);
             })
             .catch((failure) => {
                 if (active) setError(getApiErrorMessage(failure));
@@ -563,11 +573,13 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         return () => {
             active = false;
         };
-    }, []);
+    }, [reloadToken]);
 
     useEffect(() => {
         let active = true;
+        const previousDayKey = toKey(addDays(fromKey(selectedKey), -1));
         const start = `${selectedKey}T00:00:00`;
+        const scheduledStart = `${previousDayKey}T00:00:00`;
         const end = `${selectedKey}T23:59:59`;
         setLoading(true);
         setAddingTodo(false);
@@ -575,8 +587,8 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         Promise.all([
             todoService.getAll(selectedKey),
             deadlineService.getAll(start, end),
-            scheduledSessionService.getAll(start, end),
-            sessionService.getAll({ start, end, size: 200 }),
+            scheduledSessionService.getAll(scheduledStart, end),
+            sessionService.getAll({ start: scheduledStart, end, size: 200 }),
         ])
             .then(([loadedTodos, loadedDeadlines, loadedScheduled, loadedSessions]) => {
                 if (!active) return;
@@ -595,12 +607,12 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         return () => {
             active = false;
         };
-    }, [selectedKey]);
+    }, [selectedKey, reloadToken]);
 
     const week = useMemo(() => {
-        const monday = startOfWeek(selected);
-        return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
-    }, [selected]);
+        const start = plannerStartOfWeek(selected, weekStartsOn);
+        return Array.from({ length: 7 }, (_, index) => addDays(start, index));
+    }, [selected, weekStartsOn]);
 
     const sortedDeadlines = useMemo(
         () => [...deadlines].sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime()),
@@ -714,6 +726,80 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
         }
     };
 
+    const updateTimelineDrag = (event: PointerEvent<HTMLDivElement>) => {
+        const drag = dragRef.current;
+        const grid = gridRef.current;
+        if (!drag || drag.pointerId !== event.pointerId || !grid) return;
+        const value = gridMinutesFromPointer(event.clientY, grid.getBoundingClientRect());
+        dragRef.current = { ...drag, current: value };
+        setDragSelection(buildGridSelection(selected, drag.start, value));
+    };
+
+    const startTimelineDrag = (event: PointerEvent<HTMLDivElement>) => {
+        if (event.button !== 0 || (event.target instanceof Element && event.target.closest('[data-timeline-event="true"]'))) return;
+        const grid = gridRef.current;
+        if (!grid) return;
+        if (event.pointerType !== 'touch') event.preventDefault();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        const value = gridMinutesFromPointer(event.clientY, grid.getBoundingClientRect());
+        dragRef.current = { pointerId: event.pointerId, start: value, current: value };
+        setDragSelection(buildGridSelection(selected, value, value));
+    };
+
+    const finishTimelineDrag = (event: PointerEvent<HTMLDivElement>) => {
+        const drag = dragRef.current;
+        const grid = gridRef.current;
+        if (!drag || drag.pointerId !== event.pointerId || !grid) return;
+        const selection = buildGridSelection(selected, drag.start, gridMinutesFromPointer(event.clientY, grid.getBoundingClientRect()));
+        dragRef.current = null;
+        setDragSelection(null);
+        if (selection.endMinutes - selection.startMinutes >= 15) setGridSelection(selection);
+    };
+
+    const moveTimelineSession = async (event: PointerEvent<HTMLDivElement>) => {
+        const moving = movingRef.current;
+        const grid = gridRef.current;
+        if (!moving || moving.pointerId !== event.pointerId || !grid) return;
+        const currentMinutes = gridMinutesFromPointer(event.clientY, grid.getBoundingClientRect());
+        const didMove = moving.didMove || Math.abs(event.clientY - moving.originY) > 4;
+        movingRef.current = { ...moving, currentMinutes, didMove };
+        setTimelineMove({ id: moving.item.id, minutes: currentMinutes });
+        if (event.type === 'pointerup') {
+            setTimelineMove(null);
+            movingRef.current = null;
+            if (!didMove) return;
+            suppressClickRef.current = moving.item.id;
+            const oldStart = localDateFromTimestamp(moving.item.startedAt);
+            const oldEnd = localDateFromTimestamp(moving.item.endedAt);
+            if (!oldStart || !oldEnd) return;
+            const duration = oldEnd.getTime() - oldStart.getTime();
+            const durationMinutes = Math.max(15, Math.ceil(duration / 60000 / 15) * 15);
+            if (durationMinutes > WEEK_GRID_MINUTES) {
+                fail(new Error('This session is longer than the visible day and cannot be rescheduled here.'));
+                return;
+            }
+            const start = Math.max(0, Math.min(currentMinutes, WEEK_GRID_MINUTES - durationMinutes));
+            const startAt = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate(), START_HOUR, start);
+            const endAt = new Date(startAt.getTime() + duration);
+            try {
+                await scheduledSessionService.patch(moving.item.id, { startedAt: `${toKey(startAt)}T${formatClock(startAt)}:00`, endedAt: `${toKey(endAt)}T${formatClock(endAt)}:00` });
+                setScheduled((current) => current.map((item) => item.id === moving.item.id ? { ...item, startedAt: `${toKey(startAt)}T${formatClock(startAt)}:00`, endedAt: `${toKey(endAt)}T${formatClock(endAt)}:00` } : item));
+            } catch (failure) {
+                fail(failure);
+            }
+        }
+    };
+
+    const startTimelineMove = (event: PointerEvent<HTMLElement>, item: ScheduledSession) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        const start = localDateFromTimestamp(item.startedAt);
+        const startMinutes = start ? (start.getHours() - START_HOUR) * 60 + start.getMinutes() : 0;
+        movingRef.current = { item, originY: event.clientY, currentMinutes: startMinutes, pointerId: event.pointerId, didMove: false };
+    };
+
     const startStudy = (target: StudyTarget) => {
         if (target.topic) {
             setSelectedTagId(target.topic.subjectId);
@@ -775,8 +861,8 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const shift = (amount: number) => setSelected((current) => addDays(current, amount));
 
     return (
-        <div className="min-h-[calc(100vh-4.5rem)] p-3 sm:p-6 bg-[var(--app-bg)] text-[var(--app-text)] transition-colors duration-200">
-            <div className="mx-auto flex max-w-[1400px] flex-col gap-4">
+        <div className="min-h-[calc(100vh-4.5rem)] bg-[var(--app-bg)] px-4 py-6 text-[var(--app-text)] transition-colors duration-200 sm:px-6 lg:px-10 lg:py-9">
+            <div className="mx-auto flex max-w-[1500px] flex-col gap-4">
                 <header className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-4 py-3 shadow-md">
                     <div className="flex items-center gap-2">
                         <button
@@ -847,9 +933,12 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
                 <div aria-live="polite">
                     {error && (
-                        <p role="alert" className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-semibold text-red-500">
-                            {error}
-                        </p>
+                        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-semibold text-red-500">
+                            <span>{error}</span>
+                            <button type="button" onClick={() => setReloadToken((current) => current + 1)} className={`inline-flex items-center gap-2 rounded-lg border border-[var(--app-border)] bg-[var(--app-card-bg)] px-3 py-1.5 text-[var(--app-text)] ${focusRing}`}>
+                                <RotateCcw size={14} /> Try again
+                            </button>
+                        </div>
                     )}
                 </div>
 
@@ -992,37 +1081,65 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                             </span>
                         </p>
 
-                        <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)]">
-                            <div className="relative" style={{ height: GRID_HEIGHT }}>
+                        <div className="mt-6 max-h-[70vh] overflow-auto overscroll-contain rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)]">
+                            <div ref={gridRef} className="relative touch-pan-y select-none" style={{ height: GRID_HEIGHT }} onPointerDown={startTimelineDrag} onPointerMove={(event) => { updateTimelineDrag(event); void moveTimelineSession(event); }} onPointerUp={(event) => { finishTimelineDrag(event); void moveTimelineSession(event); }} onPointerCancel={() => { dragRef.current = null; movingRef.current = null; setDragSelection(null); setGridSelection(null); setTimelineMove(null); }}>
+                                <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
                                 {HOURS.map((hour, index) => (
                                     <div
                                         key={hour}
                                         className="absolute left-0 right-0 border-b border-[var(--app-border)]/60"
-                                        style={{ top: index * HOUR_HEIGHT, height: HOUR_HEIGHT }}
+                                        style={{ top: index * HOUR_HEIGHT, height: index === HOURS.length - 1 ? 0 : HOUR_HEIGHT }}
                                     >
                                         <span className="absolute left-0 top-0 flex w-[60px] justify-center pt-3 text-xs font-semibold text-[var(--app-text-muted)]">
-                                            {pad(hour)}:00
+                                            {hour === END_HOUR ? '24:00' : `${pad(hour)}:00`}
                                         </span>
                                     </div>
                                 ))}
                                 <div className="absolute bottom-0 left-[60px] top-0 border-l border-[var(--app-border)]/60" aria-hidden />
+                                </div>
 
-                                <div className="absolute bottom-0 left-[60px] right-0 top-0">
+                                <div className="absolute bottom-0 left-[60px] right-0 top-0 z-[1] pointer-events-none">
                                     {placedEvents.map((event) => {
                                         const start = Math.max(event.start, GRID_START);
                                         const end = Math.min(event.end, GRID_END);
                                         if (end <= start) return null;
-                                        const height = Math.max(end - start, 20);
+                                        const height = end - start;
                                         const textColor = readableText(event.color);
                                         return (
                                             <article
                                                 key={event.key}
-                                                className="group absolute overflow-hidden rounded-lg px-2 py-1 leading-tight shadow-md"
+                                                role={event.kind === 'scheduled' ? 'button' : undefined}
+                                                tabIndex={event.kind === 'scheduled' ? 0 : undefined}
+                                                aria-label={event.kind === 'scheduled' ? `${event.title}, ${event.startLabel} to ${event.endLabel}. Press Enter to edit or drag to reschedule.` : undefined}
+                                                data-timeline-event={event.kind === 'scheduled' ? 'true' : undefined}
+                                                onClick={() => {
+                                                    if (event.kind !== 'scheduled') return;
+                                                    if (suppressClickRef.current === event.id) { suppressClickRef.current = null; return; }
+                                                    const item = scheduled.find((sessionItem) => sessionItem.id === event.id);
+                                                    if (item) setEditingSession(item);
+                                                }}
+                                                onKeyDown={(keyboardEvent) => {
+                                                    if (keyboardEvent.target instanceof Element && keyboardEvent.target.closest('button')) return;
+                                                    if (event.kind === 'scheduled' && (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ')) {
+                                                        keyboardEvent.preventDefault();
+                                                        const item = scheduled.find((sessionItem) => sessionItem.id === event.id);
+                                                        if (item) setEditingSession(item);
+                                                    }
+                                                }}
+                                                onPointerDown={(pointerEvent) => {
+                                                    if (pointerEvent.target instanceof Element && pointerEvent.target.closest('button')) return;
+                                                    if (event.kind !== 'scheduled') return;
+                                                    const item = scheduled.find((sessionItem) => sessionItem.id === event.id);
+                                                    if (item) startTimelineMove(pointerEvent, item);
+                                                }}
+                                                onPointerMove={(pointerEvent) => { void moveTimelineSession(pointerEvent as unknown as PointerEvent<HTMLDivElement>); }}
+                                                onPointerUp={(pointerEvent) => { void moveTimelineSession(pointerEvent as unknown as PointerEvent<HTMLDivElement>); }}
+                                                className={`group absolute overflow-hidden rounded-lg px-2 leading-tight shadow-md ${height <= 20 ? 'py-0' : 'py-1'} ${event.kind === 'scheduled' ? 'pointer-events-auto cursor-grab focus-visible:outline-2 focus-visible:outline-[var(--accent-color)] active:cursor-grabbing' : ''} ${timelineMove?.id === event.id ? 'opacity-60' : ''}`}
                                                 style={{
-                                                    top: ((start - GRID_START) / 60) * HOUR_HEIGHT,
+                                                    top: ((timelineMove?.id === event.id ? timelineMove.minutes : start - GRID_START) / 60) * HOUR_HEIGHT,
                                                     height: (height / 60) * HOUR_HEIGHT,
-                                                    left: `calc(${(event.lane / event.lanes) * 100}% + 2px)`,
-                                                    width: `calc(${100 / event.lanes}% - 4px)`,
+                                                    left: `calc(${(event.lane / event.laneCount) * 100}% + 2px)`,
+                                                    width: `calc(${(event.laneSpan / event.laneCount) * 100}% - 4px)`,
                                                     backgroundColor: event.color,
                                                     color: textColor,
                                                 }}
@@ -1034,16 +1151,17 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                                 <p className="truncate text-[10px] opacity-80">{event.subtitle}</p>
                                                 {event.kind === 'scheduled' && (
                                                     <button
-                                                        onClick={() => deleteScheduled(event.id)}
+                                                        onClick={(clickEvent) => { clickEvent.stopPropagation(); void deleteScheduled(event.id); }}
+                                                        onPointerDown={(pointerEvent) => pointerEvent.stopPropagation()}
                                                         aria-label={`Delete ${event.title}`}
-                                                        className="absolute right-1 top-1 hidden cursor-pointer rounded p-0.5 hover:bg-black/20 focus-visible:block group-hover:block"
-                                                    >
+                                                        className="absolute right-1 top-1 hidden cursor-pointer rounded p-0.5 hover:bg-black/20 focus-visible:block group-hover:block">
                                                         <CloseIcon className="h-3 w-3" />
                                                     </button>
                                                 )}
                                             </article>
                                         );
                                     })}
+                                    {(dragSelection || gridSelection) && <div className="pointer-events-none absolute left-0 right-0 z-20 rounded-md border-2 border-[var(--accent-color)] bg-[var(--accent-color)]/20" style={{ top: (dragSelection ?? gridSelection)!.startMinutes / 60 * HOUR_HEIGHT, height: Math.max(16, ((dragSelection ?? gridSelection)!.endMinutes - (dragSelection ?? gridSelection)!.startMinutes) / 60 * HOUR_HEIGHT) }} aria-hidden="true" />}
                                     {showNowLine && (
                                         <div
                                             className="pointer-events-none absolute left-0 right-0 z-10 border-t-2 border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"
@@ -1057,6 +1175,19 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     </section>
                 </div>
             </div>
+
+            {(gridSelection || editingSession) && (
+                <CreateScheduledSessionDialog
+                    selection={gridSelection ?? { date: selected, startMinutes: 540, endMinutes: 600 }}
+                    session={editingSession ?? undefined}
+                    subjects={subjects}
+                    topics={topics}
+                    onClose={() => { setGridSelection(null); setEditingSession(null); }}
+                    onCreated={() => { setGridSelection(null); setEditingSession(null); setReloadToken((current) => current + 1); }}
+                    onSubjectCreated={(subject) => { setSubjects((current) => current.some((item) => item.id === subject.id) ? current : [...current, subject]); setSubjectsMap((current) => new Map(current).set(subject.id, subject)); }}
+                    onTopicCreated={(topic) => { setTopics((current) => current.some((item) => item.id === topic.id) ? current : [...current, topic]); setTopicsMap((current) => new Map(current).set(topic.id, topic)); }}
+                />
+            )}
 
             {dialog && (
                 <ItemDialog

@@ -1,7 +1,7 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { dateKey, localDateFromTimestamp } from '../../lib/planner-dates';
-import { buildGridSelection, gridMinutesFromPointer, WEEK_GRID_END_HOUR, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, type GridSelection } from '../../lib/week-grid';
+import { buildGridSelection, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_END_HOUR, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_START_HOUR, type GridSelection } from '../../lib/week-grid';
 import type { ScheduledSession } from '../../types/scheduled-session';
 import type { Subject } from '../../types/subject';
 import type { Topic } from '../../types/topic';
@@ -23,7 +23,7 @@ interface DragState {
     current: number;
 }
 
-const hourLabel = (hour: number) => new Date(2000, 0, 1, hour).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+const hourLabel = (hour: number) => hour === WEEK_GRID_END_HOUR ? '24:00' : new Date(2000, 0, 1, hour).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
 
 export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, onEdit, onMove }: WeeklyTimeGridProps) {
     const [drag, setDrag] = useState<DragState | null>(null);
@@ -34,18 +34,37 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
     const dragRef = useRef<DragState | null>(null);
     const topicById = new Map(topics.map((topic) => [topic.id, topic]));
     const subjectById = new Map(subjects.map((subject) => [subject.id, subject]));
-    const slots = scheduled.map((item) => {
+    const visibleDays = new Set(dates.map(dateKey));
+    const visibleSlots = scheduled.flatMap((item) => {
         const start = localDateFromTimestamp(item.startedAt);
         const end = localDateFromTimestamp(item.endedAt);
-        if (!start || !end) return null;
-        const date = dateKey(start);
-        const startMinutes = (start.getHours() - WEEK_GRID_START_HOUR) * 60 + start.getMinutes();
-        const endMinutes = (end.getHours() - WEEK_GRID_START_HOUR) * 60 + end.getMinutes();
-        if (endMinutes <= 0 || startMinutes >= WEEK_GRID_MINUTES) return null;
+        if (!start || !end || end.getTime() <= start.getTime()) return [];
         const topic = topicById.get(item.topicId);
         const subject = topic ? subjectById.get(topic.subjectId) : undefined;
-        return { item, date, top: Math.max(0, startMinutes) / 60 * WEEK_GRID_HOUR_HEIGHT, height: Math.max(18, (Math.min(WEEK_GRID_MINUTES, endMinutes) - Math.max(0, startMinutes)) / 60 * WEEK_GRID_HOUR_HEIGHT), topic, subject };
-    }).filter((slot): slot is NonNullable<typeof slot> => Boolean(slot));
+        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        const pieces = [];
+        for (const day = new Date(startDay); day <= endDay; day.setDate(day.getDate() + 1)) {
+            const date = dateKey(day);
+            if (!visibleDays.has(date)) continue;
+            const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), WEEK_GRID_START_HOUR);
+            const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), WEEK_GRID_END_HOUR);
+            const clippedStart = Math.max(start.getTime(), dayStart.getTime());
+            const clippedEnd = Math.min(end.getTime(), dayEnd.getTime());
+            if (clippedEnd <= clippedStart) continue;
+            const startMinutes = (clippedStart - dayStart.getTime()) / 60000;
+            const endMinutes = (clippedEnd - dayStart.getTime()) / 60000;
+            if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes) || endMinutes <= startMinutes) continue;
+            pieces.push({ item, date, key: `${item.id}:${date}`, startMinutes, endMinutes, topic, subject });
+        }
+        return pieces;
+    });
+    const layoutByKey = new Map(dates.flatMap((date) => layoutWeekGridIntervals(visibleSlots.filter((slot) => slot.date === dateKey(date)))).map((layout) => [layout.key, layout]));
+    const slots = visibleSlots.flatMap((slot) => {
+        const layout = layoutByKey.get(slot.key);
+        if (!layout) return [];
+        return [{ ...slot, lane: layout.lane, laneCount: layout.laneCount, laneSpan: layout.laneSpan, top: layout.startMinutes / 60 * WEEK_GRID_HOUR_HEIGHT, height: (layout.endMinutes - layout.startMinutes) / 60 * WEEK_GRID_HOUR_HEIGHT }];
+    });
 
     const updateDrag = (event: PointerEvent<HTMLDivElement>) => {
         const current = dragRef.current;
@@ -61,7 +80,7 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
         if (event.button !== 0) return;
         const target = event.target;
         if (target instanceof Element && target.closest('[data-calendar-event="true"]')) return;
-        event.preventDefault();
+        if (event.pointerType !== 'touch') event.preventDefault();
         const column = event.currentTarget.closest('[data-calendar-day]');
         if (!(column instanceof HTMLElement)) return;
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -128,15 +147,15 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
         } else { movingRef.current = null; setMoving(null); }
     };
 
-    const quickCreate = (date: Date) => onCreate(buildGridSelection(date, 60, 120));
+    const quickCreate = (date: Date) => onCreate(buildGridSelection(date, 540, 600));
     const handleEventKeyDown = (event: KeyboardEvent<HTMLDivElement>, item: ScheduledSession) => {
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEdit(item); }
     };
 
     return <section className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-0 pb-3 pt-1 shadow-sm sm:pb-4 sm:pt-2" aria-label="Weekly study calendar">
-        <div className="overflow-x-auto">
+        <div className="max-h-[70vh] overflow-auto overscroll-contain">
             <div className="min-w-[900px]">
-                <div className="grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)]">
+                <div className="sticky top-0 z-30 grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)] bg-[var(--app-card-bg)]">
                     <div className="pb-3" />
                     {dates.map((date) => <div key={dateKey(date)} className="px-2 pb-2 pt-1 text-center"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p><p className="mt-1 text-sm font-bold">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>)}
                 </div>
@@ -148,14 +167,14 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
                         const range = drag && dateKey(drag.date) === key ? buildGridSelection(drag.date, drag.start, drag.current) : null;
                         return <div key={key} data-calendar-day="true" className="group relative border-l border-[var(--app-border)]" style={{ height: WEEK_GRID_HEIGHT }}>
                             <div className="absolute inset-0 grid" style={{ gridTemplateRows: `repeat(${WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR}, ${WEEK_GRID_HOUR_HEIGHT}px)` }} aria-hidden="true">{Array.from({ length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR }, (_, index) => <div key={index} className="border-t border-[var(--app-border)]/70" />)}</div>
-                            <div className="absolute inset-0 touch-none select-none cursor-crosshair" onPointerDown={(event) => startDrag(event, date)} onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={() => { dragRef.current = null; setDrag(null); }} role="presentation" aria-hidden="true" />
-                            {daySlots.map(({ item, top, height, topic, subject }) => {
+                            <div className="absolute inset-0 touch-pan-y select-none cursor-crosshair" onPointerDown={(event) => startDrag(event, date)} onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={() => { dragRef.current = null; setDrag(null); }} role="presentation" aria-hidden="true" />
+                            {daySlots.map(({ item, top, height, topic, subject, lane, laneCount, laneSpan }) => {
                                 const movingThis = moving?.item.id === item.id;
                                 const movingDate = dates.find((candidate) => dateKey(candidate) === moving?.currentDate);
                                 const movingStart = moving?.current ?? 0;
                                 const active = movingThis && movingDate && dateKey(movingDate) === key;
                                 const displayTop = active ? movingStart / 60 * WEEK_GRID_HOUR_HEIGHT : top;
-                                return <div key={item.id} role="button" tabIndex={0} aria-label={`${item.title || topic?.name || 'Study session'}, ${localDateFromTimestamp(item.startedAt)?.toLocaleString('en-US')}. Press Enter to edit or drag to reschedule.`} onClick={() => { if (suppressClickRef.current === item.id) { suppressClickRef.current = null; return; } onEdit(item); }} onKeyDown={(event) => handleEventKeyDown(event, item)} onPointerMove={updateMove} onPointerUp={finishMove} onPointerCancel={() => { movingRef.current = null; setMoving(null); }} className={`absolute inset-x-1 z-10 cursor-grab overflow-hidden rounded-lg border-l-[3px] px-1.5 py-1 text-[10px] shadow-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--accent-color)] active:cursor-grabbing sm:inset-x-1.5 sm:px-2 ${movingThis ? 'opacity-60' : ''}`} data-calendar-event="true" style={{ top: displayTop, height, borderColor: subject?.color || 'var(--accent-color)', backgroundColor: `${subject?.color || 'var(--accent-color)'}24`, color: 'var(--app-text)' }} title={`${item.title || topic?.name || 'Study session'} · ${localDateFromTimestamp(item.startedAt)?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`} onPointerDown={(event) => startMove(event, item, key, Math.round(top / WEEK_GRID_HOUR_HEIGHT * 60))}><span className="block truncate font-semibold">{item.title || topic?.name || 'Study session'}</span>{height > 34 && <span className="block truncate opacity-75">{topic?.name || 'Study'}</span>}</div>;
+                                return <div key={item.id} role="button" tabIndex={0} aria-label={`${item.title || topic?.name || 'Study session'}, ${localDateFromTimestamp(item.startedAt)?.toLocaleString('en-US')}. Press Enter to edit or drag to reschedule.`} onClick={() => { if (suppressClickRef.current === item.id) { suppressClickRef.current = null; return; } onEdit(item); }} onKeyDown={(event) => handleEventKeyDown(event, item)} onPointerMove={updateMove} onPointerUp={finishMove} onPointerCancel={() => { movingRef.current = null; setMoving(null); }} className={`absolute z-10 cursor-grab overflow-hidden rounded-lg border-l-[3px] px-1.5 text-[10px] shadow-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--accent-color)] active:cursor-grabbing sm:px-2 ${height <= 18 ? 'py-0' : 'py-1'} ${movingThis ? 'opacity-60' : ''}`} data-calendar-event="true" style={{ top: displayTop, height, left: `calc(${(lane / laneCount) * 100}% + 0.25rem)`, width: `calc(${(laneSpan / laneCount) * 100}% - 0.5rem)`, borderColor: subject?.color || 'var(--accent-color)', backgroundColor: `${subject?.color || 'var(--accent-color)'}24`, color: 'var(--app-text)' }} title={`${item.title || topic?.name || 'Study session'} · ${localDateFromTimestamp(item.startedAt)?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`} onPointerDown={(event) => startMove(event, item, key, Math.round(top / WEEK_GRID_HOUR_HEIGHT * 60))}><span className="block truncate font-semibold">{item.title || topic?.name || 'Study session'}</span>{height > 34 && <span className="block truncate opacity-75">{topic?.name || 'Study'}</span>}</div>;
                             })}
                             {moving && moving.currentDate === key && moving.date !== key && (() => {
                                 const movingSlot = slots.find((slot) => slot.item.id === moving.item.id);

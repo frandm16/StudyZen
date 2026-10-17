@@ -1,7 +1,7 @@
 import { addDays, dateKey, startOfWeek } from './planner-dates';
 
-export const WEEK_GRID_START_HOUR = 8;
-export const WEEK_GRID_END_HOUR = 21;
+export const WEEK_GRID_START_HOUR = 0;
+export const WEEK_GRID_END_HOUR = 24;
 export const WEEK_GRID_HOUR_HEIGHT = 64;
 export const WEEK_GRID_MINUTES = (WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR) * 60;
 export const WEEK_GRID_HEIGHT = (WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR) * WEEK_GRID_HOUR_HEIGHT;
@@ -11,6 +11,61 @@ export interface GridSelection {
     date: Date;
     startMinutes: number;
     endMinutes: number;
+}
+
+export interface WeekGridInterval {
+    key: string;
+    startMinutes: number;
+    endMinutes: number;
+}
+
+export interface WeekGridLayout extends WeekGridInterval {
+    lane: number;
+    laneCount: number;
+    laneSpan: number;
+}
+
+export function layoutWeekGridIntervals<T extends WeekGridInterval>(intervals: T[]): (T & WeekGridLayout)[] {
+    const sorted = intervals
+        .filter((interval) => Number.isFinite(interval.startMinutes) && Number.isFinite(interval.endMinutes) && interval.endMinutes > interval.startMinutes)
+        .slice()
+        .sort((first, second) => first.startMinutes - second.startMinutes || second.endMinutes - first.endMinutes || first.key.localeCompare(second.key));
+    const clusters: T[][] = [];
+    let cluster: T[] = [];
+    let clusterEnd = Number.NEGATIVE_INFINITY;
+
+    for (const interval of sorted) {
+        if (interval.startMinutes >= clusterEnd) {
+            if (cluster.length > 0) clusters.push(cluster);
+            cluster = [];
+            clusterEnd = Number.NEGATIVE_INFINITY;
+        }
+        cluster.push(interval);
+        clusterEnd = Math.max(clusterEnd, interval.endMinutes);
+    }
+    if (cluster.length > 0) clusters.push(cluster);
+
+    return clusters.flatMap((connected) => {
+        const assigned: Array<{ interval: T; lane: number }> = [];
+        for (const interval of connected) {
+            const occupied = new Set(assigned
+                .filter(({ interval: placed }) => placed.startMinutes < interval.endMinutes && interval.startMinutes < placed.endMinutes)
+                .map(({ lane }) => lane));
+            let lane = 0;
+            while (occupied.has(lane)) lane += 1;
+            assigned.push({ interval, lane });
+        }
+        const laneCount = Math.max(...assigned.map(({ lane }) => lane + 1));
+        return assigned.map(({ interval, lane }) => {
+            let laneSpan = 1;
+            for (let candidate = lane + 1; candidate < laneCount; candidate += 1) {
+                const blocked = assigned.some(({ interval: placed, lane: placedLane }) => placedLane === candidate && placed.startMinutes < interval.endMinutes && interval.startMinutes < placed.endMinutes);
+                if (blocked) break;
+                laneSpan += 1;
+            }
+            return { ...interval, lane, laneCount, laneSpan };
+        });
+    });
 }
 
 export function gridMinutesFromPointer(clientY: number, bounds: DOMRect): number {
