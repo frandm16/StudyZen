@@ -35,8 +35,32 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, String> body,
             HttpServletRequest request, HttpServletResponse response) {
-        TokenService.TokenPair pair = authService.register(body.get("email"), body.get("password"), body.get("displayName"), request);
-        return withCookies(pair, response);
+        authService.register(body.get("email"), body.get("password"), body.get("displayName"), request);
+        return ResponseEntity.accepted().body(Map.of("message", "Check your email to verify your account"));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestBody Map<String, String> body) {
+        authService.verifyEmail(body.get("token"));
+        return ResponseEntity.ok(Map.of("message", "Email verified"));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> body) {
+        authService.resendVerification(body.get("email"));
+        return ResponseEntity.accepted().body(Map.of("message", "If the account requires verification, an email will be sent"));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> body) {
+        authService.forgotPassword(body.get("email"));
+        return ResponseEntity.accepted().body(Map.of("message", "If an account exists, password reset instructions will be sent"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> body) {
+        authService.resetPassword(body.get("token"), body.get("password"));
+        return ResponseEntity.ok(Map.of("message", "Password reset"));
     }
 
     @PostMapping("/login")

@@ -24,6 +24,9 @@ export function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [touched, setTouched] = useState({ email: false, password: false });
+    const [showResend, setShowResend] = useState(false);
+    const [resendMessage, setResendMessage] = useState('');
+    const [resending, setResending] = useState(false);
 
     const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     const emailError = touched.email && (!email ? 'Email is required' : !isValidEmail(email) ? 'Enter a valid email address' : '');
@@ -40,7 +43,23 @@ export function LoginPage() {
             notify({ title: 'Signed in', tone: 'success', persist: false });
             navigate('/timer');
         } catch (error) {
-            notify({ title: 'Login failed', description: error instanceof Error ? error.message : 'Login failed', tone: 'error' });
+            const message = error instanceof Error ? error.message : 'Login failed';
+            setShowResend(message.toLowerCase().includes('not verified'));
+            setResendMessage('');
+            notify({ title: 'Login failed', description: message, tone: 'error' });
+        }
+    };
+
+    const resendVerification = async () => {
+        setResending(true);
+        setResendMessage('');
+        try {
+            await authService.resendVerification(email);
+            setResendMessage('If this account needs verification, an email will be sent.');
+        } catch {
+            setResendMessage('Could not send the verification email. Please try again.');
+        } finally {
+            setResending(false);
         }
     };
 
@@ -68,7 +87,8 @@ export function LoginPage() {
                 <div className="auth-field auth-delay-2">
                     <div className="mb-2 flex items-center justify-between gap-3">
                         <label htmlFor="login-password" className="text-xs font-semibold tracking-wide">Password</label>
-                                            </div>
+                        <Link to="/forgot-password" className="text-xs font-semibold text-[var(--accent-color)] underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]">Forgot password?</Link>
+                    </div>
                     <input
                         id="login-password" name="password" type="password" autoComplete="current-password" required
                         value={password} onChange={(event) => setPassword(event.target.value)}
@@ -83,6 +103,8 @@ export function LoginPage() {
                     {isLoading ? <span className="auth-spinner" aria-hidden="true" /> : <span className="text-lg transition-transform group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden="true">↗</span>}
                 </button>
             </form>
+
+            {showResend && <div className="mt-4"><button type="button" onClick={() => void resendVerification()} disabled={resending || !isValidEmail(email)} className="text-sm font-semibold text-[var(--accent-color)] underline-offset-4 hover:underline disabled:opacity-50">{resending ? 'Sending...' : 'Resend verification email'}</button>{resendMessage && <p className="mt-2 text-xs text-[var(--app-text-muted)]" role="status">{resendMessage}</p>}</div>}
 
             <div className="my-6 flex items-center gap-4" aria-hidden="true">
                 <span className="h-px flex-1 bg-[var(--app-border)]" />

@@ -1,9 +1,28 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/auth-service';
 import { useToast } from '../context/ToastContext';
+
+function ResendVerification({ email }: { email: string }) {
+    const notify = useToast();
+    const [isSending, setIsSending] = useState(false);
+
+    const resend = async () => {
+        setIsSending(true);
+        try {
+            await authService.resendVerification(email);
+            notify({ title: 'Verification email sent', tone: 'success', persist: false });
+        } catch (error) {
+            notify({ title: 'Could not resend email', description: error instanceof Error ? error.message : 'Please try again.', tone: 'error' });
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    return <button type="button" onClick={() => void resend()} disabled={isSending} className="mt-6 w-full rounded-xl border border-[var(--app-border)] px-4 py-3 text-sm font-semibold transition-colors hover:border-[var(--accent-color)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)] disabled:cursor-not-allowed disabled:opacity-50">{isSending ? 'Sending...' : 'Resend verification email'}</button>;
+}
 
 function GoogleMark() {
     return (
@@ -17,7 +36,6 @@ function GoogleMark() {
 }
 
 export function RegisterPage() {
-    const navigate = useNavigate();
     const { register, isLoading } = useAuth();
     const notify = useToast();
     const [displayName, setDisplayName] = useState('');
@@ -25,6 +43,7 @@ export function RegisterPage() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [touched, setTouched] = useState({ displayName: false, email: false, password: false, confirmPassword: false });
+    const [pendingEmail, setPendingEmail] = useState('');
 
     const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     const displayNameError = touched.displayName && (!displayName ? 'Name is required' : displayName.length < 2 ? 'Name must be at least 2 characters' : '');
@@ -39,12 +58,26 @@ export function RegisterPage() {
         if (!canSubmit) return;
         try {
             await register({ email, password, displayName });
-            notify({ title: 'Account created', tone: 'success', persist: false });
-            navigate('/timer');
+            setPendingEmail(email);
+            notify({ title: 'Check your email', description: 'Verify your email to finish creating your account.', tone: 'success', persist: false });
         } catch (error) {
             notify({ title: 'Registration failed', description: error instanceof Error ? error.message : 'Registration failed', tone: 'error' });
         }
     };
+
+    if (pendingEmail) {
+        return (
+            <AuthLayout mode="register">
+                <section aria-labelledby="pending-email-title" aria-live="polite">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--accent-color)]">One more step</p>
+                    <h2 id="pending-email-title" className="auth-heading">Check your email</h2>
+                    <p className="mt-3 text-sm leading-6 text-[var(--app-text-muted)]">We sent a verification link to <span className="font-medium text-[var(--app-text)]">{pendingEmail}</span>. Open it to verify your address and finish setting up your account.</p>
+                    <ResendVerification email={pendingEmail} />
+                    <p className="mt-6 text-center text-xs text-[var(--app-text-muted)]">Already verified? <Link to="/login" className="font-semibold text-[var(--accent-color)] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]">Sign in</Link></p>
+                </section>
+            </AuthLayout>
+        );
+    }
 
     return (
         <AuthLayout mode="register">

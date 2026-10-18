@@ -20,6 +20,18 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:false}
+          starttls:
+            enable: ${SMTP_STARTTLS:false}
+
   security:
     oauth2:
       client:
@@ -44,6 +56,8 @@ app:
     access-token-expiry-ms: ${JWT_ACCESS_EXPIRY_MS:900000}
     refresh-token-expiry-ms: ${JWT_REFRESH_EXPIRY_MS:604800000}
   frontend-url: ${FRONTEND_URL:http://localhost:7777}
+  mail:
+    from: ${SMTP_FROM:noreply@studyzen.local}
   cors:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:7777}
   cookies:

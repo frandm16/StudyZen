@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { Logo } from '../navbar/NavbarIcons';
 
 interface AuthLayoutProps {
-    mode: 'login' | 'register';
+    mode: 'login' | 'register' | 'recovery';
     children: ReactNode;
 }
 
 export function AuthLayout({ mode, children }: AuthLayoutProps) {
-    const heading = mode === 'login' ? 'Your study space, ready when you are.' : 'A good place to get started.';
+    const heading = mode === 'login' ? 'Your study space, ready when you are.' : mode === 'register' ? 'A good place to get started.' : 'Your study space is within reach.';
 
     return (
         <div className="auth-page relative isolate flex min-h-full items-center justify-center overflow-x-hidden px-4 py-8 text-[var(--app-text)] sm:px-6 sm:py-10">

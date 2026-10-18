@@ -15,10 +15,11 @@ import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 import { LandingPage } from './pages/LandingPage';
+import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from './pages/AuthRecoveryPages';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 
-const PUBLIC_ROUTES = ['/', '/login', '/register', '/auth/callback'];
+const PUBLIC_ROUTES = ['/', '/login', '/register', '/auth/callback', '/forgot-password', '/reset-password', '/verify-email'];
 
 function AppContent() {
     const { pathname } = useLocation();
@@ -33,6 +34,9 @@ function AppContent() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/verify-email" element={<VerifyEmailPage />} />
 
                     <Route path="/" element={<LandingPage />} />
                     <Route

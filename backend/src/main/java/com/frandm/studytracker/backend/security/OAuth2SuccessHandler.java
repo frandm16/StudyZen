@@ -52,7 +52,15 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
         String providerUserId = oAuth2User.getAttribute("sub");
-        String email = oAuth2User.getAttribute("email");
+        String email = Optional.ofNullable((String) oAuth2User.getAttribute("email"))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(value -> !value.isBlank())
+                .orElseThrow(() -> new IllegalStateException("Google account email is missing"));
+        Object emailVerifiedAttribute = oAuth2User.getAttribute("email_verified");
+        if (!Boolean.TRUE.equals(emailVerifiedAttribute)) {
+            throw new IllegalStateException("Google account email is not verified");
+        }
         String name = oAuth2User.getAttribute("name");
         String picture = Optional.ofNullable((String) oAuth2User.getAttribute("picture"))
                 .orElse((String) oAuth2User.getAttribute("avatar_url"));
@@ -69,9 +77,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                         newUser.setEmail(email);
                         newUser.setDisplayName(name);
                         newUser.setAvatarUrl(picture);
-                        newUser.setEmailVerifiedAt(OffsetDateTime.now());
-                        return userRepository.save(newUser);
+                        return newUser;
                     });
+                    if (u.getEmailVerifiedAt() == null) u.setEmailVerifiedAt(OffsetDateTime.now());
+                    userRepository.save(u);
 
                     AuthIdentity identity = new AuthIdentity();
                     identity.setUserId(u.getId());
@@ -82,6 +91,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     return u;
                 });
 
+        user.setEmailVerifiedAt(user.getEmailVerifiedAt() == null ? OffsetDateTime.now() : user.getEmailVerifiedAt());
         if (!user.isActive()) throw new IllegalStateException("Account is inactive");
         user.setLastLoginAt(OffsetDateTime.now());
         userRepository.save(user);

@@ -10,6 +10,22 @@ export const authService = {
         await api.post('/auth/login', credentials);
     },
 
+    requestPasswordReset: async (email: string): Promise<void> => {
+        await api.post('/auth/forgot-password', { email });
+    },
+
+    resetPassword: async (token: string, password: string): Promise<void> => {
+        await api.post('/auth/reset-password', { token, password });
+    },
+
+    verifyEmail: async (token: string): Promise<void> => {
+        await api.post('/auth/verify-email', { token });
+    },
+
+    resendVerification: async (email: string): Promise<void> => {
+        await api.post('/auth/resend-verification', { email });
+    },
+
     logout: async (): Promise<void> => {
         await api.post('/auth/logout');
     },

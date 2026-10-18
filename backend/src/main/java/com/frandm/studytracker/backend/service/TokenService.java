@@ -58,7 +58,7 @@ public class TokenService {
                 .orElseThrow(() -> new RuntimeException("Invalid or revoked refresh token"));
 
         OffsetDateTime now = OffsetDateTime.now();
-        if (existing.getExpiresAt().isBefore(now)) {
+        if (!existing.getExpiresAt().isAfter(now)) {
             throw new IllegalArgumentException("Refresh token expired");
         }
         if (refreshTokenRepository.claimForRotation(existing.getId(), now) != 1) {
@@ -67,7 +67,8 @@ public class TokenService {
 
         var user = userRepository.findById(existing.getUserId())
                 .filter(com.frandm.studytracker.backend.model.User::isActive)
-                .orElseThrow(() -> new IllegalArgumentException("User is not active"));
+                .filter(account -> account.getEmailVerifiedAt() != null)
+                .orElseThrow(() -> new IllegalArgumentException("User is not active or email is not verified"));
 
         existing.setRevokedAt(now);
 

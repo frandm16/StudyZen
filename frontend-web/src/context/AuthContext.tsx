@@ -59,7 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const register = (credentials: RegisterCredentials) => authenticate(() => authService.register(credentials), 'Registration failed');
+    const register = async (credentials: RegisterCredentials) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            await authService.register(credentials);
+            setUser(null);
+        } catch (err) {
+            const message = getApiErrorMessage(err) || 'Registration failed';
+            setError(message);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
     const login = (credentials: AuthCredentials) => authenticate(() => authService.login(credentials), 'Login failed');
 
     const logout = async () => {
