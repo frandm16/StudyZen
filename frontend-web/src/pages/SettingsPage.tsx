@@ -16,7 +16,6 @@ import {
     Palette,
     Timer as TimerIcon,
     Clock,
-    Watch,
     Code,
     Check,
     AlertCircle,
@@ -31,6 +30,8 @@ import {
     Sun,
     Moon,
     BookOpen,
+    ChevronUp,
+    ChevronDown,
 } from 'lucide-react';
 
 type TabType =
@@ -38,7 +39,6 @@ type TabType =
     | 'security'
     | 'pomodoro'
     | 'countdown'
-    | 'stopwatch'
     | 'appearance'
     | 'calendar'
     | 'grades'
@@ -93,13 +93,6 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
                 breadcrumb: 'Settings / Countdown',
                 description: 'Configure default duration and quick preset timers.',
                 icon: Clock,
-            },
-            {
-                id: 'stopwatch',
-                label: 'Stopwatch',
-                breadcrumb: 'Settings / Stopwatch',
-                description: 'Customize lap recording, continuous study targets, and break tracking.',
-                icon: Watch,
             },
         ],
     },
@@ -219,6 +212,48 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ checked, onChange, label, d
     );
 };
 
+interface NumberStepperProps {
+    value: number;
+    min: number;
+    max: number;
+    ariaLabel: string;
+    onChange: (value: number) => void;
+}
+
+const NumberStepper: React.FC<NumberStepperProps> = ({ value, min, max, ariaLabel, onChange }) => (
+    <div className="flex overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] focus-within:border-[var(--accent-color)]">
+        <input
+            type="number"
+            min={min}
+            max={max}
+            value={value}
+            aria-label={ariaLabel}
+            onChange={(event) => onChange(Number(event.target.value))}
+            className="min-w-0 flex-1 px-4 py-2.5 bg-transparent text-sm text-[var(--app-text)] focus:outline-none"
+        />
+        <div className="flex flex-col border-l border-[var(--app-border)]">
+            <button
+                type="button"
+                aria-label={`Increase ${ariaLabel.toLowerCase()}`}
+                disabled={value >= max}
+                onClick={() => onChange(Math.min(max, value + 1))}
+                className="flex flex-1 items-center justify-center px-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--accent-color)]/10 hover:text-[var(--accent-color)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-[var(--accent-color)] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+                <ChevronUp size={15} aria-hidden="true" />
+            </button>
+            <button
+                type="button"
+                aria-label={`Decrease ${ariaLabel.toLowerCase()}`}
+                disabled={value <= min}
+                onClick={() => onChange(Math.max(min, value - 1))}
+                className="flex flex-1 items-center justify-center border-t border-[var(--app-border)] px-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--accent-color)]/10 hover:text-[var(--accent-color)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-[var(--accent-color)] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+                <ChevronDown size={15} aria-hidden="true" />
+            </button>
+        </div>
+    </div>
+);
+
 export const SettingsPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('profile-details');
     const { user, updateProfile, isLoading } = useAuth();
@@ -244,8 +279,6 @@ export const SettingsPage: React.FC = () => {
     const [weekStartsOn, setWeekStartsOn] = useState(1);
     const [gradeScaleMax, setGradeScaleMax] = useState('10.0');
     const [passGrade, setPassGrade] = useState('5.0');
-    const [stopwatchTargetHours, setStopwatchTargetHours] = useState(2);
-    const [enableLapRecording, setEnableLapRecording] = useState(true);
 
     const [accountError, setAccountError] = useState<string | null>(null);
 
@@ -286,7 +319,6 @@ export const SettingsPage: React.FC = () => {
                 if (s.weekStartsOn !== undefined) setWeekStartsOn(s.weekStartsOn);
                 if (s.gradeScaleMax !== undefined) setGradeScaleMax(String(s.gradeScaleMax));
                 if (s.passGrade !== undefined) setPassGrade(String(s.passGrade));
-                if (s.stopwatchTargetHours !== undefined) setStopwatchTargetHours(s.stopwatchTargetHours);
                 if (s.pomodoroWorkMinutes && s.pomodoroWorkMinutes !== timer.workMinutes) {
                     timer.setWorkMinutes(s.pomodoroWorkMinutes);
                 }
@@ -453,7 +485,7 @@ export const SettingsPage: React.FC = () => {
                                         <h2 className="px-2 text-[10px] font-bold text-[var(--app-text-muted)] uppercase tracking-widest">
                                             {group.title}
                                         </h2>
-                                        {group.items.map((item) => {
+                                        {group.items.filter((item) => item.id !== 'security' || user?.hasPassword === true).map((item) => {
                                             const Icon = item.icon;
                                             const isActive = activeTab === item.id;
                                             return (
@@ -643,13 +675,12 @@ export const SettingsPage: React.FC = () => {
                                                     <span>Work / Focus Time</span>
                                                     <span className="text-[var(--accent-color)] font-bold">{timer.workMinutes || 25} mins</span>
                                                 </div>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="120"
+                                                <NumberStepper
                                                     value={timer.workMinutes}
-                                                    onChange={(e) => handleTimerChange('workMinutes', Number(e.target.value))}
-                                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-sm text-[var(--app-text)] focus:outline-none focus:border-[var(--accent-color)]"
+                                                    min={1}
+                                                    max={120}
+                                                    ariaLabel="Work / focus time"
+                                                    onChange={(value) => handleTimerChange('workMinutes', value)}
                                                 />
                                             </div>
 
@@ -658,13 +689,12 @@ export const SettingsPage: React.FC = () => {
                                                     <span>Short Break</span>
                                                     <span className="text-[var(--accent-color)] font-bold">{timer.shortBreakMinutes || 5} mins</span>
                                                 </div>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="60"
+                                                <NumberStepper
                                                     value={timer.shortBreakMinutes}
-                                                    onChange={(e) => handleTimerChange('shortBreakMinutes', Number(e.target.value))}
-                                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-sm text-[var(--app-text)] focus:outline-none focus:border-[var(--accent-color)]"
+                                                    min={1}
+                                                    max={60}
+                                                    ariaLabel="Short break"
+                                                    onChange={(value) => handleTimerChange('shortBreakMinutes', value)}
                                                 />
                                             </div>
 
@@ -673,13 +703,12 @@ export const SettingsPage: React.FC = () => {
                                                     <span>Long Break</span>
                                                     <span className="text-[var(--accent-color)] font-bold">{timer.longBreakMinutes || 15} mins</span>
                                                 </div>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="60"
+                                                <NumberStepper
                                                     value={timer.longBreakMinutes}
-                                                    onChange={(e) => handleTimerChange('longBreakMinutes', Number(e.target.value))}
-                                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-sm text-[var(--app-text)] focus:outline-none focus:border-[var(--accent-color)]"
+                                                    min={1}
+                                                    max={60}
+                                                    ariaLabel="Long break"
+                                                    onChange={(value) => handleTimerChange('longBreakMinutes', value)}
                                                 />
                                             </div>
 
@@ -688,13 +717,12 @@ export const SettingsPage: React.FC = () => {
                                                     <span>Sessions Before Long Break</span>
                                                     <span className="text-[var(--accent-color)] font-bold">{timer.sessionsUntilLongBreak || 4} sessions</span>
                                                 </div>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="12"
+                                                <NumberStepper
                                                     value={timer.sessionsUntilLongBreak}
-                                                    onChange={(e) => handleTimerChange('sessionsUntilLongBreak', Number(e.target.value))}
-                                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-sm text-[var(--app-text)] focus:outline-none focus:border-[var(--accent-color)]"
+                                                    min={1}
+                                                    max={12}
+                                                    ariaLabel="Sessions before long break"
+                                                    onChange={(value) => handleTimerChange('sessionsUntilLongBreak', value)}
                                                 />
                                             </div>
                                         </div>
@@ -732,13 +760,12 @@ export const SettingsPage: React.FC = () => {
                                             <label className="block text-xs font-semibold text-[var(--app-text)] mb-1.5 uppercase tracking-wider">
                                                 Default Countdown Minutes
                                             </label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="180"
+                                            <NumberStepper
                                                 value={timer.countdownMinutes}
-                                                onChange={(e) => handleTimerChange('countdownMinutes', Number(e.target.value))}
-                                                className="w-full px-4 py-2.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-sm text-[var(--app-text)] focus:outline-none focus:border-[var(--accent-color)]"
+                                                min={1}
+                                                max={180}
+                                                ariaLabel="Default countdown minutes"
+                                                onChange={(value) => handleTimerChange('countdownMinutes', value)}
                                             />
                                         </div>
 
@@ -761,41 +788,6 @@ export const SettingsPage: React.FC = () => {
                                                 ))}
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'stopwatch' && (
-                                <div className="space-y-6 max-w-3xl">
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-6">
-                                        <h3 className="font-bold text-[var(--app-text)] text-sm tracking-wide uppercase text-[var(--app-text-muted)]">Stopwatch Settings</h3>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-[var(--app-text)] mb-1.5 uppercase tracking-wider">
-                                                Target Continuous Study Alert (Hours)
-                                            </label>
-                                            <select
-                                                value={stopwatchTargetHours}
-                                                onChange={(e) => {
-                                                    const val = Number(e.target.value);
-                                                    setStopwatchTargetHours(val);
-                                                    saveAutosetting('stopwatchTargetHours', { stopwatchTargetHours: val });
-                                                }}
-                                                className="w-full px-4 py-2.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-sm text-[var(--app-text)] focus:outline-none focus:border-[var(--accent-color)] cursor-pointer"
-                                            >
-                                                <option value={1}>1 Hour Target</option>
-                                                <option value={2}>2 Hours Target</option>
-                                                <option value={3}>3 Hours Target</option>
-                                                <option value={4}>4 Hours Target</option>
-                                            </select>
-                                        </div>
-
-                                        <ToggleSwitch
-                                            label="Enable Lap Split Time Recording"
-                                            description="Track study splits during stopwatch mode"
-                                            checked={enableLapRecording}
-                                            onChange={(val) => setEnableLapRecording(val)}
-                                        />
                                     </div>
                                 </div>
                             )}
@@ -916,7 +908,7 @@ export const SettingsPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {activeTab === 'security' && (
+                            {activeTab === 'security' && user?.hasPassword === true && (
                                 <form onSubmit={handleProfileSubmit} className="space-y-6 max-w-2xl">
                                     <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-4">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Change Password</h3>

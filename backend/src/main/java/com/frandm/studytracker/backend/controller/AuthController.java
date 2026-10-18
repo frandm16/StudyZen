@@ -1,6 +1,6 @@
 package com.frandm.studytracker.backend.controller;
 
-import com.frandm.studytracker.backend.model.User;
+import com.frandm.studytracker.backend.dto.auth.AuthenticatedUserResponse;
 import com.frandm.studytracker.backend.security.AuthCookies;
 import com.frandm.studytracker.backend.security.CurrentUser;
 import com.frandm.studytracker.backend.security.JwtTokenProvider;
@@ -84,11 +84,13 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<User> getMe() { return ResponseEntity.ok(authService.getMe(CurrentUser.id())); }
+    public ResponseEntity<AuthenticatedUserResponse> getMe() {
+        return ResponseEntity.ok(AuthenticatedUserResponse.from(authService.getMe(CurrentUser.id())));
+    }
 
     @PatchMapping("/profile")
-    public ResponseEntity<User> updateProfile(@RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(authService.updateProfile(CurrentUser.id(), body));
+    public ResponseEntity<AuthenticatedUserResponse> updateProfile(@RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(AuthenticatedUserResponse.from(authService.updateProfile(CurrentUser.id(), body)));
     }
 
     private ResponseEntity<Map<String, String>> withCookies(TokenService.TokenPair pair, HttpServletResponse response) {

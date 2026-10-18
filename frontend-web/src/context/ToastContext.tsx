@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, CircleAlert, Info, TriangleAlert, X } from 'lucide-react';
 import { notificationService } from '../services/notification-service';
+import { useTimerContext } from './TimerContext';
 
 type ToastTone = 'success' | 'error' | 'warning' | 'info';
 type ToastInput = { title: string; description?: string; tone?: ToastTone; duration?: number; persist?: boolean };
@@ -17,6 +18,7 @@ const toneStyles: Record<ToastTone, string> = {
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+    const { sound } = useTimerContext();
     const [toasts, setToasts] = useState<ToastItem[]>([]);
     const timers = useRef(new Map<number, number>());
     const remove = useCallback((id: number) => {
@@ -27,8 +29,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }, []);
     const notify = useCallback((input: ToastInput) => {
         const id = ++toastSequence;
-        const toast = { ...input, id, tone: input.tone ?? 'info' };
+        const tone = input.tone ?? 'info';
+        const toast = { ...input, id, tone };
         setToasts((current) => [...current.slice(-3), toast]);
+        sound.playNotification(tone);
         timers.current.set(id, window.setTimeout(() => remove(id), input.duration ?? 5000));
     }, [remove]);
     const outcome = useCallback((input: ToastInput) => {

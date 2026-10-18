@@ -117,15 +117,15 @@ function AppContent() {
 export function App() {
     return (
         <ThemeProvider>
-            <ToastProvider>
             <AuthProvider>
                 <TimerProvider>
-                    <BrowserRouter>
-                        <AppContent />
-                    </BrowserRouter>
+                    <ToastProvider>
+                        <BrowserRouter>
+                            <AppContent />
+                        </BrowserRouter>
+                    </ToastProvider>
                 </TimerProvider>
             </AuthProvider>
-            </ToastProvider>
         </ThemeProvider>
     );
 }

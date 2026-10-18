@@ -16,6 +16,7 @@ export interface User {
     avatarUrl?: string;
     createdAt?: string;
     updatedAt?: string;
+    hasPassword: boolean;
 }
 
 export interface UpdateProfileDTO {
