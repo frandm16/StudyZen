@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { statsService, type Heatmap, type WeeklyStats } from '../services/stats-service';
+import { statsService, type Heatmap } from '../services/stats-service';
 import { sessionService } from '../services/session-service';
 import type { Session } from '../types/session';
 import {
@@ -24,8 +24,8 @@ export function ProfilePage() {
 
     const [loading, setLoading] = useState(true);
     const [heatmap, setHeatmap] = useState<Heatmap>({});
-    const [weeklyStats, setWeeklyStats] = useState<WeeklyStats>({});
     const [recentSessions, setRecentSessions] = useState<Session[]>([]);
+    const [sessionCount, setSessionCount] = useState(0);
     const [totalMinutes, setTotalMinutes] = useState(0);
     const [avgFocus, setAvgFocus] = useState<number | null>(null);
     const [avatarError, setAvatarError] = useState(false);
@@ -39,9 +39,8 @@ export function ProfilePage() {
         const fetchStats = async () => {
             setLoading(true);
             try {
-                const [heatmapData, weeklyData, sessionsData] = await Promise.allSettled([
+                const [heatmapData, sessionsData] = await Promise.allSettled([
                     statsService.getHeatmap(),
-                    statsService.getWeekly(),
                     sessionService.getAll(),
                 ]);
 
@@ -49,13 +48,11 @@ export function ProfilePage() {
                     setHeatmap(heatmapData.value);
                 }
 
-                if (weeklyData.status === 'fulfilled' && weeklyData.value) {
-                    setWeeklyStats(weeklyData.value);
-                }
 
                 if (sessionsData.status === 'fulfilled' && Array.isArray(sessionsData.value)) {
                     const sessions = sessionsData.value;
                     setRecentSessions(sessions.slice(0, 8));
+                    setSessionCount(sessions.length);
 
                     const totalMins = sessions.reduce((acc, s) => acc + (s.totalMinutes || 0), 0);
                     setTotalMinutes(totalMins);
@@ -80,14 +77,14 @@ export function ProfilePage() {
 
     const hoursStudied = Math.floor(totalMinutes / 60);
     const remainingMins = totalMinutes % 60;
-    const completedSessionsCount = recentSessions.length;
+    const completedSessionsCount = sessionCount;
 
     const today = new Date();
     const days30: { dateStr: string; dayNum: number; minutes: number }[] = [];
     for (let i = 29; i >= 0; i--) {
         const d = new Date();
         d.setDate(today.getDate() - i);
-        const iso = d.toISOString().split('T')[0];
+        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         days30.push({
             dateStr: iso,
             dayNum: d.getDate(),
@@ -95,7 +92,16 @@ export function ProfilePage() {
         });
     }
 
-    const activeDaysCount = Object.values(heatmap).filter((m) => m > 0).length;
+    const activeDaysCount = days30.filter((day) => day.minutes > 0).length;
+    const startOfCurrentWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    startOfCurrentWeek.setDate(startOfCurrentWeek.getDate() - ((startOfCurrentWeek.getDay() + 6) % 7));
+    const weeklyDays = Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(startOfCurrentWeek);
+        date.setDate(startOfCurrentWeek.getDate() + index);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        return { label: date.toLocaleDateString('en-US', { weekday: 'short' }), minutes: heatmap[key] ?? 0 };
+    });
+    const weeklyTotal = weeklyDays.reduce((total, day) => total + day.minutes, 0);
     const initials = user.displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
     const hasHeaderAvatar = !!user.avatarUrl && !avatarError;
 
@@ -260,8 +266,7 @@ export function ProfilePage() {
                             </div>
 
                             <div className="space-y-3.5 pt-2">
-                                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => {
-                                    const mins = weeklyStats[day] || (idx === 0 ? 90 : idx === 1 ? 45 : idx === 2 ? 120 : 60);
+                                {weeklyDays.map(({ label: day, minutes: mins }) => {
                                     const maxMins = 180;
                                     const pct = Math.min(100, Math.round((mins / maxMins) * 100));
 
@@ -285,9 +290,9 @@ export function ProfilePage() {
 
                         <div className="pt-4 border-t border-[var(--app-border)] flex items-center justify-between text-xs text-[var(--app-text-muted)] font-medium">
                             <span className="flex items-center gap-1">
-                                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> High focus average
+                                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> Average focus: {avgFocus !== null ? `${avgFocus} / 5` : 'N/A'}
                             </span>
-                            <span>Weekly total: ~6h</span>
+                            <span>Weekly total: {weeklyTotal >= 60 ? `${Math.floor(weeklyTotal / 60)}h ${weeklyTotal % 60}m` : `${weeklyTotal}m`}</span>
                         </div>
                     </div>
 

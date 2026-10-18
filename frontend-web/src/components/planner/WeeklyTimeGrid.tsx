@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { dateKey, localDateFromTimestamp } from '../../lib/planner-dates';
 import { buildGridSelection, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_END_HOUR, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_START_HOUR, type GridSelection } from '../../lib/week-grid';
@@ -26,12 +26,30 @@ interface DragState {
 const hourLabel = (hour: number) => `${String(hour).padStart(2, '0')}:00`;
 
 export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, onEdit, onMove }: WeeklyTimeGridProps) {
+    const [now, setNow] = useState(() => new Date());
     const [drag, setDrag] = useState<DragState | null>(null);
     const [moving, setMoving] = useState<{ item: ScheduledSession; date: string; start: number; currentDate: string; current: number; pointerId: number; originX: number; originY: number; didMove: boolean } | null>(null);
     const movingRef = useRef<typeof moving>(null);
     const suppressClickRef = useRef<number | null>(null);
     const gridRef = useRef<HTMLDivElement>(null);
+    const scrolledWeekRef = useRef<string | null>(null);
     const dragRef = useRef<DragState | null>(null);
+
+    useEffect(() => {
+        const id = window.setInterval(() => setNow(new Date()), 60_000);
+        return () => window.clearInterval(id);
+    }, []);
+
+    useEffect(() => {
+        const container = gridRef.current?.parentElement;
+        const weekKey = dates.map(dateKey).join(':');
+        const today = dates.some((date) => dateKey(date) === dateKey(now));
+        if (!container || !today || now.getHours() < WEEK_GRID_START_HOUR || now.getHours() >= WEEK_GRID_END_HOUR || scrolledWeekRef.current === weekKey) return;
+        scrolledWeekRef.current = weekKey;
+        const minutes = now.getHours() * 60 + now.getMinutes() - WEEK_GRID_START_HOUR * 60;
+        const offset = minutes / 60 * WEEK_GRID_HOUR_HEIGHT;
+        container.scrollTop = Math.max(0, offset - container.clientHeight * 0.35);
+    }, [dates, now]);
     const topicById = new Map(topics.map((topic) => [topic.id, topic]));
     const subjectById = new Map(subjects.map((subject) => [subject.id, subject]));
     const visibleDays = new Set(dates.map(dateKey));
@@ -152,10 +170,10 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEdit(item); }
     };
 
-    return <section className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-0 pb-3 pt-1 shadow-sm sm:pb-4 sm:pt-2" aria-label="Weekly study calendar">
+    return <section className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] px-0 pb-3 pt-1 sm:pb-4 sm:pt-2" aria-label="Weekly study calendar">
         <div className="max-h-[70vh] overflow-auto overscroll-contain">
             <div className="min-w-[900px]">
-                <div className="sticky top-0 z-30 grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)] bg-[var(--app-card-bg)]">
+                <div className="sticky top-0 z-30 grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)] bg-[var(--app-bg)]">
                     <div className="pb-3" />
                     {dates.map((date) => <div key={dateKey(date)} className="px-2 pb-2 pt-1 text-center"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p><p className="mt-1 text-sm font-bold">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>)}
                 </div>
@@ -165,7 +183,11 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
                         const key = dateKey(date);
                         const daySlots = slots.filter((slot) => slot.date === key);
                         const range = drag && dateKey(drag.date) === key ? buildGridSelection(drag.date, drag.start, drag.current) : null;
+                        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+                        const showNowLine = key === dateKey(now) && nowMinutes >= WEEK_GRID_START_HOUR * 60 && nowMinutes <= WEEK_GRID_END_HOUR * 60;
+                        const nowTop = (nowMinutes - WEEK_GRID_START_HOUR * 60) / 60 * WEEK_GRID_HOUR_HEIGHT;
                         return <div key={key} data-calendar-day="true" className="group relative border-l border-[var(--app-border)]" style={{ height: WEEK_GRID_HEIGHT }}>
+                            {showNowLine && <div className="pointer-events-none absolute inset-x-0 z-20 border-t-2 border-red-500" style={{ top: nowTop }} aria-hidden="true"><span className="absolute -left-1.5 -top-[5px] h-2 w-2 rounded-full bg-red-500" /></div>}
                             <div className="absolute inset-0 grid" style={{ gridTemplateRows: `repeat(${WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR}, ${WEEK_GRID_HOUR_HEIGHT}px)` }} aria-hidden="true">{Array.from({ length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR }, (_, index) => <div key={index} className="border-t border-[var(--app-border)]/70" />)}</div>
                             <div className="absolute inset-0 touch-pan-y select-none cursor-crosshair" onPointerDown={(event) => startDrag(event, date)} onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={() => { dragRef.current = null; setDrag(null); }} role="presentation" aria-hidden="true" />
                             {daySlots.map(({ item, top, height, topic, subject, lane, laneCount, laneSpan }) => {

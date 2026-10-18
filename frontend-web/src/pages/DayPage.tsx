@@ -629,6 +629,14 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     const showNowLine = selectedKey === toKey(now) && nowMinutes >= GRID_START && nowMinutes <= GRID_END;
 
+    useEffect(() => {
+        if (selectedKey !== toKey(new Date())) return;
+        const container = gridRef.current?.parentElement;
+        if (!container || nowMinutes < GRID_START || nowMinutes > GRID_END) return;
+        const offset = (nowMinutes - GRID_START) * HOUR_HEIGHT / 60;
+        container.scrollTop = Math.max(0, offset - container.clientHeight * 0.35);
+    }, [selectedKey]);
+
     const fail = (failure: unknown, title = 'Action failed') => notify({ title, description: getApiErrorMessage(failure), tone: 'error' });
 
     const savePlan = async () => {
@@ -838,6 +846,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     urgency: values.urgency as any,
                     dueAt: `${selectedKey}T${values.allDay ? '23:59' : values.time}:00`,
                     allDay: values.allDay,
+                    subjectId: dialogTopic.subjectId,
                     topicId: dialogTopic.id,
                 });
                 setDeadlines((current) => [...current, created]);
@@ -943,7 +952,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
 
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-                    <section className="min-w-0 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)]/45 p-4 sm:p-6">
+                    <section className="min-w-0 rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 sm:p-6">
                         <h2 className="border-b border-[var(--app-border)] pb-4 text-lg font-bold text-[var(--app-text)]">{formatLongDate(selected)}</h2>
 
                         <div className="mt-6">
@@ -987,12 +996,6 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                     <p className={`min-w-0 flex-1 truncate text-sm font-semibold ${todo.isCompleted ? 'text-[var(--app-text-muted)] line-through' : 'text-[var(--app-text)]'}`}>
                                         {todo.text}
                                     </p>
-                                    <button
-                                        onClick={() => startStudy({ title: todo.text })}
-                                        className={`rounded-full border border-[var(--app-border)] bg-[var(--app-bg)] px-3 py-1 text-xs font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] ${focusRing}`}
-                                    >
-                                        Study
-                                    </button>
                                     <RowMenu
                                         open={openMenu === `todo-${todo.id}`}
                                         onToggle={() => setOpenMenu((current) => (current === `todo-${todo.id}` ? null : `todo-${todo.id}`))}
@@ -1073,7 +1076,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                         </ul>
                     </section>
 
-                    <section className="min-w-0 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)]/45 p-4 sm:p-6">
+                    <section className="min-w-0 rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4 sm:p-6">
                         <p className="pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
                             Day <span aria-hidden>•</span>{' '}
                             <span className="text-[var(--accent-color)] font-bold">
