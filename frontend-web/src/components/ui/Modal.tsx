@@ -8,7 +8,7 @@ export const fieldClass =
 export const primaryButton =
     'cursor-pointer rounded-full bg-[var(--accent-color)] px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 ' +
     'disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 ' +
-    'focus-visible:outline-[var(--accent-color)] shadow-md';
+    'focus-visible:outline-[var(--accent-color)]';
 
 export const ghostButton =
     'cursor-pointer rounded-full border border-[var(--app-border)] px-5 py-2.5 text-sm text-[var(--app-text-muted)] transition-colors ' +

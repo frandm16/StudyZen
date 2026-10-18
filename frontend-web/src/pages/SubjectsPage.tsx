@@ -314,7 +314,7 @@ export function SubjectsPage() {
     }
 
     return (
-        <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8 space-y-6">
+        <div className="mx-auto max-w-6xl space-y-7 p-4 sm:p-6 lg:p-8">
             {selectedSubject ? (
                 <div className="space-y-6">
                     <SubjectDetailHeader
@@ -384,7 +384,7 @@ export function SubjectsPage() {
                 </div>
             ) : (
                 <div className="space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex flex-col gap-5 border-b border-[var(--app-border)] pb-6 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <h1 className="text-2xl sm:text-3xl font-black text-[var(--app-text)]">
                                 Academic Subjects
@@ -400,7 +400,7 @@ export function SubjectsPage() {
                                 setEditingSubject(null);
                                 setSubjectModalOpen(true);
                             }}
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold text-white bg-[var(--accent-color)] hover:brightness-110 shadow-lg shadow-[var(--accent-color)]/25 transition-all cursor-pointer shrink-0"
+                            className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--accent-color)] px-5 py-3 text-sm font-bold text-white transition-colors hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
                         >
                             <Plus className="h-4 w-4" />
                             <span>New Subject</span>
@@ -429,7 +429,7 @@ export function SubjectsPage() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Search subjects by name or notes..."
-                            className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] text-xs text-[var(--app-text)] placeholder-[var(--app-text-muted)] focus:outline-none focus:border-[var(--accent-color)] shadow-sm"
+                            className="w-full rounded-xl border border-[var(--app-border)] bg-transparent py-3 pl-10 pr-4 text-sm text-[var(--app-text)] placeholder:text-[var(--app-text-muted)] focus:border-[var(--accent-color)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
                         />
                     </div>
 

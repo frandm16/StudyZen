@@ -204,7 +204,7 @@ export function TimerPage() {
             <div className="flex w-full max-w-2xl flex-col items-center gap-4">
                 <section
                     aria-label="Study timer"
-                    className="w-full rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-6 shadow-2xl sm:p-10 transition-colors"
+                    className="w-full rounded-[2rem] border border-[var(--app-border)] bg-[var(--app-card-bg)]/65 p-6 transition-colors sm:p-10"
                 >
                     <div
                         role="radiogroup"
@@ -245,7 +245,7 @@ export function TimerPage() {
                         <div
                             role="timer"
                             aria-label={`Time: ${timer.formattedTime}`}
-                            className="mt-4 font-pt text-8xl font-bold tabular-nums leading-none tracking-tight sm:text-9xl text-[var(--app-text)]"
+                            className="mt-5 font-pt text-7xl font-bold tabular-nums leading-none tracking-[-0.06em] text-[var(--app-text)] sm:text-9xl"
                         >
                             {timer.formattedTime}
                         </div>
@@ -293,7 +293,7 @@ export function TimerPage() {
                         <button
                             onClick={timer.toggle}
                             onMouseUp={(e) => e.currentTarget.blur()}
-                            className={`min-w-36 cursor-pointer rounded-full bg-[var(--accent-color)] px-10 py-3.5 text-sm font-bold text-white transition-opacity hover:opacity-90 shadow-lg ${focusRing}`}
+                            className={`min-w-36 cursor-pointer rounded-full bg-[var(--accent-color)] px-10 py-3.5 text-sm font-bold text-white transition-opacity hover:opacity-90 ${focusRing}`}
                         >
                             {startLabel}
                         </button>

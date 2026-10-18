@@ -461,28 +461,26 @@ export const SettingsPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-[calc(100vh-4.5rem)] bg-[var(--app-bg)] text-[var(--app-text)] p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-200">
-            <div className="mx-auto max-w-6xl space-y-4">
-                
+        <div className="min-h-[calc(100vh-4.5rem)] bg-[var(--app-bg)] text-[var(--app-text)] px-4 py-6 sm:px-6 lg:px-10 font-sans transition-colors duration-200">
+            <div className="mx-auto max-w-7xl space-y-7">
                 <div className="flex items-center gap-2 text-xs font-medium text-[var(--app-text-muted)]">
                     <span>Settings</span>
-                    <span>/</span>
+                    <span aria-hidden="true">/</span>
                     <span className="text-[var(--accent-color)] font-semibold">{activeItem.label}</span>
                 </div>
 
-                <div className="flex flex-col md:flex-row bg-[var(--app-card-bg)] rounded-3xl border border-[var(--app-border)] shadow-2xl overflow-hidden min-h-[680px] transition-colors duration-200">
-                    
-                    <aside className="w-full md:w-64 bg-neutral-500/5 border-r border-b md:border-b-0 border-[var(--app-border)] p-5 flex flex-col justify-between shrink-0">
+                <div className="flex flex-col md:flex-row gap-8 lg:gap-14 min-h-[680px]">
+                    <aside className="w-full md:w-56 lg:w-60 md:border-r border-[var(--app-border)] md:pr-6 flex flex-col justify-between shrink-0">
                         <div>
-                            <div className="mb-6 px-1">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)] block mb-1">General</span>
-                                <h1 className="text-2xl font-extrabold text-[var(--app-text)] tracking-tight">Settings</h1>
+                            <div className="mb-7 px-1">
+                                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--app-text-muted)] block mb-2">Preferences</span>
+                                <h1 className="text-3xl font-extrabold text-[var(--app-text)] tracking-tight">Settings</h1>
                             </div>
 
                             <nav className="space-y-6" aria-label="Settings categories">
                                 {SIDEBAR_GROUPS.map((group) => (
-                                    <div key={group.title} className="space-y-1.5">
-                                        <h2 className="px-2 text-[10px] font-bold text-[var(--app-text-muted)] uppercase tracking-widest">
+                                    <div key={group.title} className="space-y-2">
+                                        <h2 className="px-2 text-[10px] font-bold text-[var(--app-text-muted)] uppercase tracking-[0.16em]">
                                             {group.title}
                                         </h2>
                                         {group.items.filter((item) => item.id !== 'security' || user?.hasGoogleIdentity !== true).map((item) => {
@@ -492,9 +490,10 @@ export const SettingsPage: React.FC = () => {
                                                 <button
                                                     key={item.id}
                                                     onClick={() => setActiveTab(item.id)}
-                                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 text-left ${
+                                                    aria-current={isActive ? 'page' : undefined}
+                                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors duration-200 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)] ${
                                                         isActive
-                                                            ? 'bg-[var(--accent-color)]/15 text-[var(--accent-color)] border border-[var(--accent-color)]/30 shadow-md font-bold'
+                                                            ? 'bg-[var(--accent-color)]/10 text-[var(--accent-color)] border-l-2 border-[var(--accent-color)] font-bold'
                                                             : 'text-[var(--app-text-muted)] hover:bg-neutral-500/10 hover:text-[var(--app-text)]'
                                                     }`}
                                                 >
@@ -509,7 +508,7 @@ export const SettingsPage: React.FC = () => {
                         </div>
 
                         {user && (
-                            <div className="mt-8 pt-4 border-t border-[var(--app-border)] px-1 flex items-center gap-3">
+                            <div className="mt-8 pt-5 border-t border-[var(--app-border)] px-1 flex items-center gap-3">
                                 <div className="h-9 w-9 rounded-full overflow-hidden shrink-0 bg-neutral-500/10 border border-[var(--app-border)] flex items-center justify-center text-white text-xs font-bold">
                                     <img src={avatarUrl} alt={user.displayName} className="h-full w-full object-cover" />
                                 </div>
@@ -521,20 +520,19 @@ export const SettingsPage: React.FC = () => {
                         )}
                     </aside>
 
-                    <main className="flex-1 flex flex-col min-w-0 bg-[var(--app-card-bg)]">
-                        
-                        <header className="px-6 py-5 border-b border-[var(--app-border)] bg-[var(--app-card-bg)]">
+                    <main className="flex-1 flex flex-col min-w-0">
+                        <header className="pb-6 border-b border-[var(--app-border)]">
                             <p className="text-xs font-semibold text-[var(--app-text-muted)]">{SIDEBAR_GROUPS.find((g) => g.items.some((i) => i.id === activeTab))?.title}</p>
                             <h2 className="text-2xl font-bold text-[var(--app-text)] mt-0.5">{activeItem.label}</h2>
                             <p className="text-xs text-[var(--app-text-muted)] mt-1 max-w-xl">{activeItem.description}</p>
                         </header>
 
-                        <div className="p-6 sm:p-8 flex-1 overflow-y-auto space-y-8">
+                        <div className="pt-6 sm:pt-8 flex-1 overflow-y-auto space-y-8">
                             
                             {activeTab === 'profile-details' && (
                                 <form onSubmit={handleProfileSubmit} className="space-y-8 max-w-4xl">
                                     
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] flex flex-col lg:flex-row gap-8 items-start justify-between">
+                                    <div className="border-t border-[var(--app-border)] pt-6 flex flex-col lg:flex-row gap-8 items-start justify-between">
                                         
                                         <div className="space-y-5 flex-1 w-full">
                                             <div>
@@ -623,7 +621,7 @@ export const SettingsPage: React.FC = () => {
                                                     <button
                                                         type="button"
                                                         onClick={handleShuffleAvatar}
-                                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[var(--accent-color)] text-white font-bold text-xs hover:opacity-90 transition-all shadow-md"
+                                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[var(--accent-color)] text-white font-bold text-xs hover:opacity-90 transition-all"
                                                     >
                                                         <Shuffle className="w-3.5 h-3.5" /> Shuffle
                                                     </button>
@@ -656,7 +654,7 @@ export const SettingsPage: React.FC = () => {
                                         <button
                                             type="submit"
                                             disabled={isLoading}
-                                            className="px-6 py-2.5 rounded-xl font-bold text-xs bg-[var(--accent-color)] text-white hover:opacity-90 transition-all cursor-pointer shadow-lg"
+                                            className="px-6 py-2.5 rounded-xl font-bold text-xs bg-[var(--accent-color)] text-white hover:opacity-90 transition-all cursor-pointer"
                                         >
                                             {isLoading ? 'Saving Changes...' : 'Save All Changes'}
                                         </button>
@@ -666,7 +664,7 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'pomodoro' && (
                                 <div className="space-y-6 max-w-3xl">
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-6">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-6">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm tracking-wide uppercase text-[var(--app-text-muted)]">Pomodoro Durations</h3>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -753,7 +751,7 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'countdown' && (
                                 <div className="space-y-6 max-w-3xl">
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-6">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-6">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm tracking-wide uppercase text-[var(--app-text-muted)]">Countdown Duration</h3>
 
                                         <div>
@@ -794,7 +792,7 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'appearance' && (
                                 <div className="space-y-6 max-w-3xl">
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-6">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-6">
                                         <div>
                                             <p className="text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider mb-2">Color Mode</p>
                                             <div className="flex items-center justify-between p-4 rounded-2xl bg-[var(--app-bg)] border border-[var(--app-border)]">
@@ -910,7 +908,7 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'security' && user?.hasGoogleIdentity !== true && user?.hasPassword === true && (
                                 <form onSubmit={handleProfileSubmit} className="space-y-6 max-w-2xl">
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-4">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-4">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Change Password</h3>
 
                                         <div>
@@ -956,7 +954,7 @@ export const SettingsPage: React.FC = () => {
 
                                         <button
                                             type="submit"
-                                            className="px-5 py-2.5 rounded-xl bg-[var(--accent-color)] text-white font-bold text-xs hover:opacity-90 transition-all shadow-md"
+                                            className="px-5 py-2.5 rounded-xl bg-[var(--accent-color)] text-white font-bold text-xs hover:opacity-90 transition-all"
                                         >
                                             Update Password
                                         </button>
@@ -966,7 +964,7 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'calendar' && (
                                 <div className="space-y-6 max-w-2xl">
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-4">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-4">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Calendar Preferences</h3>
 
                                         <div>
@@ -986,7 +984,7 @@ export const SettingsPage: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={handleAcademicSave}
-                                            className="px-5 py-2.5 rounded-xl bg-[var(--accent-color)] text-white font-bold text-xs hover:opacity-90 transition-all shadow-md"
+                                            className="px-5 py-2.5 rounded-xl bg-[var(--accent-color)] text-white font-bold text-xs hover:opacity-90 transition-all"
                                         >
                                             Save Calendar Preferences
                                         </button>
@@ -996,7 +994,7 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'grades' && (
                                 <div className="space-y-6 max-w-2xl">
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-4">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-4">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Grade Scales</h3>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1028,7 +1026,7 @@ export const SettingsPage: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={handleAcademicSave}
-                                            className="px-5 py-2.5 rounded-xl bg-[var(--accent-color)] text-white font-bold text-xs hover:opacity-90 transition-all shadow-md"
+                                            className="px-5 py-2.5 rounded-xl bg-[var(--accent-color)] text-white font-bold text-xs hover:opacity-90 transition-all"
                                         >
                                             Save Grade Scales
                                         </button>
@@ -1040,7 +1038,7 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'sound' && (
                                 <div className="space-y-6 max-w-2xl">
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-6">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-6">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Audio Volumes</h3>
 
                                         <div className="space-y-4">
@@ -1088,7 +1086,7 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'developer' && (
                                 <div className="space-y-6 max-w-2xl">
-                                    <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-4">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-4">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Developer Diagnostic</h3>
 
                                         <div className="bg-[var(--app-bg)] text-emerald-400 p-4 rounded-xl font-mono text-xs space-y-1 border border-[var(--app-border)]">

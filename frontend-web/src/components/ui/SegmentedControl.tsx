@@ -92,7 +92,6 @@ export const SegmentedControl = <T extends string>({
                 className="
                     pointer-events-none absolute inset-y-1
                     rounded-full bg-[var(--app-card-bg)] border border-[var(--app-border)]
-                    shadow-sm
                     transition-[transform,width]
                     duration-300
                     ease-[cubic-bezier(0.22,1,0.36,1)]

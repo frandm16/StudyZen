@@ -873,7 +873,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     return (
         <div className="min-h-[calc(100vh-4.5rem)] bg-[var(--app-bg)] px-4 py-6 text-[var(--app-text)] transition-colors duration-200 sm:px-6 lg:px-10 lg:py-9">
             <div className="mx-auto flex max-w-[1500px] flex-col gap-4">
-                <header className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-4 py-3 shadow-md">
+                <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--app-border)] px-1 py-3">
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setSelected(fromKey(toKey(new Date())))}
@@ -918,7 +918,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     </div>
                 </header>
 
-                <nav aria-label="Week" className="grid grid-cols-7 overflow-hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] shadow-md">
+                <nav aria-label="Week" className="grid grid-cols-7 overflow-hidden border-y border-[var(--app-border)]">
                     {week.map((day) => {
                         const active = toKey(day) === selectedKey;
                         return (
@@ -943,7 +943,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
 
 
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-                    <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-5 shadow-xl sm:p-6">
+                    <section className="min-w-0 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)]/45 p-4 sm:p-6">
                         <h2 className="border-b border-[var(--app-border)] pb-4 text-lg font-bold text-[var(--app-text)]">{formatLongDate(selected)}</h2>
 
                         <div className="mt-6">
@@ -1073,7 +1073,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                         </ul>
                     </section>
 
-                    <section className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-5 shadow-xl sm:p-6">
+                    <section className="min-w-0 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)]/45 p-4 sm:p-6">
                         <p className="pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--app-text-muted)]">
                             Day <span aria-hidden>•</span>{' '}
                             <span className="text-[var(--accent-color)] font-bold">

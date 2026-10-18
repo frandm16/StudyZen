@@ -72,7 +72,7 @@ export const Navbar: React.FC = () => {
     }, [menuOpen]);
 
     return (
-        <header className="sticky top-0 z-50 w-full bg-[var(--app-bg,#fff)]/90 backdrop-blur-xl">
+        <header className="sticky top-0 z-50 w-full border-b border-[var(--app-border)] bg-[var(--app-bg,#fff)]/95 backdrop-blur-xl">
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
                 <div className="relative grid h-[4.5rem] grid-cols-[1fr_auto_1fr] items-center">
                     <Link
@@ -124,7 +124,6 @@ export const Navbar: React.FC = () => {
                 </div>
             </div>
 
-            <div className="h-px bg-[var(--app-border)]" />
         </header>
     );
 };

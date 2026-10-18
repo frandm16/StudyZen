@@ -123,7 +123,7 @@ export const WeekPage = () => {
 
     return <main className="min-h-full bg-[var(--app-bg)] px-4 py-6 text-[var(--app-text)] sm:px-6 lg:px-10 lg:py-9">
         <div className="mx-auto max-w-[1500px] space-y-5">
-            <header className="flex min-h-[58px] items-center justify-between gap-2 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-3 py-3 shadow-md sm:gap-3 sm:px-4">
+            <header className="flex min-h-[58px] flex-wrap items-center justify-between gap-2 border-b border-[var(--app-border)] px-1 py-3 sm:gap-3 sm:px-0">
                 <div className="flex shrink-0 items-center gap-2">
                     <button onClick={() => { const today = new Date(); setAnchor(today); setSelectedDate(today); }} className={button}>Today</button>
                     <button onClick={() => { const next = addDays(anchor, -7); setAnchor(next); setSelectedDate(next); }} aria-label="Previous week" className={iconButton}><ChevronIcon direction="left" className="h-4 w-4" /></button>
@@ -135,7 +135,7 @@ export const WeekPage = () => {
                     <button onClick={() => setSelection({ date: selectedDate, startMinutes: 540, endMinutes: 600 })} aria-label="Schedule session" title="Schedule session" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--app-border)] bg-neutral-500/10 text-[var(--app-text)] transition-colors hover:bg-neutral-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"><PlusIcon className="h-4 w-4" /></button>
                 </div>
             </header>
-            {loading && scheduled.length === 0 ? <div className="rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-10 text-center text-sm text-[var(--app-text-muted)]" role="status">Loading your week…</div> : <>
+            {loading && scheduled.length === 0 ? <div className="border-y border-[var(--app-border)] py-10 text-center text-sm text-[var(--app-text-muted)]" role="status">Loading your week…</div> : <>
                 <AiPlannerPlaceholder />
                 <WeeklyTimeGrid dates={dates} scheduled={scheduled} subjects={subjects} topics={topics} onCreate={setSelection} onEdit={setEditingSession} onMove={moveSession} />
             </>}

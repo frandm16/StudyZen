@@ -36,12 +36,12 @@ export function SubjectCard({
         : 0;
 
     return (
-        <div
+        <article
             onClick={() => onSelect(subject.id)}
-            className="group relative flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4 sm:p-5 transition-all hover:border-[var(--accent-color)]/60 hover:shadow-lg hover:shadow-[var(--accent-color)]/5 cursor-pointer overflow-hidden"
+            className="group relative flex cursor-pointer flex-col items-stretch justify-between gap-4 overflow-hidden border-b border-[var(--app-border)] py-5 transition-colors hover:bg-[var(--app-card-bg)]/45 focus-within:bg-[var(--app-card-bg)]/45 md:flex-row md:items-center"
         >
             <div
-                className="absolute top-0 bottom-0 left-0 w-1.5 transition-opacity"
+                className="absolute inset-y-5 left-0 w-1 transition-opacity"
                 style={{ backgroundColor: subject.color || 'var(--accent-color)' }}
             />
 
@@ -140,6 +140,6 @@ export function SubjectCard({
                     </div>
                 </div>
             </div>
-        </div>
+        </article>
     );
 }

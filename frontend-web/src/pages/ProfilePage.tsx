@@ -101,11 +101,11 @@ export function ProfilePage() {
 
     return (
         <div className="min-h-[calc(100vh-4.5rem)] bg-[var(--app-bg)] text-[var(--app-text)] py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
-            <div className="mx-auto max-w-6xl space-y-6">
+            <div className="mx-auto max-w-6xl space-y-8">
 
-                <div className="bg-[var(--app-card-bg)] rounded-3xl p-6 sm:p-8 shadow-xl border border-[var(--app-border)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 transition-colors duration-200">
+                <div className="flex flex-col items-start justify-between gap-6 border-b border-[var(--app-border)] pb-7 transition-colors duration-200 md:flex-row md:items-center">
                     <div className="flex items-center gap-5">
-                        <div className="h-20 w-20 rounded-3xl overflow-hidden bg-gradient-to-br from-[#4287f5] via-[#6366f1] to-[#7c3aed] flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-[#4287f5]/20 shrink-0">
+                        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-[#4287f5] via-[#6366f1] to-[#7c3aed] flex items-center justify-center text-white text-2xl font-bold">
                             {hasHeaderAvatar ? (
                                 <img
                                     src={user.avatarUrl}
@@ -142,7 +142,7 @@ export function ProfilePage() {
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         <button
                             onClick={() => navigate('/settings')}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-neutral-500/10 text-[var(--app-text)] hover:bg-neutral-500/20 font-semibold text-xs transition-all cursor-pointer border border-[var(--app-border)]"
+                            className="flex-1 cursor-pointer border-b border-[var(--app-border)] px-3 py-3 text-xs font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)] md:flex-none"
                         >
                             <Settings className="w-4 h-4 text-[var(--app-text-muted)]" />
                             Account Settings
@@ -152,7 +152,7 @@ export function ProfilePage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     
-                    <div className="bg-[var(--app-card-bg)] rounded-3xl p-5 shadow-md border border-[var(--app-border)] flex items-center gap-4 transition-colors duration-200">
+                    <div className="bg-transparent rounded-2xl p-5 border-b border-[var(--app-border)] flex items-center gap-4 transition-colors duration-200">
                         <div className="p-3.5 rounded-2xl bg-[var(--accent-color)]/10 text-[var(--accent-color)]">
                             <Clock className="w-6 h-6" />
                         </div>
@@ -165,7 +165,7 @@ export function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="bg-[var(--app-card-bg)] rounded-3xl p-5 shadow-md border border-[var(--app-border)] flex items-center gap-4 transition-colors duration-200">
+                    <div className="bg-transparent rounded-2xl p-5 border-b border-[var(--app-border)] flex items-center gap-4 transition-colors duration-200">
                         <div className="p-3.5 rounded-2xl bg-emerald-500/10 text-emerald-500">
                             <CheckCircle2 className="w-6 h-6" />
                         </div>
@@ -176,7 +176,7 @@ export function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="bg-[var(--app-card-bg)] rounded-3xl p-5 shadow-md border border-[var(--app-border)] flex items-center gap-4 transition-colors duration-200">
+                    <div className="bg-transparent rounded-2xl p-5 border-b border-[var(--app-border)] flex items-center gap-4 transition-colors duration-200">
                         <div className="p-3.5 rounded-2xl bg-amber-500/10 text-amber-500">
                             <Flame className="w-6 h-6" />
                         </div>
@@ -187,7 +187,7 @@ export function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="bg-[var(--app-card-bg)] rounded-3xl p-5 shadow-md border border-[var(--app-border)] flex items-center gap-4 transition-colors duration-200">
+                    <div className="bg-transparent rounded-2xl p-5 border-b border-[var(--app-border)] flex items-center gap-4 transition-colors duration-200">
                         <div className="p-3.5 rounded-2xl bg-purple-500/10 text-purple-500">
                             <Star className="w-6 h-6 fill-purple-500" />
                         </div>
@@ -201,7 +201,7 @@ export function ProfilePage() {
                     </div>
                 </div>
 
-                <div className="bg-[var(--app-card-bg)] rounded-3xl p-6 sm:p-8 shadow-xl border border-[var(--app-border)] space-y-4 transition-colors duration-200">
+                <div className="bg-[var(--app-card-bg)]/45 rounded-2xl p-5 sm:p-7 border border-[var(--app-border)] space-y-4 transition-colors duration-200">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-[var(--accent-color)]" />
@@ -252,7 +252,7 @@ export function ProfilePage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                    <div className="bg-[var(--app-card-bg)] rounded-3xl p-6 sm:p-8 shadow-xl border border-[var(--app-border)] space-y-4 flex flex-col justify-between transition-colors duration-200">
+                    <div className="bg-[var(--app-card-bg)]/45 rounded-2xl p-5 sm:p-7 border border-[var(--app-border)] space-y-4 flex flex-col justify-between transition-colors duration-200">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <BarChart3 className="w-5 h-5 text-[var(--accent-color)]" />
@@ -291,7 +291,7 @@ export function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="bg-[var(--app-card-bg)] rounded-3xl p-6 sm:p-8 shadow-xl border border-[var(--app-border)] space-y-4 transition-colors duration-200">
+                    <div className="bg-[var(--app-card-bg)]/45 rounded-2xl p-5 sm:p-7 border border-[var(--app-border)] space-y-4 transition-colors duration-200">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <BookOpen className="w-5 h-5 text-[var(--accent-color)]" />
