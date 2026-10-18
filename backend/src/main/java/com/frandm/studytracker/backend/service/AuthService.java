@@ -1,7 +1,9 @@
 package com.frandm.studytracker.backend.service;
 
 import com.frandm.studytracker.backend.model.User;
+import com.frandm.studytracker.backend.repository.AuthIdentityRepository;
 import com.frandm.studytracker.backend.repository.UserRepository;
+import com.frandm.studytracker.backend.model.enums.AuthProvider;
 import com.frandm.studytracker.backend.security.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,17 +18,20 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final AuthIdentityRepository authIdentityRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
 
     public AuthService(UserRepository userRepository,
+                       AuthIdentityRepository authIdentityRepository,
                        JwtTokenProvider jwtTokenProvider,
                        TokenService tokenService,
                        PasswordEncoder passwordEncoder,
                        EmailVerificationService emailVerificationService) {
         this.userRepository = userRepository;
+        this.authIdentityRepository = authIdentityRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.tokenService = tokenService;
         this.passwordEncoder = passwordEncoder;
@@ -142,6 +147,10 @@ public class AuthService {
     public User getMe(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
+    public boolean hasGoogleIdentity(UUID userId) {
+        return authIdentityRepository.existsByUserIdAndProvider(userId, AuthProvider.google);
     }
 
     public User updateProfile(UUID userId, Map<String, String> body) {

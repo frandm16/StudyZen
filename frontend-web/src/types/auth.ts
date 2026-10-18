@@ -17,6 +17,7 @@ export interface User {
     createdAt?: string;
     updatedAt?: string;
     hasPassword: boolean;
+    hasGoogleIdentity: boolean;
 }
 
 export interface UpdateProfileDTO {

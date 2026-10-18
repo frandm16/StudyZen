@@ -85,12 +85,17 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<AuthenticatedUserResponse> getMe() {
-        return ResponseEntity.ok(AuthenticatedUserResponse.from(authService.getMe(CurrentUser.id())));
+        var userId = CurrentUser.id();
+        return ResponseEntity.ok(AuthenticatedUserResponse.from(
+                authService.getMe(userId), authService.hasGoogleIdentity(userId)));
+
     }
 
     @PatchMapping("/profile")
     public ResponseEntity<AuthenticatedUserResponse> updateProfile(@RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(AuthenticatedUserResponse.from(authService.updateProfile(CurrentUser.id(), body)));
+        var userId = CurrentUser.id();
+        return ResponseEntity.ok(AuthenticatedUserResponse.from(
+                authService.updateProfile(userId, body), authService.hasGoogleIdentity(userId)));
     }
 
     private ResponseEntity<Map<String, String>> withCookies(TokenService.TokenPair pair, HttpServletResponse response) {

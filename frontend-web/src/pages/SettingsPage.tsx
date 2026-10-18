@@ -485,7 +485,7 @@ export const SettingsPage: React.FC = () => {
                                         <h2 className="px-2 text-[10px] font-bold text-[var(--app-text-muted)] uppercase tracking-widest">
                                             {group.title}
                                         </h2>
-                                        {group.items.filter((item) => item.id !== 'security' || user?.hasPassword === true).map((item) => {
+                                        {group.items.filter((item) => item.id !== 'security' || user?.hasGoogleIdentity !== true).map((item) => {
                                             const Icon = item.icon;
                                             const isActive = activeTab === item.id;
                                             return (
@@ -908,7 +908,7 @@ export const SettingsPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {activeTab === 'security' && user?.hasPassword === true && (
+                            {activeTab === 'security' && user?.hasGoogleIdentity !== true && user?.hasPassword === true && (
                                 <form onSubmit={handleProfileSubmit} className="space-y-6 max-w-2xl">
                                     <div className="bg-neutral-500/5 rounded-2xl p-6 border border-[var(--app-border)] space-y-4">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Change Password</h3>

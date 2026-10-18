@@ -1,6 +1,7 @@
 package com.frandm.studytracker.backend.dto.auth;
 
 import com.frandm.studytracker.backend.model.User;
+import com.frandm.studytracker.backend.model.enums.AuthProvider;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -13,9 +14,10 @@ public record AuthenticatedUserResponse(
         String avatarUrl,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
-        boolean hasPassword
+        boolean hasPassword,
+        boolean hasGoogleIdentity
 ) {
-    public static AuthenticatedUserResponse from(User user) {
+    public static AuthenticatedUserResponse from(User user, boolean hasGoogleIdentity) {
         return new AuthenticatedUserResponse(
                 user.getId(),
                 user.getEmail(),
@@ -25,7 +27,8 @@ public record AuthenticatedUserResponse(
                 user.getAvatarUrl(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
-                user.getPasswordHash() != null
+                user.getPasswordHash() != null,
+                hasGoogleIdentity
         );
     }
 }
