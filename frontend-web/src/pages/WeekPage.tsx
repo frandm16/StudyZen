@@ -5,6 +5,7 @@ import { AiPlannerPlaceholder } from '../components/planner/AiPlannerPlaceholder
 import { CreateScheduledSessionDialog } from '../components/planner/CreateScheduledSessionDialog';
 import { SessionModal } from '../components/subjects/modals/SessionModal';
 import { WeeklyTimeGrid } from '../components/planner/WeeklyTimeGrid';
+import { Skeleton } from '../components/ui/Skeleton';
 import { addDays, dateKey, localDateFromTimestamp, weekRange } from '../lib/planner-dates';
 import { getApiErrorMessage } from '../services/api';
 import { WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, weekGridDates, type GridSelection } from '../lib/week-grid';
@@ -170,7 +171,7 @@ export const WeekPage = () => {
                     <button onClick={() => setSelection({ date: selectedDate, startMinutes: 540, endMinutes: 600 })} aria-label="Schedule session" title="Schedule session" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--app-border)] bg-neutral-500/10 text-[var(--app-text)] transition-colors hover:bg-neutral-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"><PlusIcon className="h-4 w-4" /></button>
                 </div>
             </header>
-            {loading && scheduled.length === 0 ? <div className="border-y border-[var(--app-border)] py-10 text-center text-sm text-[var(--app-text-muted)]" role="status">Loading your week…</div> : <>
+            {loading && scheduled.length === 0 && sessions.length === 0 ? <div className="space-y-4" role="status" aria-label="Loading your week"><div className="grid grid-cols-7 gap-1.5 sm:gap-2">{Array.from({ length: 7 }, (_, index) => <Skeleton key={index} className="h-10 sm:h-14" rounded="lg" />)}</div><div className="overflow-hidden rounded-2xl border border-[var(--app-border)]"><div className="grid grid-cols-7 gap-px bg-[var(--app-border)]">{Array.from({ length: 7 }, (_, index) => <div key={index} className="min-w-0 bg-[var(--app-bg)] p-2 sm:p-3"><Skeleton className="mx-auto h-4 w-12" /><div className="mt-3 space-y-3">{Array.from({ length: 3 }, (_, row) => <Skeleton key={row} className="h-14 w-full" rounded="lg" />)}</div></div>)}</div></div></div> : <>
                 <AiPlannerPlaceholder />
                 <WeeklyTimeGrid dates={dates} scheduled={scheduled} sessions={sessions} deadlines={deadlines} subjects={subjects} topics={topics} onCreate={setSelection} onEdit={setEditingSession} onEditStudySession={setEditingStudySession} onMove={moveSession} />
             </>}

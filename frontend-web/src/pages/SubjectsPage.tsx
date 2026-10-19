@@ -29,6 +29,7 @@ import { TopicModal } from '../components/subjects/modals/TopicModal';
 import { EvaluationModal } from '../components/subjects/modals/EvaluationModal';
 import { TermModal } from '../components/subjects/modals/TermModal';
 import { SessionModal } from '../components/subjects/modals/SessionModal';
+import { Skeleton, SkeletonRows } from '../components/ui/Skeleton';
 
 export function SubjectsPage() {
     const navigate = useNavigate();
@@ -335,8 +336,13 @@ export function SubjectsPage() {
 
     if (loading) {
         return (
-            <div className="flex h-full w-full items-center justify-center p-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent-color)] border-t-transparent" />
+            <div className="mx-auto max-w-6xl space-y-7 p-4 sm:p-6 lg:p-8" role="status" aria-label="Loading subjects">
+                <div className="flex flex-col gap-5 border-b border-[var(--app-border)] pb-6 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="space-y-3"><Skeleton className="h-3 w-24" /><Skeleton className="h-8 w-52" /></div>
+                    <Skeleton className="h-10 w-full sm:w-40" rounded="lg" />
+                </div>
+                <div className="flex gap-3 overflow-hidden border-b border-[var(--app-border)] pb-4"><Skeleton className="h-9 w-40 shrink-0" rounded="lg" /><Skeleton className="h-9 w-28 shrink-0" rounded="lg" /></div>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <article key={index} className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-5"><div className="flex items-start justify-between gap-3"><div className="min-w-0 flex-1 space-y-3"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-3 w-1/2" /></div><Skeleton className="h-9 w-9" rounded="full" /></div><div className="mt-6"><SkeletonRows count={2} /></div></article>)}</div>
             </div>
         );
     }

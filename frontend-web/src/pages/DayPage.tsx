@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { CreateScheduledSessionDialog } from '../components/planner/CreateScheduledSessionDialog';
 import { SessionModal } from '../components/subjects/modals/SessionModal';
 import { TaskTagDialog } from '../components/timer/TaskTagDialog';
+import { Skeleton } from '../components/ui/Skeleton';
 import { addDays as addPlannerDays, localDateFromTimestamp, startOfWeek as plannerStartOfWeek } from '../lib/planner-dates';
 import { buildGridSelection, getDisplayInterval, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, type GridSelection } from '../lib/week-grid';
 import { useTimerContext } from '../context/TimerContext';
@@ -1001,8 +1002,8 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                             <InlineAdd placeholder="New to-do, then press Enter" onSubmit={addTodo} onCancel={() => setAddingTodo(false)} />
                         )}
 
-                        <ul className="mt-3 divide-y divide-[var(--app-border)]/50">
-                            {loading && todos.length === 0 && <li className="py-6 text-center text-xs text-[var(--app-text-muted)]">Loading…</li>}
+                        <ul className="mt-3 divide-y divide-[var(--app-border)]/50" role={loading && todos.length === 0 ? 'status' : undefined} aria-label={loading && todos.length === 0 ? 'Loading to-dos' : undefined}>
+                            {loading && todos.length === 0 && Array.from({ length: 3 }, (_, index) => <li key={`todo-skeleton-${index}`} className="flex items-center gap-3 px-1 py-3.5" aria-hidden="true"><Skeleton className="h-5 w-5 shrink-0" rounded="full" /><Skeleton className="h-3 w-2/3" /></li>)}
                             {!loading && todos.length === 0 && !addingTodo && (
                                 <li className="py-6 text-center text-xs text-[var(--app-text-muted)]">No to-dos for this day</li>
                             )}
@@ -1032,8 +1033,8 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                             </button>
                         </div>
 
-                        <ul className="mt-3 divide-y divide-[var(--app-border)]/50">
-                            {loading && deadlines.length === 0 && <li className="py-6 text-center text-xs text-[var(--app-text-muted)]">Loading…</li>}
+                        <ul className="mt-3 divide-y divide-[var(--app-border)]/50" role={loading && deadlines.length === 0 ? 'status' : undefined} aria-label={loading && deadlines.length === 0 ? 'Loading deadlines' : undefined}>
+                            {loading && deadlines.length === 0 && Array.from({ length: 2 }, (_, index) => <li key={`deadline-skeleton-${index}`} className="flex items-center gap-3 px-1 py-3.5" aria-hidden="true"><Skeleton className="h-8 w-8 shrink-0" rounded="lg" /><Skeleton className="h-3 w-1/2" /></li>)}
                             {!loading && deadlines.length === 0 && (
                                 <li className="py-6 text-center text-xs text-[var(--app-text-muted)]">No deadlines for this day</li>
                             )}
