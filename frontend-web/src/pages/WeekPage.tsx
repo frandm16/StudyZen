@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTimerContext } from '../context/TimerContext';
 import { useToast } from '../context/ToastContext';
 import { AiPlannerPlaceholder } from '../components/planner/AiPlannerPlaceholder';
@@ -58,6 +58,7 @@ export const WeekPage = () => {
     const [selection, setSelection] = useState<GridSelection | null>(null);
     const [editingSession, setEditingSession] = useState<ScheduledSession | null>(null);
     const [loading, setLoading] = useState(true);
+    const requestId = useRef(0);
 
     const dates = useMemo(() => weekGridDates(anchor, weekStartsOn), [anchor, weekStartsOn]);
     const range = useMemo(() => weekRange(anchor, weekStartsOn), [anchor, weekStartsOn]);
@@ -65,6 +66,9 @@ export const WeekPage = () => {
     const endKey = dateKey(addDays(range.end, -1));
 
     const load = useCallback(async () => {
+        const currentRequest = ++requestId.current;
+        const requestedRange = `${startKey}:${endKey}`;
+        const isCurrent = () => currentRequest === requestId.current && requestedRange === `${startKey}:${endKey}`;
         setLoading(true);
         try {
             const [year, month, day] = startKey.split('-').map(Number);
@@ -81,6 +85,7 @@ export const WeekPage = () => {
                 sessionService.getAll({ start: `${dateKey(previous)}T00:00:00`, end: rangeEnd, size: 500 }),
                 deadlineService.getAll(rangeStart, end),
             ]);
+            if (!isCurrent()) return;
             setScheduled(scheduledItems);
             setSessions(studyItems);
             setDeadlines(deadlineItems);
@@ -89,13 +94,16 @@ export const WeekPage = () => {
             const nextWeekStartsOn = Number.isInteger(settings.weekStartsOn) ? settings.weekStartsOn : 1;
             setWeekStartsOn(nextWeekStartsOn);
         } catch (failure) {
-            notify({ title: 'Could not load week', description: getApiErrorMessage(failure), tone: 'error', persist: false });
+            if (isCurrent()) notify({ title: 'Could not load week', description: getApiErrorMessage(failure), tone: 'error', persist: false });
         } finally {
-            setLoading(false);
+            if (isCurrent()) setLoading(false);
         }
     }, [startKey, endKey]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        void load();
+        return () => { requestId.current += 1; };
+    }, [load]);
 
     const weekLabel = `${dates[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - ${dates[6].toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
 

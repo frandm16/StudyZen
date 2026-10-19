@@ -8,6 +8,7 @@ import type { Subject } from '../../types/subject';
 interface SubjectEvaluationsTabProps {
     subject: Subject;
     evaluations: Assessment[];
+    passingTargetPercent: number;
     onOpenCreateEvaluation: () => void;
     onEditEvaluation: (evaluation: Assessment) => void;
     onDeleteEvaluation: (evaluationId: number) => void;
@@ -16,6 +17,7 @@ interface SubjectEvaluationsTabProps {
 
 export function SubjectEvaluationsTab({
     evaluations,
+    passingTargetPercent,
     onOpenCreateEvaluation,
     onEditEvaluation,
     onDeleteEvaluation,
@@ -23,7 +25,7 @@ export function SubjectEvaluationsTab({
 }: SubjectEvaluationsTabProps) {
     const [filter, setFilter] = useState<'all' | 'pending' | 'graded'>('all');
 
-    const gradeSummary = calculateGradeSummary(evaluations, 50);
+    const gradeSummary = calculateGradeSummary(evaluations, passingTargetPercent);
 
     const filteredEvaluations = evaluations.filter((e) => {
         if (filter === 'pending') return !e.completed;
@@ -61,7 +63,7 @@ export function SubjectEvaluationsTab({
 
                         <div className="text-right">
                             <span className="text-[11px] font-semibold text-[var(--app-text-muted)] uppercase tracking-wider block">
-                                Pass Status (50%)
+                                Pass Status ({formatGrade(passingTargetPercent)}%)
                             </span>
                             {gradeSummary.isPassGuaranteed ? (
                                 <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">

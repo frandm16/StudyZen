@@ -9,6 +9,7 @@ import { topicService } from '../services/topic-service';
 import { assessmentService } from '../services/assessment-service';
 import { sessionService } from '../services/session-service';
 import { termService } from '../services/term-service';
+import { settingsService } from '../services/settings-service';
 import type { Subject, CreateSubjectDTO } from '../types/subject';
 import type { Topic, CreateTopicDTO, TopicStatus } from '../types/topic';
 import type { Assessment, CreateAssessmentDTO, UpdateAssessmentDTO } from '../types/assessment';
@@ -45,6 +46,8 @@ export function SubjectsPage() {
     const [assessments, setAssessments] = useState<Assessment[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
     const [terms, setTerms] = useState<AcademicTerm[]>([]);
+    const [gradeScaleMax, setGradeScaleMax] = useState(10);
+    const [passGrade, setPassGrade] = useState(5);
 
     const [loading, setLoading] = useState(true);
 
@@ -67,18 +70,21 @@ export function SubjectsPage() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const [loadedSubjects, loadedTopics, loadedAssessments, loadedSessions, loadedTerms] = await Promise.all([
+            const [loadedSubjects, loadedTopics, loadedAssessments, loadedSessions, loadedTerms, settings] = await Promise.all([
                 subjectService.getAll(),
                 topicService.getAll(),
                 assessmentService.getAll(),
                 sessionService.getAll(),
                 termService.getAll(),
+                settingsService.getSettings(),
             ]);
             setSubjects(loadedSubjects);
             setTopics(loadedTopics);
             setAssessments(loadedAssessments);
             setSessions(loadedSessions);
             setTerms(loadedTerms);
+            setGradeScaleMax(settings.gradeScaleMax);
+            setPassGrade(settings.passGrade);
         } catch (err) {
             notify({ title: 'Could not load subjects', description: getApiErrorMessage(err), tone: 'error', persist: false });
         } finally {
@@ -378,6 +384,7 @@ export function SubjectsPage() {
                         <SubjectEvaluationsTab
                             subject={selectedSubject}
                             evaluations={subjectAssessments}
+                            passingTargetPercent={Number.isFinite(gradeScaleMax) && gradeScaleMax > 0 ? Math.min(100, Math.max(0, passGrade / gradeScaleMax * 100)) : 50}
                             onOpenCreateEvaluation={() => {
                                 setEditingEvaluation(null);
                                 setEvaluationModalOpen(true);

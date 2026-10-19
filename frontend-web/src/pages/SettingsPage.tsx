@@ -6,6 +6,7 @@ import { useBackground } from '../hooks/useBackground';
 import { useTheme, THEME_PRESETS, type ColorTheme } from '../context/ThemeContext';
 import { AVATAR_PRESETS, getRandomAvatarPreset, type AvatarPreset } from '../lib/avatar-presets';
 import { settingsService } from '../services/settings-service';
+import { getApiErrorMessage } from '../services/api';
 import { TermsSection } from '../components/settings/TermsSection';
 import type { UpdateProfileDTO } from '../types/auth';
 import type { SoundCategory } from '../hooks/useSound';
@@ -382,6 +383,21 @@ export const SettingsPage: React.FC = () => {
         }
     };
 
+    const handleUsernameSubmit = async () => {
+        const nextUsername = username.trim();
+        if (!/^[A-Za-z0-9_-]{3,24}$/.test(nextUsername)) {
+            notify({ title: 'Invalid username', description: 'Use 3–24 characters: letters, numbers, underscores, and hyphens.', tone: 'error', persist: false });
+            return;
+        }
+        try {
+            await updateProfile({ username: nextUsername });
+            setUsername(nextUsername);
+            notify({ title: 'Username updated', tone: 'success' });
+        } catch (err) {
+            notify({ title: 'Could not update username', description: getApiErrorMessage(err), tone: 'error' });
+        }
+    };
+
     const handleProfileSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setAccountError(null);
@@ -565,7 +581,7 @@ export const SettingsPage: React.FC = () => {
                                                     />
                                                     <button
                                                         type="button"
-                                                        onClick={handleProfileSubmit}
+                                                        onClick={() => void handleUsernameSubmit()}
                                                         className="px-4 py-2.5 rounded-xl bg-neutral-500/20 text-[var(--app-text)] hover:bg-neutral-500/30 text-xs font-semibold transition-all border border-[var(--app-border)]"
                                                     >
                                                         Save

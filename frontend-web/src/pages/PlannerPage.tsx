@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../services/api';
@@ -41,8 +41,12 @@ export const PlannerPage = () => {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [monthSessions, setMonthSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
+    const requestId = useRef(0);
 
     const load = useCallback(async () => {
+        const currentRequest = ++requestId.current;
+        const requestedMonth = `${month.getFullYear()}-${month.getMonth()}`;
+        const isCurrent = () => currentRequest === requestId.current && requestedMonth === `${month.getFullYear()}-${month.getMonth()}`;
         setLoading(true);
         try {
             const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
@@ -58,6 +62,7 @@ export const PlannerPage = () => {
             const goalRangeStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             goalRangeStart.setDate(goalRangeStart.getDate() - (goalRangeStart.getDay() - (settings.weekStartsOn ?? 1) + 7) % 7);
             const progressSessions = await loadGoalProgressSessions(`${dateKey(goalRangeStart)} 00:00:00`, `${dateKey(today)} 23:59:59`);
+            if (!isCurrent()) return;
             setDeadlines(deadlineItems);
             setAssessments(assessmentItems);
             setScheduled(scheduledItems);
@@ -69,13 +74,16 @@ export const PlannerPage = () => {
             setWeekStartsOn(nextWeekStartsOn);
             setTodoMonthDates(visibleDates);
         } catch (failure) {
-            notify({ title: 'Could not load planner', description: getApiErrorMessage(failure), tone: 'error', persist: false });
+            if (isCurrent()) notify({ title: 'Could not load planner', description: getApiErrorMessage(failure), tone: 'error', persist: false });
         } finally {
-            setLoading(false);
+            if (isCurrent()) setLoading(false);
         }
     }, [month]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => {
+        void load();
+        return () => { requestId.current += 1; };
+    }, [load]);
     const subjectById = useMemo(() => new Map(subjects.map((subject) => [subject.id, subject])), [subjects]);
     const selectedKey = dateKey(selected);
     const markers = useMemo(() => {
