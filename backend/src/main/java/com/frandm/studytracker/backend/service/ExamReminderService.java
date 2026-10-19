@@ -5,6 +5,7 @@ import com.frandm.studytracker.backend.model.Subject;
 import com.frandm.studytracker.backend.repository.AssessmentRepository;
 import com.frandm.studytracker.backend.repository.NotificationRepository;
 import com.frandm.studytracker.backend.repository.SubjectRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class ExamReminderService {
     private final NotificationRepository notificationRepository;
     private final Clock clock;
 
+    @Autowired
     public ExamReminderService(AssessmentRepository assessmentRepository,
                                SubjectRepository subjectRepository,
                                NotificationRepository notificationRepository) {
