@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { CreateScheduledSessionDialog } from '../components/planner/CreateScheduledSessionDialog';
+import { SessionModal } from '../components/subjects/modals/SessionModal';
 import { TaskTagDialog } from '../components/timer/TaskTagDialog';
 import { addDays as addPlannerDays, localDateFromTimestamp, startOfWeek as plannerStartOfWeek } from '../lib/planner-dates';
 import { buildGridSelection, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, type GridSelection } from '../lib/week-grid';
@@ -17,7 +18,7 @@ import { settingsService } from '../services/settings-service';
 import type { DayNote } from '../types/day-note';
 import type { Deadline } from '../types/deadline';
 import type { ScheduledSession } from '../types/scheduled-session';
-import type { Session } from '../types/session';
+import type { Session, UpdateSessionDTO } from '../types/session';
 import type { Subject } from '../types/subject';
 import type { Topic } from '../types/topic';
 import type { TodoItem } from '../types/todo-item';
@@ -536,6 +537,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     const [gridSelection, setGridSelection] = useState<GridSelection | null>(null);
     const [dragSelection, setDragSelection] = useState<GridSelection | null>(null);
     const [editingSession, setEditingSession] = useState<ScheduledSession | null>(null);
+    const [editingStudySession, setEditingStudySession] = useState<Session | null>(null);
     const [timelineMove, setTimelineMove] = useState<{ id: number; minutes: number } | null>(null);
     const gridRef = useRef<HTMLDivElement>(null);
     const dragRef = useRef<{ pointerId: number; start: number; current: number } | null>(null);
@@ -638,6 +640,19 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
     }, [selectedKey]);
 
     const fail = (failure: unknown, title = 'Action failed') => notify({ title, description: getApiErrorMessage(failure), tone: 'error' });
+
+    const saveStudySession = async (data: UpdateSessionDTO) => {
+        if (!editingStudySession) return;
+        try {
+            const updated = await sessionService.update(editingStudySession.id, data);
+            setSessions((current) => current.map((item) => item.id === updated.id ? updated : item));
+            setEditingStudySession(null);
+            notify({ title: 'Study session updated', tone: 'success' });
+        } catch (failure) {
+            notify({ title: 'Could not update study session', description: getApiErrorMessage(failure), tone: 'error' });
+            throw failure;
+        }
+    };
 
     const savePlan = async () => {
         const draft = drafts[selectedKey];
@@ -1084,6 +1099,16 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                             </span>
                         </p>
 
+                        {deadlines.some((deadline) => deadline.allDay) && <section className="mt-5 rounded-xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-3" aria-label="All-day deadlines">
+                            <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">All day</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {deadlines.filter((deadline) => deadline.allDay).map((deadline) => {
+                                    const topic = deadline.topicId ? topicsMap.get(deadline.topicId) : undefined;
+                                    const subject = topic ? subjectsMap.get(topic.subjectId) : deadline.subjectId ? subjectsMap.get(deadline.subjectId) : undefined;
+                                    return <span key={deadline.id} className={`max-w-full truncate rounded-md border px-2 py-1 text-xs font-semibold ${deadline.isCompleted ? 'line-through opacity-60' : ''}`} style={{ borderColor: subject?.color || 'var(--accent-color)' }} title={deadline.title}>{deadline.title}</span>;
+                                })}
+                            </div>
+                        </section>}
                         <div className="mt-6 max-h-[70vh] overflow-auto overscroll-contain rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)]">
                             <div ref={gridRef} className="relative touch-pan-y select-none" style={{ height: GRID_HEIGHT }} onPointerDown={startTimelineDrag} onPointerMove={(event) => { updateTimelineDrag(event); void moveTimelineSession(event); }} onPointerUp={(event) => { finishTimelineDrag(event); void moveTimelineSession(event); }} onPointerCancel={() => { dragRef.current = null; movingRef.current = null; setDragSelection(null); setGridSelection(null); setTimelineMove(null); }}>
                                 <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
@@ -1102,6 +1127,14 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                 </div>
 
                                 <div className="absolute bottom-0 left-[60px] right-0 top-0 z-[1] pointer-events-none">
+                                    {deadlines.filter((deadline) => !deadline.allDay).map((deadline) => {
+                                        const due = new Date(deadline.dueAt);
+                                        const minute = due.getHours() * 60 + due.getMinutes();
+                                        if (minute < GRID_START || minute > GRID_END) return null;
+                                        const topic = deadline.topicId ? topicsMap.get(deadline.topicId) : undefined;
+                                        const subject = topic ? subjectsMap.get(topic.subjectId) : deadline.subjectId ? subjectsMap.get(deadline.subjectId) : undefined;
+                                        return <div key={`deadline-marker-${deadline.id}`} className={`absolute left-0 right-0 z-[5] border-t-2 border-dashed ${deadline.isCompleted ? 'opacity-40' : ''}`} style={{ top: ((minute - GRID_START) / 60) * HOUR_HEIGHT, borderColor: subject?.color || '#f59e0b' }} aria-hidden="true"><span className="absolute left-1 top-0 max-w-[95%] -translate-y-full truncate rounded bg-[var(--app-card-bg)] px-1 text-[9px] font-bold text-[var(--app-text)]">◆ {formatClock(due)} · {deadline.title}</span></div>;
+                                    })}
                                     {placedEvents.map((event) => {
                                         const start = Math.max(event.start, GRID_START);
                                         const end = Math.min(event.end, GRID_END);
@@ -1111,22 +1144,31 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                         return (
                                             <article
                                                 key={event.key}
-                                                role={event.kind === 'scheduled' ? 'button' : undefined}
-                                                tabIndex={event.kind === 'scheduled' ? 0 : undefined}
-                                                aria-label={event.kind === 'scheduled' ? `${event.title}, ${event.startLabel} to ${event.endLabel}. Press Enter to edit or drag to reschedule.` : undefined}
-                                                data-timeline-event={event.kind === 'scheduled' ? 'true' : undefined}
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-label={`${event.kind === 'session' ? 'Studied' : 'Scheduled'}: ${event.title}, ${event.startLabel} to ${event.endLabel}. Press Enter to ${event.kind === 'session' ? 'edit details' : 'edit or drag to reschedule'}.`}
+                                                data-timeline-event="true"
                                                 onClick={() => {
-                                                    if (event.kind !== 'scheduled') return;
-                                                    if (suppressClickRef.current === event.id) { suppressClickRef.current = null; return; }
-                                                    const item = scheduled.find((sessionItem) => sessionItem.id === event.id);
-                                                    if (item) setEditingSession(item);
+                                                    if (event.kind === 'scheduled' && suppressClickRef.current === event.id) { suppressClickRef.current = null; return; }
+                                                    if (event.kind === 'scheduled') {
+                                                        const item = scheduled.find((sessionItem) => sessionItem.id === event.id);
+                                                        if (item) setEditingSession(item);
+                                                    } else {
+                                                        const item = sessions.find((sessionItem) => sessionItem.id === event.id);
+                                                        if (item) setEditingStudySession(item);
+                                                    }
                                                 }}
                                                 onKeyDown={(keyboardEvent) => {
                                                     if (keyboardEvent.target instanceof Element && keyboardEvent.target.closest('button')) return;
-                                                    if (event.kind === 'scheduled' && (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ')) {
+                                                    if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
                                                         keyboardEvent.preventDefault();
-                                                        const item = scheduled.find((sessionItem) => sessionItem.id === event.id);
-                                                        if (item) setEditingSession(item);
+                                                        if (event.kind === 'scheduled') {
+                                                            const item = scheduled.find((sessionItem) => sessionItem.id === event.id);
+                                                            if (item) setEditingSession(item);
+                                                        } else {
+                                                            const item = sessions.find((sessionItem) => sessionItem.id === event.id);
+                                                            if (item) setEditingStudySession(item);
+                                                        }
                                                     }
                                                 }}
                                                 onPointerDown={(pointerEvent) => {
@@ -1137,17 +1179,18 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                                 }}
                                                 onPointerMove={(pointerEvent) => { void moveTimelineSession(pointerEvent as unknown as PointerEvent<HTMLDivElement>); }}
                                                 onPointerUp={(pointerEvent) => { void moveTimelineSession(pointerEvent as unknown as PointerEvent<HTMLDivElement>); }}
-                                                className={`group absolute overflow-hidden rounded-lg px-2 leading-tight shadow-md ${height <= 20 ? 'py-0' : 'py-1'} ${event.kind === 'scheduled' ? 'pointer-events-auto cursor-grab focus-visible:outline-2 focus-visible:outline-[var(--accent-color)] active:cursor-grabbing' : ''} ${timelineMove?.id === event.id ? 'opacity-60' : ''}`}
+                                                className={`group absolute overflow-hidden rounded-lg border-l-[3px] px-2 leading-tight shadow-md ${height <= 20 ? 'py-0' : 'py-1'} pointer-events-auto focus-visible:outline-2 focus-visible:outline-[var(--accent-color)] ${event.kind === 'scheduled' ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer border-dashed'} ${timelineMove?.id === event.id ? 'opacity-60' : ''}`}
                                                 style={{
                                                     top: ((timelineMove?.id === event.id ? timelineMove.minutes : start - GRID_START) / 60) * HOUR_HEIGHT,
                                                     height: (height / 60) * HOUR_HEIGHT,
                                                     left: `calc(${(event.lane / event.laneCount) * 100}% + 2px)`,
                                                     width: `calc(${(event.laneSpan / event.laneCount) * 100}% - 4px)`,
-                                                    backgroundColor: event.color,
-                                                    color: textColor,
+                                                    backgroundColor: event.kind === 'scheduled' ? event.color : `${event.color}24`,
+                                                    borderColor: event.kind === 'scheduled' ? 'transparent' : event.color,
+                                                    color: event.kind === 'scheduled' ? textColor : 'var(--app-text)',
                                                 }}
                                             >
-                                                <p className="truncate pr-4 text-xs font-bold">{event.title}</p>
+                                                <p className="truncate pr-4 text-xs font-bold">{event.kind === 'session' ? '✓ Studied · ' : 'Scheduled · '}{event.title}</p>
                                                 <p className="truncate text-[11px] font-semibold opacity-90">
                                                     {event.startLabel} - {event.endLabel}
                                                 </p>
@@ -1178,6 +1221,8 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     </section>
                 </div>
             </div>
+
+            {editingStudySession && <SessionModal session={editingStudySession} subjects={subjects} topics={topics} onClose={() => setEditingStudySession(null)} onSave={saveStudySession} />}
 
             {(gridSelection || editingSession) && (
                 <CreateScheduledSessionDialog

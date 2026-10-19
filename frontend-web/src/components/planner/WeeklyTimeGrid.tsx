@@ -1,18 +1,23 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { dateKey, localDateFromTimestamp } from '../../lib/planner-dates';
-import { buildGridSelection, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_END_HOUR, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_START_HOUR, type GridSelection } from '../../lib/week-grid';
+import { buildGridSelection, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_END_HOUR, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_START_HOUR, WEEK_GRID_MINUTES, type GridSelection } from '../../lib/week-grid';
 import type { ScheduledSession } from '../../types/scheduled-session';
+import type { Session } from '../../types/session';
+import type { Deadline } from '../../types/deadline';
 import type { Subject } from '../../types/subject';
 import type { Topic } from '../../types/topic';
 
 interface WeeklyTimeGridProps {
     dates: Date[];
     scheduled: ScheduledSession[];
+    sessions: Session[];
+    deadlines: Deadline[];
     subjects: Subject[];
     topics: Topic[];
     onCreate: (selection: GridSelection) => void;
     onEdit: (session: ScheduledSession) => void;
+    onEditStudySession: (session: Session) => void;
     onMove: (session: ScheduledSession, date: Date, startMinutes: number) => void;
 }
 
@@ -25,7 +30,7 @@ interface DragState {
 
 const hourLabel = (hour: number) => `${String(hour).padStart(2, '0')}:00`;
 
-export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, onEdit, onMove }: WeeklyTimeGridProps) {
+export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, subjects, topics, onCreate, onEdit, onEditStudySession, onMove }: WeeklyTimeGridProps) {
     const [now, setNow] = useState(() => new Date());
     const [drag, setDrag] = useState<DragState | null>(null);
     const [moving, setMoving] = useState<{ item: ScheduledSession; date: string; start: number; currentDate: string; current: number; pointerId: number; originX: number; originY: number; didMove: boolean } | null>(null);
@@ -53,7 +58,10 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
     const topicById = new Map(topics.map((topic) => [topic.id, topic]));
     const subjectById = new Map(subjects.map((subject) => [subject.id, subject]));
     const visibleDays = new Set(dates.map(dateKey));
-    const visibleSlots = scheduled.flatMap((item) => {
+    const visibleSlots = [
+        ...scheduled.map((item) => ({ kind: 'scheduled' as const, item })),
+        ...sessions.map((item) => ({ kind: 'study' as const, item })),
+    ].flatMap(({ kind, item }) => {
         const start = localDateFromTimestamp(item.startedAt);
         const end = localDateFromTimestamp(item.endedAt);
         if (!start || !end || end.getTime() <= start.getTime()) return [];
@@ -73,7 +81,7 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
             const startMinutes = (clippedStart - dayStart.getTime()) / 60000;
             const endMinutes = (clippedEnd - dayStart.getTime()) / 60000;
             if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes) || endMinutes <= startMinutes) continue;
-            pieces.push({ item, date, key: `${item.id}:${date}`, startMinutes, endMinutes, topic, subject });
+            pieces.push({ kind, item, date, key: `${kind}-${item.id}:${date}`, startMinutes, endMinutes, topic, subject });
         }
         return pieces;
     });
@@ -82,6 +90,15 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
         const layout = layoutByKey.get(slot.key);
         if (!layout) return [];
         return [{ ...slot, lane: layout.lane, laneCount: layout.laneCount, laneSpan: layout.laneSpan, top: layout.startMinutes / 60 * WEEK_GRID_HOUR_HEIGHT, height: (layout.endMinutes - layout.startMinutes) / 60 * WEEK_GRID_HOUR_HEIGHT }];
+    });
+    const allDayDeadlines = deadlines.filter((deadline) => deadline.allDay);
+    const timedDeadlines = deadlines.filter((deadline) => !deadline.allDay).flatMap((deadline) => {
+        const due = localDateFromTimestamp(deadline.dueAt);
+        if (!due || !visibleDays.has(dateKey(due))) return [];
+        const dayStart = new Date(due.getFullYear(), due.getMonth(), due.getDate(), WEEK_GRID_START_HOUR);
+        const minute = (due.getTime() - dayStart.getTime()) / 60000;
+        if (minute < 0 || minute > WEEK_GRID_MINUTES) return [];
+        return [{ deadline, date: dateKey(due), top: minute / 60 * WEEK_GRID_HOUR_HEIGHT }];
     });
 
     const updateDrag = (event: PointerEvent<HTMLDivElement>) => {
@@ -166,13 +183,21 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
     };
 
     const quickCreate = (date: Date) => onCreate(buildGridSelection(date, 540, 600));
-    const handleEventKeyDown = (event: KeyboardEvent<HTMLDivElement>, item: ScheduledSession) => {
-        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEdit(item); }
-    };
-
     return <section className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] px-0 pb-3 pt-1 sm:pb-4 sm:pt-2" aria-label="Weekly study calendar">
         <div className="max-h-[70vh] overflow-auto overscroll-contain">
             <div className="min-w-[900px]">
+                {allDayDeadlines.length > 0 && <div className="grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)] bg-[var(--app-card-bg)]">
+                    <div className="flex items-start justify-end px-2 py-2 text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">All day</div>
+                    {dates.map((date) => {
+                        const dayDeadlines = allDayDeadlines.filter((deadline) => {
+                            const due = localDateFromTimestamp(deadline.dueAt);
+                            return due && dateKey(due) === dateKey(date);
+                        });
+                        return <div key={dateKey(date)} className="min-h-10 space-y-1 border-l border-[var(--app-border)] px-1.5 py-1.5">
+                            {dayDeadlines.map((deadline) => <div key={deadline.id} className={`truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${deadline.isCompleted ? 'line-through opacity-60' : ''}`} style={{ borderColor: `${subjectById.get(deadline.subjectId ?? topicById.get(deadline.topicId ?? -1)?.subjectId ?? -1)?.color ?? 'var(--accent-color)'}80`, backgroundColor: 'var(--app-bg)' }} title={deadline.title}>{deadline.title}</div>)}
+                        </div>;
+                    })}
+                </div>}
                 <div className="sticky top-0 z-30 grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)] bg-[var(--app-bg)]">
                     <div className="pb-3" />
                     {dates.map((date) => <div key={dateKey(date)} className="px-2 pb-2 pt-1 text-center"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p><p className="mt-1 text-sm font-bold">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>)}
@@ -190,16 +215,33 @@ export function WeeklyTimeGrid({ dates, scheduled, subjects, topics, onCreate, o
                             {showNowLine && <div className="pointer-events-none absolute inset-x-0 z-20 border-t-2 border-red-500" style={{ top: nowTop }} aria-hidden="true"><span className="absolute -left-1.5 -top-[5px] h-2 w-2 rounded-full bg-red-500" /></div>}
                             <div className="absolute inset-0 grid" style={{ gridTemplateRows: `repeat(${WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR}, ${WEEK_GRID_HOUR_HEIGHT}px)` }} aria-hidden="true">{Array.from({ length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR }, (_, index) => <div key={index} className="border-t border-[var(--app-border)]/70" />)}</div>
                             <div className="absolute inset-0 touch-pan-y select-none cursor-crosshair" onPointerDown={(event) => startDrag(event, date)} onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={() => { dragRef.current = null; setDrag(null); }} role="presentation" aria-hidden="true" />
-                            {daySlots.map(({ item, top, height, topic, subject, lane, laneCount, laneSpan }) => {
-                                const movingThis = moving?.item.id === item.id;
+                            {daySlots.map(({ kind, item, top, height, topic, subject, lane, laneCount, laneSpan }) => {
+                                const scheduledItem = kind === 'scheduled' ? item as ScheduledSession : null;
+                                const studyItem = kind === 'study' ? item as Session : null;
+                                const eventTitle = item.title?.trim() || topic?.name || 'Study session';
+                                const movingThis = scheduledItem !== null && moving?.item.id === scheduledItem.id;
                                 const movingDate = dates.find((candidate) => dateKey(candidate) === moving?.currentDate);
-                                const movingStart = moving?.current ?? 0;
                                 const active = movingThis && movingDate && dateKey(movingDate) === key;
-                                const displayTop = active ? movingStart / 60 * WEEK_GRID_HOUR_HEIGHT : top;
-                                return <div key={item.id} role="button" tabIndex={0} aria-label={`${item.title || topic?.name || 'Study session'}, ${localDateFromTimestamp(item.startedAt)?.toLocaleString('en-US')}. Press Enter to edit or drag to reschedule.`} onClick={() => { if (suppressClickRef.current === item.id) { suppressClickRef.current = null; return; } onEdit(item); }} onKeyDown={(event) => handleEventKeyDown(event, item)} onPointerMove={updateMove} onPointerUp={finishMove} onPointerCancel={() => { movingRef.current = null; setMoving(null); }} className={`absolute z-10 cursor-grab overflow-hidden rounded-lg border-l-[3px] px-1.5 text-[10px] shadow-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--accent-color)] active:cursor-grabbing sm:px-2 ${height <= 18 ? 'py-0' : 'py-1'} ${movingThis ? 'opacity-60' : ''}`} data-calendar-event="true" style={{ top: displayTop, height, left: `calc(${(lane / laneCount) * 100}% + 0.25rem)`, width: `calc(${(laneSpan / laneCount) * 100}% - 0.5rem)`, borderColor: subject?.color || 'var(--accent-color)', backgroundColor: `${subject?.color || 'var(--accent-color)'}24`, color: 'var(--app-text)' }} title={`${item.title || topic?.name || 'Study session'} · ${localDateFromTimestamp(item.startedAt)?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`} onPointerDown={(event) => startMove(event, item, key, Math.round(top / WEEK_GRID_HOUR_HEIGHT * 60))}><span className="block truncate font-semibold">{item.title || topic?.name || 'Study session'}</span>{height > 34 && <span className="block truncate opacity-75">{topic?.name || 'Study'}</span>}</div>;
+                                const displayTop = active ? (moving?.current ?? 0) / 60 * WEEK_GRID_HOUR_HEIGHT : top;
+                                return <div key={`${kind}-${item.id}-${key}`} role="button" tabIndex={0} aria-label={`${kind === 'study' ? 'Studied' : 'Scheduled'}: ${eventTitle}, ${localDateFromTimestamp(item.startedAt)?.toLocaleString('en-US')}. Press Enter to ${kind === 'study' ? 'edit details' : 'edit or drag to reschedule'}.`} onClick={() => {
+                                    if (scheduledItem && suppressClickRef.current === scheduledItem.id) { suppressClickRef.current = null; return; }
+                                    if (scheduledItem) onEdit(scheduledItem);
+                                    if (studyItem) onEditStudySession(studyItem);
+                                }} onKeyDown={(event) => {
+                                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                                    event.preventDefault();
+                                    if (scheduledItem) onEdit(scheduledItem);
+                                    if (studyItem) onEditStudySession(studyItem);
+                                }} onPointerMove={scheduledItem ? updateMove : undefined} onPointerUp={scheduledItem ? finishMove : undefined} onPointerCancel={scheduledItem ? () => { movingRef.current = null; setMoving(null); } : undefined} className={`absolute z-10 overflow-hidden rounded-lg border-l-[3px] px-1.5 text-[10px] shadow-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--accent-color)] sm:px-2 ${height <= 18 ? 'py-0' : 'py-1'} ${scheduledItem ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer border-dashed opacity-90'} ${movingThis ? 'opacity-60' : ''}`} data-calendar-event="true" style={{ top: displayTop, height, left: `calc(${(lane / laneCount) * 100}% + 0.25rem)`, width: `calc(${(laneSpan / laneCount) * 100}% - 0.5rem)`, borderColor: subject?.color || 'var(--accent-color)', backgroundColor: `${subject?.color || 'var(--accent-color)'}24`, color: 'var(--app-text)' }} title={`${kind === 'study' ? 'Studied' : 'Scheduled'} · ${eventTitle} · ${localDateFromTimestamp(item.startedAt)?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`} onPointerDown={scheduledItem ? (event) => startMove(event, scheduledItem, key, Math.round(top / WEEK_GRID_HOUR_HEIGHT * 60)) : undefined}><span className="block truncate font-semibold">{kind === 'study' ? '✓ Studied' : 'Scheduled'} · {eventTitle}</span>{height > 34 && <span className="block truncate opacity-75">{topic?.name || 'Study'}</span>}</div>;
+                            })}
+                            {timedDeadlines.filter((item) => item.date === key).map(({ deadline, top }) => {
+                                const topic = deadline.topicId ? topicById.get(deadline.topicId) : undefined;
+                                const subjectId = topic?.subjectId ?? deadline.subjectId;
+                                const subject = subjectId ? subjectById.get(subjectId) : undefined;
+                                return <div key={`deadline-${deadline.id}`} className={`pointer-events-none absolute left-0 right-0 z-[5] border-t-2 border-dashed ${deadline.isCompleted ? 'opacity-40' : ''}`} style={{ top, borderColor: subject?.color || '#f59e0b' }} aria-label={`Deadline: ${deadline.title}`}><span className="absolute left-1 top-0 max-w-[95%] -translate-y-full truncate rounded bg-[var(--app-card-bg)] px-1 text-[9px] font-bold text-[var(--app-text)]">◆ {deadline.title}</span></div>;
                             })}
                             {moving && moving.currentDate === key && moving.date !== key && (() => {
-                                const movingSlot = slots.find((slot) => slot.item.id === moving.item.id);
+                                const movingSlot = slots.find((slot) => slot.kind === 'scheduled' && slot.item.id === moving.item.id);
                                 return movingSlot ? <div className="pointer-events-none absolute inset-x-1 z-20 rounded-lg border-2 border-dashed border-[var(--accent-color)] bg-[var(--accent-color)]/20 px-1.5 py-1 text-[10px] opacity-80 sm:inset-x-1.5 sm:px-2" style={{ top: moving.current / 60 * WEEK_GRID_HOUR_HEIGHT, height: movingSlot.height }} aria-hidden="true"><span className="block truncate font-semibold">{moving.item.title || movingSlot.topic?.name || 'Study session'}</span></div> : null;
                             })()}
                             {range && <div className="pointer-events-none absolute inset-x-1 z-20 rounded-lg border-2 border-[var(--accent-color)] bg-[var(--accent-color)]/20" style={{ top: range.startMinutes / 60 * WEEK_GRID_HOUR_HEIGHT, height: Math.max(16, (range.endMinutes - range.startMinutes) / 60 * WEEK_GRID_HOUR_HEIGHT) }} aria-hidden="true" />}

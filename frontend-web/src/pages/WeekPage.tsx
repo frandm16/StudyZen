@@ -3,15 +3,20 @@ import { useTimerContext } from '../context/TimerContext';
 import { useToast } from '../context/ToastContext';
 import { AiPlannerPlaceholder } from '../components/planner/AiPlannerPlaceholder';
 import { CreateScheduledSessionDialog } from '../components/planner/CreateScheduledSessionDialog';
+import { SessionModal } from '../components/subjects/modals/SessionModal';
 import { WeeklyTimeGrid } from '../components/planner/WeeklyTimeGrid';
 import { addDays, dateKey, localDateFromTimestamp, weekRange } from '../lib/planner-dates';
 import { getApiErrorMessage } from '../services/api';
 import { WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, weekGridDates, type GridSelection } from '../lib/week-grid';
 import { scheduledSessionService } from '../services/scheduled-session-service';
+import { sessionService } from '../services/session-service';
+import { deadlineService } from '../services/deadline-service';
 import { settingsService } from '../services/settings-service';
 import { subjectService } from '../services/subject-service';
 import { topicService } from '../services/topic-service';
 import type { ScheduledSession } from '../types/scheduled-session';
+import type { Session, UpdateSessionDTO } from '../types/session';
+import type { Deadline } from '../types/deadline';
 import type { Subject } from '../types/subject';
 import type { Topic } from '../types/topic';
 
@@ -45,6 +50,9 @@ export const WeekPage = () => {
     const [selectedDate, setSelectedDate] = useState(initialDate);
     const [weekStartsOn, setWeekStartsOn] = useState(1);
     const [scheduled, setScheduled] = useState<ScheduledSession[]>([]);
+    const [sessions, setSessions] = useState<Session[]>([]);
+    const [deadlines, setDeadlines] = useState<Deadline[]>([]);
+    const [editingStudySession, setEditingStudySession] = useState<Session | null>(null);
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [topics, setTopics] = useState<Topic[]>([]);
     const [selection, setSelection] = useState<GridSelection | null>(null);
@@ -63,13 +71,19 @@ export const WeekPage = () => {
             const previous = addDays(new Date(year, month - 1, day), -1);
             const start = `${dateKey(previous)} 00:00:00`;
             const end = `${endKey} 23:59:59`;
-            const [scheduledItems, subjectItems, topicItems, settings] = await Promise.all([
+            const rangeStart = `${startKey}T00:00:00`;
+            const rangeEnd = `${dateKey(range.end)}T00:00:00`;
+            const [scheduledItems, subjectItems, topicItems, settings, studyItems, deadlineItems] = await Promise.all([
                 scheduledSessionService.getAll(start, end),
                 subjectService.getAll(),
                 topicService.getAll(),
                 settingsService.getSettings(),
+                sessionService.getAll({ start: `${dateKey(previous)}T00:00:00`, end: rangeEnd, size: 500 }),
+                deadlineService.getAll(rangeStart, end),
             ]);
             setScheduled(scheduledItems);
+            setSessions(studyItems);
+            setDeadlines(deadlineItems);
             setSubjects(subjectItems);
             setTopics(topicItems);
             const nextWeekStartsOn = Number.isInteger(settings.weekStartsOn) ? settings.weekStartsOn : 1;
@@ -111,6 +125,19 @@ export const WeekPage = () => {
         }
     };
 
+    const saveStudySession = async (data: UpdateSessionDTO) => {
+        if (!editingStudySession) return;
+        try {
+            const updated = await sessionService.update(editingStudySession.id, data);
+            setSessions((current) => current.map((item) => item.id === updated.id ? updated : item));
+            setEditingStudySession(null);
+            notify({ title: 'Study session updated', tone: 'success' });
+        } catch (failure) {
+            notify({ title: 'Could not update study session', description: getApiErrorMessage(failure), tone: 'error' });
+            throw failure;
+        }
+    };
+
     const handleSaved = async () => {
         setSelection(null);
         setEditingSession(null);
@@ -137,9 +164,10 @@ export const WeekPage = () => {
             </header>
             {loading && scheduled.length === 0 ? <div className="border-y border-[var(--app-border)] py-10 text-center text-sm text-[var(--app-text-muted)]" role="status">Loading your week…</div> : <>
                 <AiPlannerPlaceholder />
-                <WeeklyTimeGrid dates={dates} scheduled={scheduled} subjects={subjects} topics={topics} onCreate={setSelection} onEdit={setEditingSession} onMove={moveSession} />
+                <WeeklyTimeGrid dates={dates} scheduled={scheduled} sessions={sessions} deadlines={deadlines} subjects={subjects} topics={topics} onCreate={setSelection} onEdit={setEditingSession} onEditStudySession={setEditingStudySession} onMove={moveSession} />
             </>}
         </div>
+        {editingStudySession && <SessionModal session={editingStudySession} subjects={subjects} topics={topics} onClose={() => setEditingStudySession(null)} onSave={saveStudySession} />}
         {(selection || editingSession) && <CreateScheduledSessionDialog selection={selection ?? { date: selectedDate, startMinutes: 540, endMinutes: 600 }} session={editingSession ?? undefined} subjects={subjects} topics={topics} onClose={() => { setSelection(null); setEditingSession(null); }} onCreated={() => void handleSaved()} onSubjectCreated={addSubject} onTopicCreated={addTopic} />}
     </main>;
 };
