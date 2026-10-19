@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTimerContext } from '../context/TimerContext';
-import { useBackground } from '../hooks/useBackground';
 import { useTheme, THEME_PRESETS, type ColorTheme } from '../context/ThemeContext';
 import { AVATAR_PRESETS, getRandomAvatarPreset, type AvatarPreset } from '../lib/avatar-presets';
 import { settingsService } from '../services/settings-service';
@@ -104,7 +103,7 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
                 id: 'appearance',
                 label: 'Theme & Accent',
                 breadcrumb: 'Settings / Appearance',
-                description: 'Customize color modes, accent themes, video backgrounds, and fonts.',
+                description: 'Customize color modes, accent themes, and fonts.',
                 icon: Palette,
             },
         ],
@@ -259,7 +258,6 @@ export const SettingsPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('profile-details');
     const { user, updateProfile, isLoading } = useAuth();
     const timer = useTimerContext();
-    const bg = useBackground();
     const sound = timer.sound;
     const { colorMode, colorTheme, setColorMode, setColorTheme } = useTheme();
     const notify = useToast();
@@ -899,25 +897,6 @@ export const SettingsPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <p className="text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider mb-2">Background Videos</p>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                                {bg.options.map((option) => (
-                                                    <button
-                                                        key={option.source}
-                                                        type="button"
-                                                        onClick={() => bg.setBackground(option.source)}
-                                                        className={`p-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                                                            bg.source === option.source
-                                                                ? 'bg-[var(--accent-color)]/10 border-[var(--accent-color)] text-[var(--accent-color)] shadow-sm'
-                                                                : 'bg-[var(--app-bg)] border-[var(--app-border)] text-[var(--app-text)] hover:border-neutral-500/30'
-                                                        }`}
-                                                    >
-                                                        {option.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -1119,7 +1098,6 @@ export const SettingsPage: React.FC = () => {
                                                 localStorage.removeItem('studyzen_timer_config');
                                                 localStorage.removeItem('studyzen_theme');
                                                 localStorage.removeItem('studyzen_sound');
-                                                localStorage.removeItem('studyzen_background');
                                                 window.location.reload();
                                             }}
                                             className="px-4 py-2 rounded-xl bg-red-600/20 text-red-400 border border-red-500/30 text-xs font-bold hover:bg-red-600/30 transition-all flex items-center gap-2 cursor-pointer"
