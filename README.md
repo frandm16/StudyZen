@@ -1,176 +1,107 @@
-# 🎓 StudyZen
+# StudyZen
 
-StudyZen is a self-hosted study platform for people who want a personal study system they fully control.
+StudyZen is a self-hosted study platform for planning work, tracking focus sessions, and reviewing progress. The stack includes a React web app, a Spring Boot API, and PostgreSQL.
 
-It brings together focused session tracking, weekly planning, tasks, deadlines, logs, and progress insights in one place, while keeping your data on your own machine through a local backend.
+## Features
 
-## 🚀 Main Features
+- Pomodoro, countdown, and focus timers with session notes and ratings
+- Subjects, topics, academic terms, assessments, and grades
+- Daily and weekly planning, scheduled study sessions, deadlines, and to-dos
+- Study statistics, activity history, and progress summaries
+- Account settings, theme customization, and configurable timer sounds
 
-### ⏱️ Focus Tracking
+## Run with Docker Compose
 
-- Pomodoro, Timer, and Countdown modes
-- Session title, notes, duration, and rating
-- A cleaner record of what you actually studied
+### Requirements
 
-### 📅 Planning
+- Docker Desktop or Docker Engine with the Compose plugin
 
-- Weekly planner
-- Scheduled study blocks
-- Deadlines and daily todos
-- Tag and task organization
+### Start
 
-### 📊 Review
+1. Create a local environment file:
 
-- Logs by history, calendar, and focus area
-- Statistics dashboard with visual summaries
-- Better feedback on workload and consistency
+   ```bash
+   cp .env.example .env
+   ```
 
-### 🌐 Web Experience
+2. Edit `.env`: set database credentials and replace `JWT_SECRET` with a unique random secret of at least 32 characters. Keep `.env` private and never commit real credentials.
 
-- Responsive study planning and session tracking
-- Multiple themes and accessible interface controls
-- Browser-based access to your self-hosted StudyZen instance
+3. Build and start the services:
 
-## 🖼️ Gallery
+   ```bash
+   docker compose up -d --build
+   ```
 
-| Timer                     | Search                     |
-|---------------------------|----------------------------|
-| ![Timer](images/img1.png) | ![Search](images/img2.png) |
+4. Open the web app at <http://localhost:7777>.
 
-| Planner Daily View                     | Planner Weekly View                     |
-|----------------------------------------|-----------------------------------------|
-| ![Planner Daily View](images/img3.png) | ![Planner Weekly View](images/img4.png) |
+The frontend proxies API and authentication routes to the backend over the Compose network. The backend is also exposed directly at <http://localhost:8082/api> by default. PostgreSQL listens on port 5432 inside the Compose network and stores data in the persistent `postgres_data` volume.
 
-| Stats                     | Log History                     |
-|---------------------------|---------------------------------|
-| ![Stats](images/img5.png) | ![Log History](images/img6.png) |
+To inspect service logs, run `docker compose logs -f`. To stop the services while keeping database data, run `docker compose down`. **`docker compose down -v` deletes the database volume and its data.**
 
-| Log Focus                     | Settings                     |
-|-------------------------------|------------------------------|
-| ![Log Focus](images/img7.png) | ![Settings](images/img8.png) |
+### Environment configuration
 
-## ⚙️ How It Works
+The root `.env.example` configures the full Compose stack. Important settings:
 
-StudyZen runs as a local self-hosted setup:
+| Variable | Default / purpose |
+|---|---|
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD` | PostgreSQL database and credentials; choose a strong password. |
+| `JWT_SECRET` | Required. Replace the placeholder with a unique random value of at least 32 characters. |
+| `FRONTEND_PORT` | Host port for the web app (`7777`). |
+| `BACKEND_PUBLIC_PORT` | Host port for the backend API (`8082`). |
+| `BACKEND_PRIVATE_PORT` | Backend container port (`8080`). |
+| `FRONTEND_URL`, `CORS_ALLOWED_ORIGIN` | Frontend origin (`http://localhost:7777`); update together when hosting at another origin. |
+| `COOKIE_SECURE` | Set `true` when serving over HTTPS; local HTTP default is `false`. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google sign-in credentials. Configure valid OAuth credentials and callback URLs before enabling Google sign-in. |
+| `SMTP_*` | Optional mail delivery settings for account verification and recovery flows. |
+| `JWT_ACCESS_EXPIRY_MS`, `JWT_REFRESH_EXPIRY_MS` | Optional token lifetimes in milliseconds; defaults are 900000 and 604800000. |
+| `VITE_API_BASE_URL`, `VITE_BACKEND_URL` | Frontend build settings. Compose defaults to `/api` and an empty backend URL so Nginx proxies internally. Do not put secrets in `VITE_*` values; they are included in the frontend build. |
 
-- a web frontend for the UI
-- a backend API for data persistence
-- a PostgreSQL database for storage
+The root example includes the full list of settings and safe placeholders. Keep secret values on the backend and outside source control.
 
-Docker Compose starts the web frontend, backend, and database locally. The application is available at `http://localhost:7777`, and the backend API at:
+## Development
 
-```text
-http://localhost:8080/api
-```
+### Web frontend
 
-## 🧭 Getting Started
-
-### 1. 🛠️ Configure the local environment
-
-Copy the example file:
+Use Node.js and npm. From `frontend-web/`:
 
 ```bash
-cp .env.example .env
+npm install
+npm run dev
 ```
 
-Default local setup:
+The Vite server defaults to <http://localhost:7777>. Its `.env.example` is for standalone frontend development and points to the backend on `localhost:8082` by default. The Vite development server proxies `/api`, `/oauth2`, and `/login/oauth2` to the backend. To use a different backend address, set `VITE_BACKEND_URL` in a local, uncommitted `frontend-web/.env` file.
 
-```env
-BACKEND_PUBLIC_PORT=8080
-BACKEND_PRIVATE_PORT=8080
-DB_PORT=5432
-DB_NAME=studytracker
-DB_USER=your_user
-DB_PASSWORD=your_password
-API_URL=http://localhost:8080/api
-```
-
-### 2. 🐳 Start the backend
-
-You can do this in either of these ways:
-
-- from the project root with the repository files
-- from the backend release package `StudyZen-backend-v<version>.zip`
-
-If you are using the backend package, extract it and work from:
-
-```text
-studyzen-backend/
-```
-
-That package is documented in [README-backend.md](README-backend.md).
-
-Then start the services:
+To validate or build the frontend:
 
 ```bash
-docker compose up -d
+npm run lint
+npm run build
 ```
 
-### 3. 🌐 Open StudyZen
+### Backend
 
-Open the web application at:
-
-```text
-http://localhost:7777
-```
-
-The frontend connects to the backend API through the configured local setup.
-
-## 📦 Release Artifacts
-
-The backend can be shipped separately as:
-
-- **StudyZen Backend**: `StudyZen-backend-v<version>.zip`
-
-That backend package is intended to contain:
-
-- `docker-compose.yml`
-- `.env.example`
-- `README-backend.md`
-
-## 🧪 Build From Source
-
-To run the project locally, you will need:
-
-- Node.js and npm for the web frontend
-- Java 21 and Maven 3.9+ for the backend
-- Docker Desktop
-
-Start the application stack:
+The backend uses Java 21 and Maven. With PostgreSQL available and the required database/JWT environment variables set, run from the repository root:
 
 ```bash
-docker compose up -d
+mvn -pl backend -am spring-boot:run
 ```
 
-For frontend development, run `npm install` and `npm run dev` from `frontend-web/`.
+## Backend-only package
 
-## 🗂️ Project Layout
+For instructions on running the separately packaged backend with an independently hosted frontend, see [README-backend.md](README-backend.md).
+
+## Project layout
 
 ```text
 StudyZen/
-├── backend/          # Java 21, Spring Boot, PostgreSQL, Flyway
-├── frontend-web/     # React, TypeScript, Vite, Tailwind CSS
-├── .env.example
+├── backend/          # Spring Boot API, database migrations, and backend services
+├── frontend-web/     # React, TypeScript, Vite, and Tailwind CSS web app
 ├── docker-compose.yml
 ├── Dockerfile
-├── LICENSE
-├── pom.xml
+├── .env.example
 └── README.md
 ```
 
-## 🧱 Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | React, TypeScript, Vite, Tailwind CSS |
-| Backend | Java 21, Spring Boot 3 |
-| Database | PostgreSQL 16 |
-| Deployment | Docker Compose |
-
-## 📄 License
+## License
 
 StudyZen is licensed under the MIT License. See [LICENSE](LICENSE).
-
-## 👤 Author
-
-Fran Dorado

@@ -25,10 +25,10 @@ Running the compose file starts:
 - PostgreSQL
 - the StudyZen backend API
 
-The default backend URL is:
+The backend is exposed on host port `8082` by default. The default backend URL is:
 
 ```text
-http://localhost:8080/api
+http://localhost:8082/api
 ```
 
 ## Quick Start
@@ -48,20 +48,15 @@ cp .env.example .env
 Example default values:
 
 ```env
-BACKEND_PUBLIC_PORT=8080
+BACKEND_PUBLIC_PORT=8082
 BACKEND_PRIVATE_PORT=8080
-DB_PORT=5432
 DB_NAME=studytracker
-DB_USER=your_user
-DB_PASSWORD=your_password
-API_URL=http://localhost:8080/api
+DB_USER=studyzen
+DB_PASSWORD=replace-with-a-strong-database-password
+JWT_SECRET=replace-this-with-a-unique-random-secret-at-least-32-characters
 ```
 
-At minimum, you should set:
-
-- `DB_USER`
-- `DB_PASSWORD`
-- `DB_NAME`
+At minimum, set `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `JWT_SECRET`. Replace the JWT placeholder with a unique random secret of at least 32 characters, and keep all real credentials private.
 
 ### 3. Start the services
 
@@ -76,7 +71,7 @@ docker compose up -d
 Configure your StudyZen web frontend to use:
 
 ```text
-http://localhost:8080/api
+http://localhost:8082/api
 ```
 
 If you changed `BACKEND_PUBLIC_PORT`, use that port instead.
