@@ -121,15 +121,14 @@ input[type="range"]:active::-moz-range-thumb {
   box-shadow: 0 0 0 6px var(--accent-ring);
 }
 
-@keyframes skeleton-shimmer {
-  0% { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
+@keyframes skeleton-breathe {
+  0%, 100% { opacity: 0.62; }
+  50% { opacity: 1; }
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(100deg, color-mix(in srgb, var(--app-text-muted) 10%, var(--app-card-bg)) 25%, color-mix(in srgb, var(--accent-color) 15%, var(--app-card-bg)) 50%, color-mix(in srgb, var(--app-text-muted) 10%, var(--app-card-bg)) 75%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.7s ease-in-out infinite;
+  background: color-mix(in srgb, var(--app-text-muted) 13%, var(--app-card-bg));
+  animation: skeleton-breathe 1.5s ease-in-out infinite;
 }
 
 @keyframes toast-in {

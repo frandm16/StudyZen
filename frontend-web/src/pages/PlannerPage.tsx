@@ -110,7 +110,7 @@ export const PlannerPage = () => {
     const selectDate = (date: Date) => { setSelected(date); if (date.getMonth() !== month.getMonth() || date.getFullYear() !== month.getFullYear()) setMonth(new Date(date.getFullYear(), date.getMonth(), 1)); };
     const monthLabel = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    return <main className="min-h-full bg-[var(--app-bg)] px-4 py-6 text-[var(--app-text)] sm:px-6 lg:px-10 lg:py-9"><div className="mx-auto max-w-7xl space-y-8 sm:space-y-10">
+    return <main className="min-h-full bg-[var(--app-bg)] px-4 py-6 text-[var(--app-text)] sm:px-6 lg:px-10 lg:py-9"><div className="mx-auto max-w-[1500px] space-y-8 sm:space-y-10">
         <header className="grid min-h-[58px] grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-[var(--app-border)] px-1 py-3 sm:gap-3 sm:px-0">
             <div className="flex min-w-0 items-center gap-2">
                 <button className={`${button} px-3 py-2 text-xs sm:px-4 sm:text-sm`} onClick={() => { const current = new Date(); setMonth(new Date(current.getFullYear(), current.getMonth(), 1)); setSelected(current); }}>Today</button>
