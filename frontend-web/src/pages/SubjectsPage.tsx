@@ -199,7 +199,7 @@ export function SubjectsPage() {
         try {
             const updated = await subjectService.toggleFavorite(subjectId);
             setSubjects((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-            notify({ title: updated.isFavorite ? 'Subject added to favorites' : 'Subject removed from favorites', tone: 'success' });
+            notify({ title: updated.isFavorite ? 'Subject added to favorites' : 'Subject removed from favorites', description: updated.name, tone: 'success' });
         } catch (err) {
             notify({ title: 'Could not update favorite', description: getApiErrorMessage(err), tone: 'error' });
         }
@@ -217,7 +217,7 @@ export function SubjectsPage() {
             if (selectedSubjectId === subjectId) {
                 setSearchParams({});
             }
-            notify({ title: 'Subject deleted', tone: 'success' });
+            notify({ title: 'Subject deleted', description: subjectToDelete?.name, tone: 'success' });
         } catch (err) {
             notify({ title: 'Could not delete subject', description: getApiErrorMessage(err), tone: 'error' });
         }
@@ -227,12 +227,12 @@ export function SubjectsPage() {
         if (editingSubject) {
             const updated = await subjectService.update(editingSubject.id, dto);
             setSubjects((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-            notify({ title: 'Subject updated', tone: 'success' });
+            notify({ title: 'Subject updated', description: updated.name, tone: 'success' });
         } else {
             const created = await subjectService.create(dto);
             setSubjects((prev) => [...prev, created]);
             setSearchParams({ id: String(created.id) });
-            notify({ title: 'Subject created', tone: 'success' });
+            notify({ title: 'Subject created', description: created.name, tone: 'success' });
         }
     };
 
@@ -240,11 +240,11 @@ export function SubjectsPage() {
         if (editingTopic) {
             const updated = await topicService.update(editingTopic.id, dto);
             setTopics((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-            notify({ title: 'Topic updated', tone: 'success' });
+            notify({ title: 'Topic updated', description: updated.name, tone: 'success' });
         } else {
             const created = await topicService.create(dto);
             setTopics((prev) => [...prev, created]);
-            notify({ title: 'Topic created', tone: 'success' });
+            notify({ title: 'Topic created', description: created.name, tone: 'success' });
         }
     };
 
@@ -252,7 +252,7 @@ export function SubjectsPage() {
         try {
             const updated = await topicService.patch(topicId, { status });
             setTopics((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-            notify({ title: 'Topic status updated', tone: 'success' });
+            notify({ title: 'Topic status updated', description: updated.name, tone: 'success' });
         } catch (err) {
             notify({ title: 'Could not update topic status', description: getApiErrorMessage(err), tone: 'error' });
         }
@@ -300,11 +300,11 @@ export function SubjectsPage() {
         if (editingEvaluation) {
             const updated = await assessmentService.update(editingEvaluation.id, dto);
             setAssessments((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
-            notify({ title: 'Evaluation updated', tone: 'success' });
+            notify({ title: 'Evaluation updated', description: updated.title, tone: 'success' });
         } else {
             const created = await assessmentService.create(dto as CreateAssessmentDTO);
             setAssessments((prev) => [...prev, created]);
-            notify({ title: 'Evaluation created', tone: 'success' });
+            notify({ title: 'Evaluation created', description: created.title, tone: 'success' });
         }
     };
 
@@ -312,7 +312,7 @@ export function SubjectsPage() {
         try {
             const updated = await assessmentService.toggleComplete(evaluation);
             setAssessments((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
-            notify({ title: updated.completed ? 'Evaluation completed' : 'Evaluation reopened', tone: 'success' });
+            notify({ title: updated.completed ? 'Evaluation completed' : 'Evaluation reopened', description: updated.title, tone: 'success' });
         } catch (err) {
             notify({ title: 'Could not update evaluation', description: getApiErrorMessage(err), tone: 'error' });
         }

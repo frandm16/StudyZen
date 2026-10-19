@@ -17,6 +17,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findByUserIdOrderByCreatedAtDescIdDesc(UUID userId, Pageable pageable);
     Optional<Notification> findByIdAndUserId(Long id, UUID userId);
     long countByUserIdAndReadFalse(UUID userId);
+    @Modifying
+    @Query(value = "INSERT INTO notifications (user_id, type, title, body, is_read, reminder_key) VALUES (:userId, 'warning', :title, :body, FALSE, :reminderKey) ON CONFLICT (reminder_key) WHERE reminder_key IS NOT NULL DO NOTHING", nativeQuery = true)
+    int insertExamReminder(@Param("userId") UUID userId, @Param("title") String title, @Param("body") String body, @Param("reminderKey") String reminderKey);
 
     @Modifying
     @Query("UPDATE Notification n SET n.read = true WHERE n.userId = :userId AND n.read = false")

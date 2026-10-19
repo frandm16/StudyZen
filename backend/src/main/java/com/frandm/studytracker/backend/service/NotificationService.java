@@ -43,7 +43,7 @@ public class NotificationService {
         notification.setType(request.type());
         notification.setTitle(request.title().trim());
         notification.setBody(request.body().trim());
-        notification.setRead(false);
+        notification.setRead(Boolean.TRUE.equals(request.read()));
         return NotificationResponse.from(notificationRepository.save(notification));
     }
 

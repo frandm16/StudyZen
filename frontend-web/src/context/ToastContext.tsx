@@ -43,6 +43,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             type: tone,
             title: input.title,
             body: input.description?.trim() || input.title,
+            read: true,
         }).then(() => window.dispatchEvent(new Event('studyzen:notifications-changed'))).catch(() => undefined);
     }, [notify]);
     useEffect(() => () => timers.current.forEach((timer) => window.clearTimeout(timer)), []);

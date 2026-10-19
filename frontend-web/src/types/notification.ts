@@ -13,4 +13,5 @@ export interface CreateNotificationDTO {
     type: NotificationType;
     title: string;
     body: string;
+    read?: boolean;
 }

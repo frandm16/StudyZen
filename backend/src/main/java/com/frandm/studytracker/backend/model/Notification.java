@@ -29,6 +29,9 @@ public class Notification {
     @Column(name = "is_read", nullable = false)
     private boolean read;
 
+    @Column(name = "reminder_key", length = 100)
+    private String reminderKey;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -49,6 +52,8 @@ public class Notification {
     public void setBody(String body) { this.body = body; }
     public boolean isRead() { return read; }
     public void setRead(boolean read) { this.read = read; }
+    public String getReminderKey() { return reminderKey; }
+    public void setReminderKey(String reminderKey) { this.reminderKey = reminderKey; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 }

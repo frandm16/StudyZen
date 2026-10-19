@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 public record NotificationCreateRequest(
         @NotNull NotificationType type,
         @NotBlank @Size(max = 200) String title,
-        @NotBlank @Size(max = 2000) String body
+        @NotBlank @Size(max = 2000) String body,
+        Boolean read
 ) {
 }
