@@ -12,7 +12,7 @@ import { termService } from '../services/term-service';
 import type { Subject, CreateSubjectDTO } from '../types/subject';
 import type { Topic, CreateTopicDTO, TopicStatus } from '../types/topic';
 import type { Assessment, CreateAssessmentDTO, UpdateAssessmentDTO } from '../types/assessment';
-import type { Session } from '../types/session';
+import type { Session, UpdateSessionDTO } from '../types/session';
 import type { AcademicTerm } from '../types/academic-term';
 
 import { TermFilterBar } from '../components/subjects/TermFilterBar';
@@ -27,6 +27,7 @@ import { SubjectModal } from '../components/subjects/modals/SubjectModal';
 import { TopicModal } from '../components/subjects/modals/TopicModal';
 import { EvaluationModal } from '../components/subjects/modals/EvaluationModal';
 import { TermModal } from '../components/subjects/modals/TermModal';
+import { SessionModal } from '../components/subjects/modals/SessionModal';
 
 export function SubjectsPage() {
     const navigate = useNavigate();
@@ -61,6 +62,7 @@ export function SubjectsPage() {
     const [editingEvaluation, setEditingEvaluation] = useState<Assessment | null>(null);
 
     const [termModalOpen, setTermModalOpen] = useState(false);
+    const [editingSession, setEditingSession] = useState<Session | null>(null);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -241,7 +243,7 @@ export function SubjectsPage() {
 
     const handleUpdateTopicStatus = async (topicId: number, status: TopicStatus) => {
         try {
-            const updated = await topicService.update(topicId, { status });
+            const updated = await topicService.patch(topicId, { status });
             setTopics((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
             notify({ title: 'Topic status updated', tone: 'success' });
         } catch (err) {
@@ -257,6 +259,26 @@ export function SubjectsPage() {
             notify({ title: 'Topic deleted', tone: 'success' });
         } catch (err) {
             notify({ title: 'Could not delete topic', description: getApiErrorMessage(err), tone: 'error' });
+        }
+    };
+
+    const handleSaveSession = async (data: UpdateSessionDTO) => {
+        if (!editingSession) return;
+        const updated = await sessionService.update(editingSession.id, data);
+        setSessions((previous) => previous.map((session) => session.id === updated.id ? updated : session));
+        setEditingSession(null);
+        notify({ title: 'Session updated', tone: 'success' });
+    };
+
+    const handleDeleteSession = async (sessionId: number) => {
+        const session = sessions.find((item) => item.id === sessionId);
+        if (!window.confirm(`Delete the session "${session?.title || 'Untitled session'}"? This cannot be undone.`)) return;
+        try {
+            await sessionService.delete(sessionId);
+            setSessions((previous) => previous.filter((item) => item.id !== sessionId));
+            notify({ title: 'Session deleted', tone: 'success' });
+        } catch (error) {
+            notify({ title: 'Could not delete session', description: getApiErrorMessage(error), tone: 'error' });
         }
     };
 
@@ -373,7 +395,9 @@ export function SubjectsPage() {
                         <SubjectSessionsTab
                             subject={selectedSubject}
                             sessions={subjectSessions}
-                            topics={subjectTopics}
+                            topics={topics}
+                            onEditSession={setEditingSession}
+                            onDeleteSession={handleDeleteSession}
                             onStartSession={() => {
                                 timer.setSelectedTagId(selectedSubject.id);
                                 if (subjectTopics[0]) timer.setSelectedTaskId(subjectTopics[0].id);
@@ -489,6 +513,16 @@ export function SubjectsPage() {
                         </div>
                     )}
                 </div>
+            )}
+
+            {editingSession && (
+                <SessionModal
+                    session={editingSession}
+                    subjects={subjects}
+                    topics={topics}
+                    onClose={() => setEditingSession(null)}
+                    onSave={handleSaveSession}
+                />
             )}
 
             <SubjectModal

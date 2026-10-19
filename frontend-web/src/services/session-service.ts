@@ -1,9 +1,9 @@
 import { api } from './api';
 import { normalizeStudySession } from '../lib/api-flags';
 import { formatApiTimestamp, formatRequiredApiTimestamp } from '../lib/api-datetime';
-import type { Session, CreateSessionDTO, SessionQuery } from '../types/session';
+import type { Session, CreateSessionDTO, UpdateSessionDTO, SessionQuery } from '../types/session';
 
-function formatSessionDates(session: CreateSessionDTO): CreateSessionDTO {
+function formatSessionDates<T extends { startedAt: string; endedAt: string }>(session: T): T {
     return {
         ...session,
         startedAt: formatRequiredApiTimestamp(session.startedAt),
@@ -39,8 +39,8 @@ export const sessionService = {
         return normalizeStudySession(res.data);
     },
 
-    update: async (id: number, sessionData: CreateSessionDTO): Promise<Session> => {
-        const res = await api.put<unknown>(`/sessions/${id}`, formatSessionDates(sessionData));
+    update: async (id: number, sessionData: UpdateSessionDTO): Promise<Session> => {
+        const res = await api.patch<unknown>(`/sessions/${id}`, sessionData);
         return normalizeStudySession(res.data);
     },
 

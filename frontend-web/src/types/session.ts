@@ -28,6 +28,7 @@ export interface UpdateSessionDTO {
     totalMinutes?: number;
     startedAt?: string;
     endedAt?: string;
+    topicId?: number;
     focusRating?: number;
     pausedMinutes?: number;
 }

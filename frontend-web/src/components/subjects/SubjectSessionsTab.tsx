@@ -1,4 +1,4 @@
-import { History, Clock, Star, Play, Calendar } from 'lucide-react';
+import { History, Clock, Star, Play, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { formatMinutes, formatDateDisplay } from './helpers';
 import type { Session } from '../../types/session';
 import type { Topic } from '../../types/topic';
@@ -9,12 +9,16 @@ interface SubjectSessionsTabProps {
     sessions: Session[];
     topics: Topic[];
     onStartSession: () => void;
+    onEditSession: (session: Session) => void;
+    onDeleteSession: (sessionId: number) => void;
 }
 
 export function SubjectSessionsTab({
     sessions,
     topics,
     onStartSession,
+    onEditSession,
+    onDeleteSession,
 }: SubjectSessionsTabProps) {
     const topicMap = new Map(topics.map((t) => [t.id, t]));
     const totalMinutes = sessions.reduce((acc, s) => acc + (s.totalMinutes || 0), 0);
@@ -92,7 +96,7 @@ export function SubjectSessionsTab({
                                             <span>{formatDateDisplay(session.startedAt)}</span>
                                         </div>
 
-                                        {session.focusRating && (
+                                        {session.focusRating !== undefined && session.focusRating !== null && (
                                             <div className="flex items-center gap-1 text-amber-400">
                                                 <Star className="h-3 w-3 fill-current" />
                                                 <span className="font-bold">{session.focusRating}/5</span>
@@ -106,6 +110,12 @@ export function SubjectSessionsTab({
                                         <Clock className="h-3.5 w-3.5" />
                                         <span>{formatMinutes(session.totalMinutes)}</span>
                                     </div>
+                                    <button type="button" onClick={() => onEditSession(session)} aria-label={`Edit ${session.title || 'session'}`} title="Edit session" className="rounded-lg border border-[var(--app-border)] p-2 text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]">
+                                        <Pencil className="h-4 w-4" />
+                                    </button>
+                                    <button type="button" onClick={() => onDeleteSession(session.id)} aria-label={`Delete ${session.title || 'session'}`} title="Delete session" className="rounded-lg border border-[var(--app-border)] p-2 text-[var(--app-text-muted)] transition-colors hover:border-red-500 hover:text-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500">
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
                                 </div>
                             </div>
                         );

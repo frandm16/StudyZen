@@ -9,7 +9,6 @@ export const api = axios.create({
     headers: { Accept: 'application/json' },
 });
 
-let csrfToken: string | null = null;
 let csrfRequest: Promise<string> | null = null;
 let refreshRequest: Promise<void> | null = null;
 
@@ -19,15 +18,11 @@ interface AuthRequestConfig extends InternalAxiosRequestConfig {
 }
 
 export async function getCsrfToken(): Promise<string> {
-    if (csrfToken) return csrfToken;
     if (!csrfRequest) {
         csrfRequest = axios.get<{ token: string }>(`${API_BASE_URL}/auth/csrf`, {
             withCredentials: true,
             headers: { Accept: 'application/json' },
-        }).then(({ data }) => {
-            csrfToken = data.token;
-            return csrfToken;
-        }).finally(() => {
+        }).then(({ data }) => data.token).finally(() => {
             csrfRequest = null;
         });
     }
