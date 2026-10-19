@@ -54,7 +54,7 @@ function resolveConfig(options: TimerOptions, internal: TimerConfig): TimerConfi
 }
 
 const TIMER_STORAGE_KEY = 'studyzen_timer_config';
-const TIME_SPEED_MULTIPLIER = 1000;
+const TIME_SPEED_MULTIPLIER = 1; // 1 to default
 
 function loadPersistedTimerConfig(): TimerConfig {
     try {
