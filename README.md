@@ -1,8 +1,6 @@
-![StudyZen Banner](frontend/src/main/resources/com/frandm/studytracker/images/study-zen-banner.png)
-
 # 🎓 StudyZen
 
-StudyZen is a self-hosted desktop app for people who want a personal study system they fully control.
+StudyZen is a self-hosted study platform for people who want a personal study system they fully control.
 
 It brings together focused session tracking, weekly planning, tasks, deadlines, logs, and progress insights in one place, while keeping your data on your own machine through a local backend.
 
@@ -27,12 +25,11 @@ It brings together focused session tracking, weekly planning, tasks, deadlines, 
 - Statistics dashboard with visual summaries
 - Better feedback on workload and consistency
 
-### 🖥️ Desktop Experience
+### 🌐 Web Experience
 
-- Multiple themes and fonts
-- Sound and notification customization
-- First-run guide and in-app backend setup
-- Portable and installer-based frontend distribution
+- Responsive study planning and session tracking
+- Multiple themes and accessible interface controls
+- Browser-based access to your self-hosted StudyZen instance
 
 ## 🖼️ Gallery
 
@@ -56,11 +53,11 @@ It brings together focused session tracking, weekly planning, tasks, deadlines, 
 
 StudyZen runs as a local self-hosted setup:
 
-- a desktop frontend for the UI
+- a web frontend for the UI
 - a backend API for data persistence
 - a PostgreSQL database for storage
 
-For the default setup, Docker Compose starts the backend and database locally, and the desktop app connects to them through:
+Docker Compose starts the web frontend, backend, and database locally. The application is available at `http://localhost:7777`, and the backend API at:
 
 ```text
 http://localhost:8080/api
@@ -109,34 +106,19 @@ Then start the services:
 docker compose up -d
 ```
 
-### 3. 🪟 Open the frontend
+### 3. 🌐 Open StudyZen
 
-Use the desktop release build:
-
-- `StudyTracker-v<version>-Setup.msi`
-- `StudyTracker-v<version>-Portable.zip`
-
-On first launch, the app will guide you through:
-
-1. a short welcome flow
-2. backend connection setup
-
-For the default local setup, use:
+Open the web application at:
 
 ```text
-http://localhost:8080/api
+http://localhost:7777
 ```
 
-Once saved, StudyZen remembers the server URL for future launches.
+The frontend connects to the backend API through the configured local setup.
 
 ## 📦 Release Artifacts
 
-The frontend is prepared to ship in two formats:
-
-- **Windows Installer** for a standard desktop installation
-- **Portable Build** for running the app without installation
-
-The backend can also be shipped separately as:
+The backend can be shipped separately as:
 
 - **StudyZen Backend**: `StudyZen-backend-v<version>.zip`
 
@@ -148,67 +130,26 @@ That backend package is intended to contain:
 
 ## 🧪 Build From Source
 
-If you want to run the full project from source, you will need:
+To run the project locally, you will need:
 
-- Java 21 for the backend
-- Java 25 for the frontend
-- Maven 3.9+
+- Node.js and npm for the web frontend
+- Java 21 and Maven 3.9+ for the backend
 - Docker Desktop
 
-Run the frontend:
-
-```bash
-mvn -pl frontend javafx:run
-```
-
-Run backend + database:
+Start the application stack:
 
 ```bash
 docker compose up -d
 ```
 
+For frontend development, run `npm install` and `npm run dev` from `frontend-web/`.
+
 ## 🗂️ Project Layout
 
 ```text
 StudyZen/
-├── backend/
-│   ├── src/main/java/com/frandm/studytracker/backend/
-│   │   ├── config/
-│   │   ├── controller/
-│   │   ├── mapper/
-│   │   ├── model/
-│   │   ├── repository/
-│   │   ├── service/
-│   │   └── util/
-│   ├── src/main/resources/
-│   │   ├── application.yml
-│   │   └── db/migration/
-│   └── pom.xml
-├── frontend/
-│   ├── src/main/java/com/frandm/studytracker/
-│   │   ├── client/
-│   │   ├── controllers/
-│   │   ├── core/
-│   │   ├── models/
-│   │   ├── ui/
-│   │   │   ├── util/
-│   │   │   └── views/
-│   │   │       ├── dashboard/
-│   │   │       ├── logs/
-│   │   │       └── planner/
-│   │   ├── App.java
-│   │   └── Launcher.java
-│   ├── src/main/resources/com/frandm/studytracker/
-│   │   ├── css/
-│   │   ├── fonts/
-│   │   ├── fxml/
-│   │   ├── images/
-│   │   ├── sounds/
-│   │   └── videos/
-│   └── pom.xml
-├── images/
-├── dist/
-├── .env
+├── backend/          # Java 21, Spring Boot, PostgreSQL, Flyway
+├── frontend-web/     # React, TypeScript, Vite, Tailwind CSS
 ├── .env.example
 ├── docker-compose.yml
 ├── Dockerfile
@@ -221,27 +162,10 @@ StudyZen/
 
 | Layer | Technology |
 |---|---|
-| Frontend | Java 25, JavaFX 23 |
+| Frontend | React, TypeScript, Vite, Tailwind CSS |
 | Backend | Java 21, Spring Boot 3 |
 | Database | PostgreSQL 16 |
-| Packaging | Maven Shade, jpackage |
 | Deployment | Docker Compose |
-
-## 💾 Local Data
-
-StudyZen stores local preferences in:
-
-```text
-C:\Users\<user>\.StudyTracker\settings.properties
-```
-
-This includes things like:
-
-- saved backend URL
-- onboarding completion
-- appearance settings
-- sounds and notifications
-- keyboard shortcuts
 
 ## 📄 License
 

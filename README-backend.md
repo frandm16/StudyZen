@@ -73,7 +73,7 @@ docker compose up -d
 
 ### 4. Connect the frontend
 
-Open the StudyZen desktop app and use:
+Configure your StudyZen web frontend to use:
 
 ```text
 http://localhost:8080/api
