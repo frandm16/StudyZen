@@ -22,18 +22,18 @@ export function AuthLayout({ mode, children }: AuthLayoutProps) {
                     </Link>
                 </header>
                 <main className="auth-frame grid overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] shadow-[0_24px_80px_rgba(0,0,0,0.18)] lg:grid-cols-[1fr_0.9fr]">
-                    <section className="auth-side relative hidden min-h-[610px] flex-col justify-between overflow-hidden p-10 lg:flex xl:p-12" aria-label="StudyZen">
+                    <section className="auth-side relative flex min-h-[270px] flex-col justify-between overflow-hidden px-6 py-6 sm:min-h-[330px] sm:px-8 sm:py-8 lg:min-h-[610px] lg:p-10 xl:p-12" aria-label="StudyZen">
                         <div className="auth-grid absolute inset-0" />
                         <div className="auth-side-light auth-side-light-one absolute rounded-full" />
                         <div className="auth-side-light auth-side-light-two absolute rounded-full" />
                         <div className="relative z-10 max-w-[370px]">
-                            <h1 className="auth-side-heading text-[2.5rem] font-semibold leading-[1.12] tracking-[-0.045em]">{heading}</h1>
-                            <p className="mt-4 max-w-[310px] text-sm leading-6 text-[var(--app-text-muted)]">Plan your work, keep track of your sessions, and make steady progress.</p>
+                            <h1 className="auth-side-heading text-xl font-semibold leading-tight tracking-[-0.04em] sm:text-2xl lg:text-[2.5rem] lg:leading-[1.12] lg:tracking-[-0.045em]">{heading}</h1>
+                            <p className="mt-2 hidden max-w-[310px] text-sm leading-6 text-[var(--app-text-muted)] sm:block sm:mt-3 lg:mt-4">Plan your work, keep track of your sessions, and make steady progress.</p>
                         </div>
-                        <div className="auth-study-art relative mx-auto flex h-[290px] w-full max-w-[430px] items-center justify-center" aria-hidden="true">
+                        <div className="auth-study-art relative mx-auto flex h-[150px] w-full max-w-[430px] items-center justify-center sm:h-[190px] lg:h-[290px]" aria-hidden="true">
                             <div className="auth-art-glow absolute rounded-full" />
                             <div className="auth-paper-sheet auth-paper-back absolute rounded-2xl border border-[var(--app-border)]" />
-                            <div className="auth-paper-sheet auth-paper-front relative rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-6 shadow-xl">
+                            <div className="auth-paper-sheet auth-paper-front relative rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-4 sm:p-5 lg:p-6 shadow-xl">
                                 <div className="flex items-center justify-between border-b border-[var(--app-border)] pb-4">
                                     <span className="text-xs font-semibold text-[var(--app-text)]">Study plan</span>
                                     <span className="text-[10px] text-[var(--app-text-muted)]">TODAY</span>
@@ -41,7 +41,7 @@ export function AuthLayout({ mode, children }: AuthLayoutProps) {
                                 <div className="mt-5 flex gap-4">
                                     <div className="flex flex-col items-center">
                                         <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent-color)]" />
-                                        <span className="h-[74px] w-px bg-[var(--app-border)]" />
+                                        <span className="h-10 w-px sm:h-[52px] lg:h-[74px] bg-[var(--app-border)]" />
                                         <span className="h-2.5 w-2.5 rounded-full border-2 border-[var(--accent-color)] bg-[var(--app-card-bg)]" />
                                     </div>
                                     <div className="flex flex-1 flex-col gap-3">
