@@ -25,6 +25,16 @@ export interface WeekGridLayout extends WeekGridInterval {
     laneSpan: number;
 }
 
+export function getDisplayInterval(startMinutes: number, endMinutes: number): Pick<WeekGridInterval, 'startMinutes' | 'endMinutes'> {
+    if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes) || endMinutes <= startMinutes) {
+        return { startMinutes, endMinutes };
+    }
+    return {
+        startMinutes,
+        endMinutes: Math.min(WEEK_GRID_MINUTES, Math.max(endMinutes, startMinutes + WEEK_GRID_SNAP_MINUTES)),
+    };
+}
+
 export function layoutWeekGridIntervals<T extends WeekGridInterval>(intervals: T[]): (T & WeekGridLayout)[] {
     const sorted = intervals
         .filter((interval) => Number.isFinite(interval.startMinutes) && Number.isFinite(interval.endMinutes) && interval.endMinutes > interval.startMinutes)

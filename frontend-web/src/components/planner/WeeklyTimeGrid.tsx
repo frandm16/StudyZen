@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { dateKey, localDateFromTimestamp } from '../../lib/planner-dates';
-import { buildGridSelection, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_END_HOUR, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_START_HOUR, WEEK_GRID_MINUTES, type GridSelection } from '../../lib/week-grid';
+import { buildGridSelection, getDisplayInterval, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_END_HOUR, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_START_HOUR, WEEK_GRID_MINUTES, type GridSelection } from '../../lib/week-grid';
 import type { ScheduledSession } from '../../types/scheduled-session';
 import type { Session } from '../../types/session';
 import type { Deadline } from '../../types/deadline';
@@ -81,15 +81,16 @@ export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, subjects
             const startMinutes = (clippedStart - dayStart.getTime()) / 60000;
             const endMinutes = (clippedEnd - dayStart.getTime()) / 60000;
             if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes) || endMinutes <= startMinutes) continue;
-            pieces.push({ kind, item, date, key: `${kind}-${item.id}:${date}`, startMinutes, endMinutes, topic, subject });
+            const displayInterval = getDisplayInterval(startMinutes, endMinutes);
+            pieces.push({ kind, item, date, key: `${kind}-${item.id}:${date}`, startMinutes, endMinutes, displayStartMinutes: displayInterval.startMinutes, displayEndMinutes: displayInterval.endMinutes, topic, subject });
         }
         return pieces;
     });
-    const layoutByKey = new Map(dates.flatMap((date) => layoutWeekGridIntervals(visibleSlots.filter((slot) => slot.date === dateKey(date)))).map((layout) => [layout.key, layout]));
+    const layoutByKey = new Map(dates.flatMap((date) => layoutWeekGridIntervals(visibleSlots.filter((slot) => slot.date === dateKey(date)).map((slot) => ({ ...slot, startMinutes: slot.displayStartMinutes, endMinutes: slot.displayEndMinutes })))).map((layout) => [layout.key, layout]));
     const slots = visibleSlots.flatMap((slot) => {
         const layout = layoutByKey.get(slot.key);
         if (!layout) return [];
-        return [{ ...slot, lane: layout.lane, laneCount: layout.laneCount, laneSpan: layout.laneSpan, top: layout.startMinutes / 60 * WEEK_GRID_HOUR_HEIGHT, height: (layout.endMinutes - layout.startMinutes) / 60 * WEEK_GRID_HOUR_HEIGHT }];
+        return [{ ...slot, lane: layout.lane, laneCount: layout.laneCount, laneSpan: layout.laneSpan, top: slot.startMinutes / 60 * WEEK_GRID_HOUR_HEIGHT, height: (slot.displayEndMinutes - slot.startMinutes) / 60 * WEEK_GRID_HOUR_HEIGHT }];
     });
     const allDayDeadlines = deadlines.filter((deadline) => deadline.allDay);
     const timedDeadlines = deadlines.filter((deadline) => !deadline.allDay).flatMap((deadline) => {

@@ -3,7 +3,7 @@ import { CreateScheduledSessionDialog } from '../components/planner/CreateSchedu
 import { SessionModal } from '../components/subjects/modals/SessionModal';
 import { TaskTagDialog } from '../components/timer/TaskTagDialog';
 import { addDays as addPlannerDays, localDateFromTimestamp, startOfWeek as plannerStartOfWeek } from '../lib/planner-dates';
-import { buildGridSelection, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, type GridSelection } from '../lib/week-grid';
+import { buildGridSelection, getDisplayInterval, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_MINUTES, WEEK_GRID_START_HOUR, type GridSelection } from '../lib/week-grid';
 import { useTimerContext } from '../context/TimerContext';
 import { useToast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../services/api';
@@ -47,7 +47,7 @@ interface TimelineEvent {
     done: boolean;
 }
 
-type PlacedEvent = TimelineEvent & { lane: number; laneCount: number; laneSpan: number };
+type PlacedEvent = TimelineEvent & { lane: number; laneCount: number; laneSpan: number; displayEnd: number };
 type DialogKind = 'deadline' | 'session';
 
 interface ItemValues {
@@ -177,11 +177,11 @@ const buildEvents = (
 };
 
 const placeEvents = (events: TimelineEvent[]): PlacedEvent[] =>
-    layoutWeekGridIntervals(events.map((event) => ({
-        ...event,
-        startMinutes: Math.max(0, event.start - GRID_START),
-        endMinutes: Math.min(WEEK_GRID_MINUTES, event.end - GRID_START),
-    }))).map((event) => ({
+    layoutWeekGridIntervals(events.map((event) => {
+        const startMinutes = Math.max(0, event.start - GRID_START);
+        const endMinutes = Math.min(WEEK_GRID_MINUTES, event.end - GRID_START);
+        return { ...event, ...getDisplayInterval(startMinutes, endMinutes) };
+    })).map((event) => ({
         key: event.key,
         kind: event.kind,
         id: event.id,
@@ -196,6 +196,7 @@ const placeEvents = (events: TimelineEvent[]): PlacedEvent[] =>
         lane: event.lane,
         laneCount: event.laneCount,
         laneSpan: event.laneSpan,
+        displayEnd: event.endMinutes + GRID_START,
     }));
 
 const urgencyLabel = (urgency: string) => {
@@ -1139,7 +1140,8 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                                         const start = Math.max(event.start, GRID_START);
                                         const end = Math.min(event.end, GRID_END);
                                         if (end <= start) return null;
-                                        const height = end - start;
+                                        const displayEnd = Math.min(event.displayEnd, GRID_END);
+                                        const height = Math.max(0, displayEnd - start);
                                         const textColor = readableText(event.color);
                                         return (
                                             <article
