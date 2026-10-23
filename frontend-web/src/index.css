@@ -269,6 +269,65 @@ input[type="range"]:active::-moz-range-thumb {
   .auth-submit, .auth-google, .auth-input { transition: none !important; }
 }
 
+@layer components {
+  .app-page-frame {
+    min-height: 100%;
+    background: var(--app-bg);
+    color: var(--app-text);
+    padding: 1.5rem 1rem;
+  }
+
+  .app-page-content {
+    width: min(100%, 1500px);
+    margin-inline: auto;
+  }
+
+  .app-page-header {
+    display: flex;
+    min-height: 3.625rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--app-border);
+    padding: 0.75rem 0.25rem;
+  }
+
+  .app-page-title {
+    color: var(--app-text);
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.35;
+  }
+
+  .app-section-surface {
+    min-width: 0;
+    border: 1px solid var(--app-border);
+    border-radius: 1rem;
+    background: var(--app-card-bg);
+  }
+
+  .app-section-title {
+    color: var(--app-text);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+}
+
+@media (min-width: 640px) {
+  .app-page-frame {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-page-frame {
+    padding: 2.25rem 2.5rem;
+  }
+}
+
 @theme {
   --font-sans: "Inter", system-ui, sans-serif;
   --font-plex: "IBM Plex Serif", Georgia, serif;

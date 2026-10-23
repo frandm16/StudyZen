@@ -23,7 +23,7 @@ import type { Subject } from '../types/subject';
 import type { TodoItem } from '../types/todo-item';
 import type { Session } from '../types/session';
 
-const card = 'border-t border-[var(--app-border)]';
+const card = 'app-section-surface';
 const button = 'inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]';
 
 export const PlannerPage = () => {
@@ -110,8 +110,8 @@ export const PlannerPage = () => {
     const selectDate = (date: Date) => { setSelected(date); if (date.getMonth() !== month.getMonth() || date.getFullYear() !== month.getFullYear()) setMonth(new Date(date.getFullYear(), date.getMonth(), 1)); };
     const monthLabel = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    return <main className="min-h-full bg-[var(--app-bg)] px-4 py-6 text-[var(--app-text)] sm:px-6 lg:px-10 lg:py-9"><div className="mx-auto max-w-[1500px] space-y-8 sm:space-y-10">
-        <header className="grid min-h-[58px] grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-[var(--app-border)] px-1 py-3 sm:gap-3 sm:px-0">
+    return <main className="app-page-frame"><div className="app-page-content space-y-8 sm:space-y-10">
+        <header className="app-page-header">
             <div className="flex min-w-0 items-center gap-2">
                 <button className={`${button} px-3 py-2 text-xs sm:px-4 sm:text-sm`} onClick={() => { const current = new Date(); setMonth(new Date(current.getFullYear(), current.getMonth(), 1)); setSelected(current); }}>Today</button>
                 <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]" aria-label="Previous month" onClick={() => setMonth((value) => moveMonth(value, -1))}><ArrowLeft size={17} /></button>

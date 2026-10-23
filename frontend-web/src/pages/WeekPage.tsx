@@ -157,9 +157,9 @@ export const WeekPage = () => {
     const addSubject = (subject: Subject) => setSubjects((current) => current.some((item) => item.id === subject.id) ? current : [...current, subject]);
     const addTopic = (topic: Topic) => setTopics((current) => current.some((item) => item.id === topic.id) ? current : [...current, topic]);
 
-    return <main className="min-h-full bg-[var(--app-bg)] px-4 py-6 text-[var(--app-text)] sm:px-6 lg:px-10 lg:py-9">
-        <div className="mx-auto max-w-[1500px] space-y-5">
-            <header className="flex min-h-[58px] flex-wrap items-center justify-between gap-2 border-b border-[var(--app-border)] px-1 py-3 sm:gap-3 sm:px-0">
+    return <main className="app-page-frame">
+        <div className="app-page-content space-y-5">
+            <header className="app-page-header">
                 <div className="flex shrink-0 items-center gap-2">
                     <button onClick={() => { const today = new Date(); setAnchor(today); setSelectedDate(today); }} className={button}>Today</button>
                     <button onClick={() => { const next = addDays(anchor, -7); setAnchor(next); setSelectedDate(next); }} aria-label="Previous week" className={iconButton}><ChevronIcon direction="left" className="h-4 w-4" /></button>

@@ -475,8 +475,8 @@ export const SettingsPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-[calc(100vh-4.5rem)] bg-[var(--app-bg)] text-[var(--app-text)] px-4 py-6 sm:px-6 lg:px-10 font-sans transition-colors duration-200">
-            <div className="mx-auto max-w-7xl space-y-7">
+        <div className="app-page-frame font-sans">
+            <div className="app-page-content space-y-7">
                 <div className="flex items-center gap-2 text-xs font-medium text-[var(--app-text-muted)]">
                     <span>Settings</span>
                     <span aria-hidden="true">/</span>

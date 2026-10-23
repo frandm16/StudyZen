@@ -186,7 +186,7 @@ export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, subjects
     const quickCreate = (date: Date) => onCreate(buildGridSelection(date, 540, 600));
     return <section className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] px-0 pb-3 pt-1 sm:pb-4 sm:pt-2" aria-label="Weekly study calendar">
         <div className="max-h-[70vh] overflow-auto overscroll-contain">
-            <div className="min-w-[900px]">
+            <div className="min-w-[720px]">
                 {allDayDeadlines.length > 0 && <div className="grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)] bg-[var(--app-card-bg)]">
                     <div className="flex items-start justify-end px-2 py-2 text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">All day</div>
                     {dates.map((date) => {

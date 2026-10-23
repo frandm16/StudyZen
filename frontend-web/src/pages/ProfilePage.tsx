@@ -106,8 +106,8 @@ export function ProfilePage() {
     const hasHeaderAvatar = !!user.avatarUrl && !avatarError;
 
     return (
-        <div className="min-h-[calc(100vh-4.5rem)] bg-[var(--app-bg)] text-[var(--app-text)] py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
-            <div className="mx-auto max-w-6xl space-y-8">
+        <div className="app-page-frame">
+            <div className="app-page-content space-y-8">
 
                 <div className="flex flex-col items-start justify-between gap-6 border-b border-[var(--app-border)] pb-7 transition-colors duration-200 md:flex-row md:items-center">
                     <div className="flex items-center gap-5">
