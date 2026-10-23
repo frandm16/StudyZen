@@ -6,9 +6,9 @@ import { useTheme, THEME_PRESETS, type ColorTheme } from '../context/ThemeContex
 import { AVATAR_PRESETS, getRandomAvatarPreset, type AvatarPreset } from '../lib/avatar-presets';
 import { settingsService } from '../services/settings-service';
 import { getApiErrorMessage } from '../services/api';
+import type { SoundCategory } from '../hooks/useSound';
 import { TermsSection } from '../components/settings/TermsSection';
 import type { UpdateProfileDTO } from '../types/auth';
-import type { SoundCategory } from '../hooks/useSound';
 import {
     User as UserIcon,
     Key,
@@ -1037,7 +1037,7 @@ export const SettingsPage: React.FC = () => {
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Audio Volumes</h3>
 
                                         <div className="space-y-4">
-                                            {(['master', 'alarm', 'notification', 'background'] as SoundCategory[]).map((cat) => (
+                                            {(['master', 'alarm', 'notification'] as SoundCategory[]).map((cat) => (
                                                 <div key={cat} className="space-y-1.5 p-3.5 rounded-2xl bg-[var(--app-bg)] border border-[var(--app-border)]">
                                                     <div className="flex justify-between text-xs font-semibold text-[var(--app-text)]">
                                                         <span className="capitalize">{cat} Volume</span>
@@ -1056,7 +1056,6 @@ export const SettingsPage: React.FC = () => {
                                                                 if (cat === 'master') payload.masterVolume = val;
                                                                 if (cat === 'alarm') payload.alarmVolume = val;
                                                                 if (cat === 'notification') payload.notificationVolume = val;
-                                                                if (cat === 'background') payload.backgroundVolume = val;
                                                                 saveAutosetting(`${cat}Volume`, payload);
                                                             }}
                                                             className="w-full cursor-pointer"
@@ -1073,6 +1072,13 @@ export const SettingsPage: React.FC = () => {
                                                 className="px-4 py-2 rounded-xl bg-neutral-500/10 text-[var(--app-text)] text-xs font-semibold hover:bg-neutral-500/20 transition-all border border-[var(--app-border)] flex items-center gap-2 cursor-pointer"
                                             >
                                                 <Play className="w-3.5 h-3.5 text-[var(--accent-color)]" /> Test Alarm
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => sound.playNotification('info')}
+                                                className="px-4 py-2 rounded-xl bg-neutral-500/10 text-[var(--app-text)] text-xs font-semibold hover:bg-neutral-500/20 transition-all border border-[var(--app-border)] flex items-center gap-2 cursor-pointer"
+                                            >
+                                                <Play className="w-3.5 h-3.5 text-[var(--accent-color)]" /> Test Notification
                                             </button>
                                         </div>
                                     </div>

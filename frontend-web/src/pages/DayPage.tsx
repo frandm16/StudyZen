@@ -903,7 +903,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setSelected(fromKey(toKey(new Date())))}
-                            className={`rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-4 py-2 text-xs font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] ${focusRing}`}
+                            className={`rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] ${focusRing}`}
                         >
                             Today
                         </button>
