@@ -2,6 +2,7 @@ package com.frandm.studytracker.backend.controller;
 
 import com.frandm.studytracker.backend.dto.auth.AuthenticatedUserResponse;
 import com.frandm.studytracker.backend.security.AuthCookies;
+import com.frandm.studytracker.backend.security.AuthRateLimiter;
 import com.frandm.studytracker.backend.security.CurrentUser;
 import com.frandm.studytracker.backend.security.JwtTokenProvider;
 import com.frandm.studytracker.backend.service.AuthService;
@@ -20,11 +21,14 @@ public class AuthController {
     private final AuthService authService;
     private final AuthCookies authCookies;
     private final TokenService tokenService;
+    private final AuthRateLimiter authRateLimiter;
 
-    public AuthController(AuthService authService, AuthCookies authCookies, TokenService tokenService) {
+    public AuthController(AuthService authService, AuthCookies authCookies, TokenService tokenService,
+            AuthRateLimiter authRateLimiter) {
         this.authService = authService;
         this.authCookies = authCookies;
         this.tokenService = tokenService;
+        this.authRateLimiter = authRateLimiter;
     }
 
     @GetMapping("/csrf")
@@ -35,30 +39,39 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, String> body,
             HttpServletRequest request, HttpServletResponse response) {
+        authRateLimiter.checkRegistration(request);
         authService.register(body.get("email"), body.get("password"), body.get("displayName"), request);
         return ResponseEntity.accepted().body(Map.of("message", "Check your email to verify your account"));
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<Map<String, String>> verifyEmail(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestBody Map<String, String> body,
+            HttpServletRequest request) {
+        authRateLimiter.checkTokenAction("verify-email", request);
         authService.verifyEmail(body.get("token"));
         return ResponseEntity.ok(Map.of("message", "Email verified"));
     }
 
     @PostMapping("/resend-verification")
-    public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> body,
+            HttpServletRequest request) {
+        authRateLimiter.checkEmailAction("resend-verification", body.get("email"), request);
         authService.resendVerification(body.get("email"));
         return ResponseEntity.accepted().body(Map.of("message", "If the account requires verification, an email will be sent"));
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> body,
+            HttpServletRequest request) {
+        authRateLimiter.checkEmailAction("forgot-password", body.get("email"), request);
         authService.forgotPassword(body.get("email"));
         return ResponseEntity.accepted().body(Map.of("message", "If an account exists, password reset instructions will be sent"));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody Map<String, String> body,
+            HttpServletRequest request) {
+        authRateLimiter.checkTokenAction("reset-password", request);
         authService.resetPassword(body.get("token"), body.get("password"));
         return ResponseEntity.ok(Map.of("message", "Password reset"));
     }
@@ -66,7 +79,9 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> body,
             HttpServletRequest request, HttpServletResponse response) {
+        authRateLimiter.checkLogin(body.get("email"), request);
         TokenService.TokenPair pair = authService.login(body.get("email"), body.get("password"), request);
+        authRateLimiter.loginSucceeded(body.get("email"));
         return withCookies(pair, response);
     }
 

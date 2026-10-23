@@ -19,6 +19,13 @@ public class JwtTokenProvider {
     public JwtTokenProvider(
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.access-token-expiry-ms}") long accessTokenExpiryMs) {
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32
+                || secret.equals("random-secret-at-least-32-characters")
+                || secret.toLowerCase(java.util.Locale.ROOT).contains("replace-this")
+                || secret.toLowerCase(java.util.Locale.ROOT).contains("placeholder")
+                || secret.toLowerCase(java.util.Locale.ROOT).contains("generate-a-unique")) {
+            throw new IllegalArgumentException("JWT_SECRET must be a unique secret of at least 32 bytes");
+        }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpiryMs = accessTokenExpiryMs;
     }
