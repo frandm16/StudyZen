@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../services/api';
-import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3 } from 'lucide-react';
+import { CalendarDays, Check, Clock3 } from 'lucide-react';
 import { assessmentService } from '../services/assessment-service';
 import { deadlineService } from '../services/deadline-service';
 import { scheduledSessionService } from '../services/scheduled-session-service';
@@ -25,6 +25,7 @@ import type { Session } from '../types/session';
 
 const card = 'app-section-surface';
 const button = 'inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-4 py-2 text-sm font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]';
+const PlannerChevron = ({ direction }: { direction: 'left' | 'right' }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden><path d={direction === 'left' ? 'm15 6-6 6 6 6' : 'm9 6 6 6-6 6'} /></svg>;
 
 export const PlannerPage = () => {
     const notify = useToast();
@@ -114,11 +115,11 @@ export const PlannerPage = () => {
         <header className="app-page-header">
             <div className="flex min-w-0 items-center gap-2">
                 <button className={`${button} px-3 py-2 text-xs sm:px-4 sm:text-sm`} onClick={() => { const current = new Date(); setMonth(new Date(current.getFullYear(), current.getMonth(), 1)); setSelected(current); }}>Today</button>
-                <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]" aria-label="Previous month" onClick={() => setMonth((value) => moveMonth(value, -1))}><ArrowLeft size={17} /></button>
+                <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]" aria-label="Previous month" onClick={() => setMonth((value) => moveMonth(value, -1))}><PlannerChevron direction="left" /></button>
             </div>
             <h1 className="min-w-0 truncate text-center text-sm font-bold text-[var(--app-text)] sm:text-base">{monthLabel}</h1>
             <div className="flex justify-end">
-                <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]" aria-label="Next month" onClick={() => setMonth((value) => moveMonth(value, 1))}><ArrowRight size={17} /></button>
+                <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text-muted)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--app-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]" aria-label="Next month" onClick={() => setMonth((value) => moveMonth(value, 1))}><PlannerChevron direction="right" /></button>
             </div>
         </header>
         {loading && <span role="status" className="sr-only">Loading planner data</span>}

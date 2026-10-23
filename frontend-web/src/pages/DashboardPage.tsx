@@ -15,12 +15,12 @@ const formatMinutes = (minutes: number) => `${Math.floor(minutes / 60)}h ${minut
 const mondayOf = (date: Date) => addDays(date, -((date.getDay() + 6) % 7));
 
 function StatCard({ label, value, detail, icon: Icon, tint }: { label: string; value: string; detail: string; icon: typeof Clock3; tint: string }) {
-    return <article className={`${card} py-5 transition-colors hover:border-[var(--accent-color)]`}><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--app-text-muted)]">{label}</p><p className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{value}</p><p className="mt-1 text-xs text-[var(--app-text-muted)]">{detail}</p></div><span className={`flex h-10 w-10 items-center justify-center rounded-full ${tint}`}><Icon size={19} /></span></div></article>;
+    return <article className={`${card} px-5 py-5 transition-colors hover:border-[var(--accent-color)]`}><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--app-text-muted)]">{label}</p><p className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{value}</p><p className="mt-1 text-xs text-[var(--app-text-muted)]">{detail}</p></div><span className={`flex h-10 w-10 items-center justify-center rounded-full ${tint}`}><Icon size={19} /></span></div></article>;
 }
 
 function DashboardSkeleton({ weeks }: { weeks: Date[] }) {
     return <div className="space-y-5" role="status" aria-label="Loading study statistics">
-        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <article key={index} className={`${card} py-5`}><div className="flex items-start justify-between gap-3"><div className="flex-1 space-y-3"><Skeleton className="h-3 w-28" /><Skeleton className="h-9 w-32" /><Skeleton className="h-3 w-40" /></div><Skeleton className="h-10 w-10" rounded="full" /></div></article>)}</div>
+        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <article key={index} className={`${card} px-5 py-5`}><div className="flex items-start justify-between gap-3"><div className="flex-1 space-y-3"><Skeleton className="h-3 w-28" /><Skeleton className="h-9 w-32" /><Skeleton className="h-3 w-40" /></div><Skeleton className="h-10 w-10" rounded="full" /></div></article>)}</div>
         <section className={`${card} px-3 py-6 sm:px-4 sm:py-7`} aria-hidden="true">
             <div className="flex flex-wrap items-end justify-between gap-3"><div className="space-y-2"><Skeleton className="h-3 w-32" /><Skeleton className="h-6 w-36" /></div><Skeleton className="h-4 w-24" /></div>
             <div className="mt-5 overflow-x-auto pb-2"><div className="grid min-w-[620px] grid-cols-[2rem_repeat(12,minmax(0,1fr))] gap-1.5">
