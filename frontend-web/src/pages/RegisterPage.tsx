@@ -4,6 +4,7 @@ import { AuthLayout } from '../components/auth/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/auth-service';
 import { useToast } from '../context/ToastContext';
+import { getApiErrorMessage } from '../services/api';
 
 function ResendVerification({ email }: { email: string }) {
     const notify = useToast();
@@ -15,7 +16,7 @@ function ResendVerification({ email }: { email: string }) {
             await authService.resendVerification(email);
             notify({ title: 'Verification email sent', tone: 'success', persist: false });
         } catch (error) {
-            notify({ title: 'Could not resend email', description: error instanceof Error ? error.message : 'Please try again.', tone: 'error' });
+            notify({ title: 'Could not resend email', description: getApiErrorMessage(error), tone: 'error' });
         } finally {
             setIsSending(false);
         }
@@ -61,7 +62,7 @@ export function RegisterPage() {
             setPendingEmail(email);
             notify({ title: 'Check your email', description: 'Verify your email to finish creating your account.', tone: 'success', persist: false });
         } catch (error) {
-            notify({ title: 'Registration failed', description: error instanceof Error ? error.message : 'Registration failed', tone: 'error' });
+            notify({ title: 'Registration failed', description: getApiErrorMessage(error), tone: 'error' });
         }
     };
 

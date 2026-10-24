@@ -4,6 +4,7 @@ import { AuthLayout } from '../components/auth/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { authService } from '../services/auth-service';
+import { getApiErrorMessage, getStructuredApiErrorMessage } from '../services/api';
 
 function GoogleMark() {
     return (
@@ -43,8 +44,9 @@ export function LoginPage() {
             notify({ title: 'Signed in', tone: 'success', persist: false });
             navigate('/timer');
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Login failed';
-            setShowResend(message.toLowerCase().includes('not verified'));
+            const message = getApiErrorMessage(error);
+            const structuredMessage = getStructuredApiErrorMessage(error);
+            setShowResend(structuredMessage?.toLowerCase().includes('not verified') ?? false);
             setResendMessage('');
             notify({ title: 'Login failed', description: message, tone: 'error' });
         }

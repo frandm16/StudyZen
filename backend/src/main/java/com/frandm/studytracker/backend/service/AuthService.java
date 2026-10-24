@@ -1,5 +1,6 @@
 package com.frandm.studytracker.backend.service;
 
+import com.frandm.studytracker.backend.config.ClientRequestException;
 import com.frandm.studytracker.backend.model.User;
 import com.frandm.studytracker.backend.repository.AuthIdentityRepository;
 import com.frandm.studytracker.backend.repository.UserRepository;
@@ -42,11 +43,11 @@ public class AuthService {
     public void register(String email, String password,
                                          String displayName, HttpServletRequest request) {
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Email and password are required");
+            throw new ClientRequestException("Email and password are required");
         }
         String normalizedEmail = normalizeAndValidateEmail(email);
         if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new IllegalArgumentException("Email already registered");
+            throw new ClientRequestException("Email already registered", org.springframework.http.HttpStatus.CONFLICT);
         }
         User user = new User();
         user.setEmail(normalizedEmail);
@@ -56,7 +57,7 @@ public class AuthService {
             userRepository.saveAndFlush(user);
             emailVerificationService.sendToken(user, com.frandm.studytracker.backend.model.enums.TokenPurpose.email_verification);
         } catch (DataIntegrityViolationException exception) {
-            throw new IllegalArgumentException("Email already registered");
+            throw new ClientRequestException("Email already registered", org.springframework.http.HttpStatus.CONFLICT);
         }
     }
 
@@ -64,19 +65,19 @@ public class AuthService {
     public TokenService.TokenPair login(String email, String password,
                                       HttpServletRequest request) {
         if (email == null || password == null) {
-            throw new IllegalArgumentException("Invalid credentials");
+            throw new ClientRequestException("Invalid credentials");
         }
         String normalizedEmail = normalizeAndValidateEmail(email);
         User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+                .orElseThrow(() -> new ClientRequestException("Invalid credentials"));
 
         if (user.getPasswordHash() == null ||
                 !passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid credentials");
+            throw new ClientRequestException("Invalid credentials");
         }
 
-        if (user.getEmailVerifiedAt() == null) throw new IllegalArgumentException("Email address is not verified");
-        if (!user.isActive()) throw new IllegalArgumentException("Account is inactive");
+        if (user.getEmailVerifiedAt() == null) throw new ClientRequestException("Email address is not verified", org.springframework.http.HttpStatus.FORBIDDEN);
+        if (!user.isActive()) throw new ClientRequestException("Account is inactive");
         user.setLastLoginAt(OffsetDateTime.now());
         userRepository.save(user);
 
@@ -88,7 +89,7 @@ public class AuthService {
     @org.springframework.transaction.annotation.Transactional
     public TokenService.TokenPair refresh(String rawRefreshToken, HttpServletRequest request) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
-            throw new IllegalArgumentException("Refresh token is required");
+            throw new ClientRequestException("Refresh token is required");
         }
         TokenService.TokenPair pair = tokenService.rotateRefreshToken(rawRefreshToken,
                 userRepository, request);
@@ -105,7 +106,7 @@ public class AuthService {
         String normalized = email.trim().toLowerCase(java.util.Locale.ROOT);
         if (normalized.length() > 254 || !org.springframework.util.StringUtils.hasText(normalized)
                 || !normalized.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-            throw new IllegalArgumentException("A valid email address is required");
+            throw new ClientRequestException("A valid email address is required");
         }
         return normalized;
     }
@@ -131,7 +132,7 @@ public class AuthService {
     @org.springframework.transaction.annotation.Transactional
     public void resetPassword(String rawToken, String newPassword) {
         if (newPassword == null || newPassword.length() < 6) {
-            throw new IllegalArgumentException("Password must be at least 6 characters");
+            throw new ClientRequestException("Password must be at least 6 characters");
         }
         User user = emailVerificationService.consume(rawToken,
                 com.frandm.studytracker.backend.model.enums.TokenPurpose.password_reset);
@@ -146,7 +147,7 @@ public class AuthService {
 
     public User getMe(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ClientRequestException("Resource not found", org.springframework.http.HttpStatus.NOT_FOUND));
     }
 
     public boolean hasGoogleIdentity(UUID userId) {
@@ -162,7 +163,7 @@ public class AuthService {
         }
 
         if (body.containsKey("email") && body.get("email") != null && !body.get("email").trim().equalsIgnoreCase(user.getEmail())) {
-            throw new IllegalArgumentException("Email changes require the email verification flow");
+            throw new ClientRequestException("Email changes require the email verification flow");
         }
 
         if (body.containsKey("newPassword") && body.get("newPassword") != null && !body.get("newPassword").isBlank()) {
@@ -171,11 +172,11 @@ public class AuthService {
 
             if (user.getPasswordHash() != null) {
                 if (currentPassword == null || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
-                    throw new IllegalArgumentException("Current password is incorrect");
+                    throw new ClientRequestException("Current password is incorrect");
                 }
             }
             if (newPassword.length() < 6) {
-                throw new IllegalArgumentException("Password must be at least 6 characters");
+                throw new ClientRequestException("Password must be at least 6 characters");
             }
             user.setPasswordHash(passwordEncoder.encode(newPassword));
         }

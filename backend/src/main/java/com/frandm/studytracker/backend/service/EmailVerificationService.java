@@ -1,5 +1,6 @@
 package com.frandm.studytracker.backend.service;
 
+import com.frandm.studytracker.backend.config.ClientRequestException;
 import com.frandm.studytracker.backend.model.User;
 import com.frandm.studytracker.backend.model.VerificationToken;
 import com.frandm.studytracker.backend.model.enums.TokenPurpose;
@@ -124,14 +125,14 @@ public class EmailVerificationService {
     }
 
     private User claimUser(String raw, TokenPurpose purpose) {
-        if (raw == null || raw.isBlank()) throw new IllegalArgumentException("Invalid or expired token");
+        if (raw == null || raw.isBlank()) throw new ClientRequestException("Invalid or expired token");
         String tokenHash = hash(raw);
         VerificationToken token = verificationTokenRepository.findByTokenHashAndPurposeAndUsedAtIsNull(tokenHash, purpose)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
         OffsetDateTime now = OffsetDateTime.now();
         if (!token.getExpiresAt().isAfter(now)
                 || verificationTokenRepository.claimValidToken(tokenHash, purpose, now) != 1) {
-            throw new IllegalArgumentException("Invalid or expired token");
+            throw new ClientRequestException("Invalid or expired token");
         }
         return userRepository.findById(token.getUserId()).orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
     }

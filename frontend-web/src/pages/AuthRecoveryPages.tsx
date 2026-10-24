@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { authService } from '../services/auth-service';
+import { getApiErrorMessage } from '../services/api';
 
 function AuthMessage({ children }: { children: string }) {
     return <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500" role="alert">{children}</p>;
@@ -21,7 +22,7 @@ export function ForgotPasswordPage() {
             await authService.requestPasswordReset(email);
             setSubmitted(true);
         } catch (requestError) {
-            setError(requestError instanceof Error ? requestError.message : 'Please try again.');
+            setError(getApiErrorMessage(requestError));
         } finally {
             setIsSubmitting(false);
         }
@@ -50,7 +51,7 @@ export function ResetPasswordPage() {
             await authService.resetPassword(token, password);
             setSuccess(true);
         } catch (requestError) {
-            setError(requestError instanceof Error ? requestError.message : 'Please request a new reset link.');
+            setError(getApiErrorMessage(requestError));
         } finally {
             setIsSubmitting(false);
         }

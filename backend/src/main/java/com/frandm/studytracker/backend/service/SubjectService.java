@@ -1,5 +1,6 @@
 package com.frandm.studytracker.backend.service;
 
+import com.frandm.studytracker.backend.config.ClientRequestException;
 import com.frandm.studytracker.backend.model.AcademicTerm;
 import com.frandm.studytracker.backend.model.Subject;
 import com.frandm.studytracker.backend.repository.AcademicTermRepository;
@@ -46,7 +47,7 @@ public class SubjectService {
 
     public Subject create(String name, Long termId, String color, String notes, Boolean isArchived, Boolean isFavorite) {
         if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Subject name is required");
+            throw new ClientRequestException("Subject name is required");
         }
         UUID userId = CurrentUser.id();
         Long resolvedTermId = resolveOrCreateTerm(termId, userId);

@@ -300,7 +300,7 @@ export const SettingsPage: React.FC = () => {
             const error = (event as CustomEvent<unknown>).detail;
             if (autosaveErrors.current.has('theme')) return;
             autosaveErrors.current.add('theme');
-            notify({ title: 'Could not save theme', description: error instanceof Error ? error.message : undefined, tone: 'error', persist: false });
+            notify({ title: 'Could not save theme', description: getApiErrorMessage(error), tone: 'error', persist: false });
         };
         const onThemeSaveSuccess = () => autosaveErrors.current.delete('theme');
         window.addEventListener('studyzen:theme-save-error', onThemeSaveError);
@@ -337,7 +337,7 @@ export const SettingsPage: React.FC = () => {
                 if (s.autoStartWork !== undefined) timer.setAutoStartWork(s.autoStartWork);
                 if (s.countBreakTime !== undefined) timer.setCountBreakTime(s.countBreakTime);
             } catch (err) {
-                notify({ title: 'Could not load settings', description: err instanceof Error ? err.message : undefined, tone: 'error', persist: false });
+                notify({ title: 'Could not load settings', description: getApiErrorMessage(err), tone: 'error', persist: false });
             }
         };
 
@@ -424,7 +424,7 @@ export const SettingsPage: React.FC = () => {
             setNewPassword('');
             setConfirmPassword('');
         } catch (err) {
-            notify({ title: 'Failed to update profile', description: err instanceof Error ? err.message : undefined, tone: 'error' });
+            notify({ title: 'Failed to update profile', description: getApiErrorMessage(err), tone: 'error' });
         }
     };
 
@@ -434,7 +434,7 @@ export const SettingsPage: React.FC = () => {
         }).catch((err: unknown) => {
             if (autosaveErrors.current.has(key)) return;
             autosaveErrors.current.add(key);
-            notify({ title: 'Could not save setting', description: err instanceof Error ? err.message : undefined, tone: 'error', persist: false });
+            notify({ title: 'Could not save setting', description: getApiErrorMessage(err), tone: 'error', persist: false });
         });
     };
 
@@ -470,7 +470,7 @@ export const SettingsPage: React.FC = () => {
             });
             notify({ title: 'Academic settings saved', tone: 'success' });
         } catch (err) {
-            notify({ title: 'Failed to save academic settings', description: err instanceof Error ? err.message : undefined, tone: 'error' });
+            notify({ title: 'Failed to save academic settings', description: getApiErrorMessage(err), tone: 'error' });
         }
     };
 

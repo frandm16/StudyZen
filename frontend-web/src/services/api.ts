@@ -61,9 +61,34 @@ api.interceptors.response.use(
     },
 );
 
+const API_ERROR_FALLBACK = 'Something went wrong. Please try again.';
+
+const STATUS_ERROR_MESSAGES: Record<number, string> = {
+    400: 'Please check your information and try again.',
+    401: 'Your session may have expired. Please sign in and try again.',
+    403: 'You do not have permission to do that.',
+    404: 'The requested information could not be found.',
+    409: 'This change conflicts with existing information.',
+    422: 'Please check your information and try again.',
+    429: 'Too many requests. Please wait a moment and try again.',
+};
+
+export function getStructuredApiErrorMessage(error: unknown): string | null {
+    if (!axios.isAxiosError<{ message?: unknown }>(error)) return null;
+
+    const message = error.response?.data?.message;
+    return typeof message === 'string' && message.trim() ? message.trim() : null;
+}
+
 export function getApiErrorMessage(error: unknown): string {
-    if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
-        return error.response?.data?.message ?? error.response?.data?.error ?? error.message ?? 'Request could not be completed.';
+    const structuredMessage = getStructuredApiErrorMessage(error);
+    if (structuredMessage) return structuredMessage;
+
+    if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status && STATUS_ERROR_MESSAGES[status]) return STATUS_ERROR_MESSAGES[status];
+        if (status && status >= 500) return 'The service is temporarily unavailable. Please try again later.';
     }
-    return error instanceof Error ? error.message : 'Request could not be completed.';
+
+    return API_ERROR_FALLBACK;
 }

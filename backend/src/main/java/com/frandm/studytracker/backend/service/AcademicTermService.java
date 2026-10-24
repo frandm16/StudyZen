@@ -1,5 +1,6 @@
 package com.frandm.studytracker.backend.service;
 
+import com.frandm.studytracker.backend.config.ClientRequestException;
 import com.frandm.studytracker.backend.model.AcademicTerm;
 import com.frandm.studytracker.backend.repository.AcademicTermRepository;
 import com.frandm.studytracker.backend.security.CurrentUser;
@@ -36,16 +37,16 @@ public class AcademicTermService {
     @Transactional
     public AcademicTerm create(String name, LocalDate startDate, LocalDate endDate, Boolean isCurrent, Boolean isArchived) {
         if (name == null || name.trim().isBlank()) {
-            throw new IllegalArgumentException("Term name is required");
+            throw new ClientRequestException("Term name is required");
         }
         if (startDate == null) {
-            throw new IllegalArgumentException("Start date is required");
+            throw new ClientRequestException("Start date is required");
         }
         if (endDate == null) {
-            throw new IllegalArgumentException("End date is required");
+            throw new ClientRequestException("End date is required");
         }
         if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End date must be on or after start date");
+            throw new ClientRequestException("End date must be on or after start date");
         }
         boolean current = Boolean.TRUE.equals(isCurrent);
         if (current) {

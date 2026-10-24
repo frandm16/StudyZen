@@ -1,5 +1,6 @@
 package com.frandm.studytracker.backend.service;
 
+import com.frandm.studytracker.backend.config.ClientRequestException;
 import com.frandm.studytracker.backend.model.RefreshToken;
 import com.frandm.studytracker.backend.repository.RefreshTokenRepository;
 import com.frandm.studytracker.backend.repository.UserRepository;
@@ -55,20 +56,20 @@ public class TokenService {
                                         HttpServletRequest request) {
         String hash = sha256(rawRefreshToken);
         RefreshToken existing = refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(hash)
-                .orElseThrow(() -> new RuntimeException("Invalid or revoked refresh token"));
+                .orElseThrow(() -> new ClientRequestException("Invalid or revoked refresh token"));
 
         OffsetDateTime now = OffsetDateTime.now();
         if (!existing.getExpiresAt().isAfter(now)) {
-            throw new IllegalArgumentException("Refresh token expired");
+            throw new ClientRequestException("Refresh token expired");
         }
         if (refreshTokenRepository.claimForRotation(existing.getId(), now) != 1) {
-            throw new IllegalArgumentException("Invalid or revoked refresh token");
+            throw new ClientRequestException("Invalid or revoked refresh token");
         }
 
         var user = userRepository.findById(existing.getUserId())
                 .filter(com.frandm.studytracker.backend.model.User::isActive)
                 .filter(account -> account.getEmailVerifiedAt() != null)
-                .orElseThrow(() -> new IllegalArgumentException("User is not active or email is not verified"));
+                .orElseThrow(() -> new ClientRequestException("User is not active or email is not verified", org.springframework.http.HttpStatus.FORBIDDEN));
 
         existing.setRevokedAt(now);
 
