@@ -119,7 +119,7 @@ export function LandingFeatures() {
                                 </div>
                                 <div>
                                     <h3 className="text-base font-bold text-[var(--app-text)]">
-                                        Full-stack architecture & self-hosting
+                                        Modern full-stack architecture
                                     </h3>
                                     <p className="text-xs text-[var(--app-text-muted)]">
                                         Engineered with modern standards across the entire stack.

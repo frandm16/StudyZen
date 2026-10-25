@@ -17,7 +17,7 @@ export function LandingHero() {
             <div className="mx-auto max-w-4xl text-center">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[var(--app-border)] bg-[var(--app-card-bg)] px-3.5 py-1.5 text-xs font-medium text-[var(--app-text-muted)]">
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-color)]" aria-hidden="true" />
-                    <span>Personal portfolio project · Self-hosted study platform</span>
+                    <span>Structured study workspace for academic focus</span>
                 </div>
 
                 <h1
@@ -65,12 +65,12 @@ export function LandingHero() {
                         onClick={() => setIsZoomOpen(true)}
                         onKeyDown={(e) => e.key === 'Enter' && setIsZoomOpen(true)}
                         aria-label="Click to enlarge focus timer screenshot"
-                        className="group relative aspect-[16/10] w-full cursor-zoom-in overflow-hidden bg-[var(--app-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
+                        className="group relative w-full cursor-zoom-in overflow-hidden bg-[var(--app-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
                     >
                         <img
                             src={imgSrc}
                             alt={imgAlt}
-                            className="h-full w-full object-cover object-[right_top] transition-transform duration-300 group-hover:scale-[1.01]"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
                             fetchPriority="high"
                         />
                         <div className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-card-bg)]/90 px-2.5 py-1 text-xs font-medium text-[var(--app-text)] opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">

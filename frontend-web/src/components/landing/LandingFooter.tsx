@@ -16,7 +16,7 @@ export function LandingFooter() {
                         <span className="font-bold tracking-tight">StudyZen</span>
                     </Link>
                     <span>·</span>
-                    <span>Self-hosted study platform</span>
+                    <span>Structured study workspace</span>
                 </div>
 
                 <div className="flex items-center gap-4">
