@@ -5,6 +5,7 @@ import { useTimerContext } from '../context/TimerContext';
 import { useTheme, THEME_PRESETS, type ColorTheme } from '../context/ThemeContext';
 import { AVATAR_PRESETS, getRandomAvatarPreset, type AvatarPreset } from '../lib/avatar-presets';
 import { settingsService } from '../services/settings-service';
+import { seedStudyData } from '../services/demo-seed-service';
 import { getApiErrorMessage } from '../services/api';
 import type { SoundCategory } from '../hooks/useSound';
 import { TermsSection } from '../components/settings/TermsSection';
@@ -280,6 +281,9 @@ export const SettingsPage: React.FC = () => {
     const [passGrade, setPassGrade] = useState('5.0');
 
     const [accountError, setAccountError] = useState<string | null>(null);
+    const [isSeeding, setIsSeeding] = useState(false);
+    const [seedResult, setSeedResult] = useState<string | null>(null);
+    const seedEnabled = import.meta.env.VITE_ENABLE_DEMO_SEEDER === 'true';
 
     useEffect(() => {
         if (user) {
@@ -459,6 +463,23 @@ export const SettingsPage: React.FC = () => {
         if (key === 'countBreakTime') payload.countBreakTime = value;
 
         saveAutosetting(key, payload);
+    };
+
+    const handleSeedStudyData = async () => {
+        const confirmed = window.confirm('This will permanently add 89 fictional study records to your signed-in account, including five subjects, topics, assessments and grades, study history, tasks, deadlines, and planned sessions. Existing data will not be deleted or overwritten. Continue?');
+        if (!confirmed) return;
+        setIsSeeding(true);
+        setSeedResult(null);
+        try {
+            const result = await seedStudyData();
+            setSeedResult(`Done. ${result.created} records were created. Review Subjects, Planner, and Stats.`);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : getApiErrorMessage(error);
+            setSeedResult(message);
+            notify({ title: 'Study data generation stopped', description: message, tone: 'error', persist: true });
+        } finally {
+            setIsSeeding(false);
+        }
     };
 
     const handleAcademicSave = async () => {
@@ -1097,6 +1118,25 @@ export const SettingsPage: React.FC = () => {
                                             <p>Active Theme: {colorTheme} ({colorMode})</p>
                                             <p>Logged User: {user?.email}</p>
                                         </div>
+
+                                        {seedEnabled && (
+                                            <section className="space-y-3 border-t border-[var(--app-border)] pt-6" aria-labelledby="seed-data-title">
+                                                <div>
+                                                    <h3 id="seed-data-title" className="text-sm font-bold text-[var(--app-text)]">Generate study data</h3>
+                                                    <p className="mt-1 text-xs leading-5 text-[var(--app-text-muted)]">Temporarily populate this account with fictional academic data across the last six weeks and the next two weeks. This adds records to the active term and cannot be undone here.</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => void handleSeedStudyData()}
+                                                    disabled={isSeeding}
+                                                    className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[var(--accent-color)] px-4 py-2 text-xs font-bold text-[var(--app-bg)] transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)] disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                                                    {isSeeding ? 'Generating records...' : 'Generate study data'}
+                                                </button>
+                                                {seedResult && <p className="text-xs leading-5 text-[var(--app-text-muted)]" role="status">{seedResult}</p>}
+                                            </section>
+                                        )}
 
                                         <button
                                             type="button"
