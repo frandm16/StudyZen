@@ -65,7 +65,7 @@ export function LandingHero() {
                         onClick={() => setIsZoomOpen(true)}
                         onKeyDown={(e) => e.key === 'Enter' && setIsZoomOpen(true)}
                         aria-label="Click to enlarge focus timer screenshot"
-                        className="group relative w-full cursor-zoom-in overflow-hidden bg-[var(--app-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
+                        className="group relative aspect-video w-full cursor-zoom-in overflow-hidden bg-[var(--app-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
                     >
                         <img
                             src={imgSrc}

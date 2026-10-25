@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent } from 'react';
-import { Timer, BookOpen, Calendar, CalendarDays, CalendarRange, BarChart3, Maximize2 } from 'lucide-react';
+import { Timer, BookOpen, Calendar, CalendarDays, CalendarRange, BarChart3, Maximize2, Monitor } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { ImageLightbox } from './ImageLightbox';
 import type { ScreenshotId } from '../../types/landing';
@@ -215,10 +215,11 @@ export function LandingGallery() {
                         </div>
 
                         <div className="overflow-hidden rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] shadow-md">
-                            <div className="flex h-9 items-center justify-between border-b border-[var(--app-border)] bg-[var(--app-card-bg)]/80 px-4">
-                                <span className="font-mono text-xs text-[var(--app-text-muted)]">
-                                    {activeScreen.route}
-                                </span>
+                            <div className="flex h-10 items-center justify-between border-b border-[var(--app-border)] bg-[var(--app-bg)]/60 px-4">
+                                <div className="flex items-center gap-2 text-xs text-[var(--app-text-muted)]">
+                                    <Monitor className="h-3.5 w-3.5" aria-hidden="true" />
+                                    <span className="font-mono text-[11px]">{activeScreen.route}</span>
+                                </div>
                             </div>
 
                             <div
@@ -227,13 +228,13 @@ export function LandingGallery() {
                                 onClick={() => setIsZoomOpen(true)}
                                 onKeyDown={(e) => e.key === 'Enter' && setIsZoomOpen(true)}
                                 aria-label={`Click to enlarge ${activeScreen.label} screenshot`}
-                                className="group relative  w-full cursor-zoom-in bg-[var(--app-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
+                                className="group relative aspect-video w-full cursor-zoom-in overflow-hidden bg-[var(--app-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
                             >
                                 <img
                                     key={`${activeScreen.id}-${colorMode}`}
                                     src={currentSrc}
                                     alt={activeScreen.alt}
-                                    className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.01]"
+                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
                                     loading="lazy"
                                 />
                                 <div className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-card-bg)]/90 px-2.5 py-1 text-xs font-medium text-[var(--app-text)] opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
