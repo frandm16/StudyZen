@@ -6,6 +6,7 @@ import { useTheme, THEME_PRESETS, type ColorTheme } from '../context/ThemeContex
 import { AVATAR_PRESETS, getRandomAvatarPreset, type AvatarPreset } from '../lib/avatar-presets';
 import { settingsService } from '../services/settings-service';
 import { seedStudyData } from '../services/demo-seed-service';
+import { studyDataService } from '../services/study-data-service';
 import { getApiErrorMessage } from '../services/api';
 import type { SoundCategory } from '../hooks/useSound';
 import { TermsSection } from '../components/settings/TermsSection';
@@ -45,6 +46,7 @@ type TabType =
     | 'grades'
     | 'terms'
     | 'sound'
+    | 'data-management'
     | 'developer';
 
 interface SidebarGroup {
@@ -150,6 +152,13 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
     {
         title: 'SYSTEM',
         items: [
+            {
+                id: 'data-management',
+                label: 'Data management',
+                breadcrumb: 'Settings / Data management',
+                description: 'Manage your study records and permanently clear your study workspace.',
+                icon: RotateCcw,
+            },
             {
                 id: 'developer',
                 label: 'Developer API & Cache',
@@ -284,6 +293,10 @@ export const SettingsPage: React.FC = () => {
     const [isSeeding, setIsSeeding] = useState(false);
     const [seedResult, setSeedResult] = useState<string | null>(null);
     const seedEnabled = import.meta.env.VITE_ENABLE_DEMO_SEEDER === 'true';
+    const [isDeleteStudyDataOpen, setIsDeleteStudyDataOpen] = useState(false);
+    const [deleteStudyDataPhrase, setDeleteStudyDataPhrase] = useState('');
+    const [isDeletingStudyData, setIsDeletingStudyData] = useState(false);
+    const [deleteStudyDataResult, setDeleteStudyDataResult] = useState<string | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -465,14 +478,33 @@ export const SettingsPage: React.FC = () => {
         saveAutosetting(key, payload);
     };
 
+    const handleDeleteAllStudyData = async () => {
+        if (deleteStudyDataPhrase !== 'DELETE MY STUDY DATA' || isDeletingStudyData) return;
+        setIsDeletingStudyData(true);
+        setDeleteStudyDataResult(null);
+        try {
+            await studyDataService.deleteAll();
+            setDeleteStudyDataResult('All study records and notifications were permanently deleted. Your account, profile, login, and preferences remain intact.');
+            setDeleteStudyDataPhrase('');
+            setIsDeleteStudyDataOpen(false);
+            notify({ title: 'Study data deleted', description: 'Your account and preferences were kept.', tone: 'success', persist: true });
+        } catch (error) {
+            const message = getApiErrorMessage(error);
+            setDeleteStudyDataResult(`Could not confirm the deletion. Check the current data before trying again. ${message}`);
+            notify({ title: 'Could not delete study data', description: message, tone: 'error', persist: true });
+        } finally {
+            setIsDeletingStudyData(false);
+        }
+    };
+
     const handleSeedStudyData = async () => {
-        const confirmed = window.confirm('This will permanently add 89 fictional study records to your signed-in account, including five subjects, topics, assessments and grades, study history, tasks, deadlines, and planned sessions. Existing data will not be deleted or overwritten. Continue?');
+        const confirmed = window.confirm('This will add up to 270 fictional study records to your signed-in account: five subjects, 40 topics, 25 assessments (including exams and grades), 100 study sessions, 30 tasks, 15 deadlines, 35 planned sessions, and 20 daily notes across recent weeks and the next three weeks. Existing matching records will be reused; nothing will be deleted or overwritten. Continue?');
         if (!confirmed) return;
         setIsSeeding(true);
         setSeedResult(null);
         try {
             const result = await seedStudyData();
-            setSeedResult(`Done. ${result.created} records were created. Review Subjects, Planner, and Stats.`);
+            setSeedResult(`Done. ${result.created} missing records were added. Review Subjects, Planner, Day, and Stats.`);
         } catch (error) {
             const message = error instanceof Error ? error.message : getApiErrorMessage(error);
             setSeedResult(message);
@@ -1106,6 +1138,31 @@ export const SettingsPage: React.FC = () => {
                                 </div>
                             )}
 
+                            {activeTab === 'data-management' && (
+                                <div className="max-w-2xl space-y-6">
+                                    <section className="space-y-4 rounded-2xl border border-red-500/30 bg-red-500/5 p-5" aria-labelledby="delete-study-data-title">
+                                        <div>
+                                            <h3 id="delete-study-data-title" className="text-sm font-bold text-[var(--app-text)]">Delete all study data</h3>
+                                            <p className="mt-2 text-xs leading-5 text-[var(--app-text-muted)]">Permanently deletes all of your subjects, topics, sessions, assessments, tasks, deadlines, planned sessions, goals, daily notes, and notifications. Your account, profile, login credentials, and preferences will remain.</p>
+                                            <p className="mt-2 text-xs font-semibold text-red-400">This action cannot be undone.</p>
+                                        </div>
+                                        {deleteStudyDataResult && <p className="text-xs leading-5 text-[var(--app-text-muted)]" role="status">{deleteStudyDataResult}</p>}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setDeleteStudyDataPhrase('');
+                                                setDeleteStudyDataResult(null);
+                                                setIsDeleteStudyDataOpen(true);
+                                            }}
+                                            disabled={isDeletingStudyData}
+                                            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-bold text-red-400 transition-colors hover:bg-red-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" /> Delete all study data
+                                        </button>
+                                    </section>
+                                </div>
+                            )}
+
                             {activeTab === 'developer' && (
                                 <div className="space-y-6 max-w-2xl">
                                     <div className="border-t border-[var(--app-border)] pt-6 space-y-4">
@@ -1158,6 +1215,47 @@ export const SettingsPage: React.FC = () => {
                     </main>
                 </div>
             </div>
+
+            {isDeleteStudyDataOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-study-data-title" aria-describedby="confirm-delete-study-data-description">
+                    <div className="w-full max-w-lg space-y-5 rounded-3xl border border-red-500/30 bg-[var(--app-card-bg)] p-6 shadow-2xl">
+                        <div>
+                            <h3 id="confirm-delete-study-data-title" className="text-lg font-bold text-[var(--app-text)]">Confirm permanent deletion</h3>
+                            <p id="confirm-delete-study-data-description" className="mt-2 text-sm leading-6 text-[var(--app-text-muted)]">All study records and notifications for your account will be permanently deleted. Your account, profile, login, and preferences will not be deleted.</p>
+                        </div>
+                        <div>
+                            <label htmlFor="delete-study-data-confirmation" className="mb-2 block text-xs font-semibold text-[var(--app-text)]">Type <span className="font-mono text-red-400">DELETE MY STUDY DATA</span> to continue</label>
+                            <input
+                                id="delete-study-data-confirmation"
+                                type="text"
+                                autoComplete="off"
+                                value={deleteStudyDataPhrase}
+                                onChange={(event) => setDeleteStudyDataPhrase(event.target.value)}
+                                disabled={isDeletingStudyData}
+                                className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-4 py-3 text-sm text-[var(--app-text)] focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:opacity-60"
+                            />
+                        </div>
+                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setIsDeleteStudyDataOpen(false)}
+                                disabled={isDeletingStudyData}
+                                className="min-h-10 rounded-xl border border-[var(--app-border)] px-4 py-2 text-xs font-semibold text-[var(--app-text)] transition-colors hover:bg-[var(--app-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)] disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void handleDeleteAllStudyData()}
+                                disabled={isDeletingStudyData || deleteStudyDataPhrase !== 'DELETE MY STUDY DATA'}
+                                className="min-h-10 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {isDeletingStudyData ? 'Deleting study data...' : 'Permanently delete data'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {isAvatarModalOpen && (
                 <div className="fixed inset-0 z-50 bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4">
