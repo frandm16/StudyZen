@@ -347,6 +347,7 @@ export function TimerPage() {
             {saveOpen && (
                 <SaveSessionDialog
                     topic={selectedTopic}
+                    subject={selectedSubject}
                     minutes={minutes}
                     saving={saving}
                     onPickTopic={() => setPickerOpen(true)}
