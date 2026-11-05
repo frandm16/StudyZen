@@ -4,12 +4,10 @@ import { TimerProvider } from './context/TimerContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { TimerPage } from './pages/TimerPage';
-import { PlannerPage } from './pages/PlannerPage';
+import { CalendarPage } from './pages/CalendarPage';
 import { SubjectsPage } from './pages/SubjectsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SettingsPage } from './pages/SettingsPage';
-import { DayPage } from "./pages/DayPage";
-import { WeekPage } from "./pages/WeekPage.tsx";
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -24,12 +22,13 @@ const PUBLIC_ROUTES = ['/', '/login', '/register', '/auth/callback', '/forgot-pa
 function AppContent() {
     const { pathname } = useLocation();
     const showNavbar = !PUBLIC_ROUTES.includes(pathname);
+    const isCalendar = pathname === '/calendar';
 
     return (
         <div className="flex flex-col h-screen w-screen overflow-hidden select-none bg-[var(--app-bg,#0b0f17)] text-[var(--app-text,#f9fafb)] transition-colors duration-200">
             {showNavbar && <Navbar />}
 
-            <main className="flex-1 overflow-auto relative z-10">
+            <main className={`flex-1 min-h-0 relative z-10 ${isCalendar ? 'overflow-hidden flex flex-col' : 'overflow-auto'}`}>
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
@@ -48,28 +47,24 @@ function AppContent() {
                         }
                     />
                     <Route
-                        path="/day"
+                        path="/calendar"
                         element={
                             <ProtectedRoute>
-                                <DayPage />
+                                <CalendarPage />
                             </ProtectedRoute>
                         }
+                    />
+                    <Route
+                        path="/day"
+                        element={<Navigate to="/calendar?view=day" replace />}
                     />
                     <Route
                         path="/week"
-                        element={
-                            <ProtectedRoute>
-                                <WeekPage />
-                            </ProtectedRoute>
-                        }
+                        element={<Navigate to="/calendar?view=week" replace />}
                     />
                     <Route
                         path="/planner"
-                        element={
-                            <ProtectedRoute>
-                                <PlannerPage />
-                            </ProtectedRoute>
-                        }
+                        element={<Navigate to="/calendar?view=month" replace />}
                     />
                     <Route
                         path="/subjects"

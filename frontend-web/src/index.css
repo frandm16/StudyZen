@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --app-bg: #0b0f17;
-  --app-card-bg: #111827;
-  --app-card-hover: #182238;
-  --app-text: #f8fafc;
-  --app-text-muted: #94a3b8;
+  --app-bg: #09090b;
+  --app-card-bg: #141416;
+  --app-card-hover: #1c1d21;
+  --app-text: #f4f4f5;
+  --app-text-muted: #a1a1aa;
   --app-border: rgba(255, 255, 255, 0.08);
-  --accent-color: #38bdf8;
-  --accent-hover: #0ea5e9;
-  --accent-ring: rgba(56, 189, 248, 0.35);
+  --accent-color: #818cf8;
+  --accent-hover: #6366f1;
+  --accent-ring: rgba(129, 140, 248, 0.35);
   --app-slider-track: rgba(255, 255, 255, 0.12);
 }
 

@@ -76,6 +76,9 @@ public class UserSettings {
     @Column(name = "alarm_preset", nullable = false)
     private String alarmPreset;
 
+    @Column(name = "calendar_feed_token", unique = true, length = 64)
+    private String calendarFeedToken;
+
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
@@ -153,6 +156,9 @@ public class UserSettings {
 
     public String getAlarmPreset() { return alarmPreset; }
     public void setAlarmPreset(String alarmPreset) { this.alarmPreset = alarmPreset; }
+
+    public String getCalendarFeedToken() { return calendarFeedToken; }
+    public void setCalendarFeedToken(String calendarFeedToken) { this.calendarFeedToken = calendarFeedToken; }
 
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -18,8 +19,12 @@ public class UserSettingsService {
         this.settingsRepository = settingsRepository;
     }
 
+    private String generateCalendarFeedToken() {
+        return UUID.randomUUID().toString().replace("-", "") + UUID.randomUUID().toString().replace("-", "");
+    }
+
     public UserSettings getByUserId(UUID userId) {
-        return settingsRepository.findById(userId).orElseGet(() -> {
+        UserSettings settings = settingsRepository.findById(userId).orElseGet(() -> {
             UserSettings defaults = new UserSettings();
             defaults.setUserId(userId);
             defaults.setWeekStartsOn((short) 1);
@@ -43,9 +48,33 @@ public class UserSettingsService {
             defaults.setNotificationVolume(100);
             defaults.setBackgroundVolume(35);
             defaults.setAlarmPreset("bells");
+            defaults.setCalendarFeedToken(generateCalendarFeedToken());
             defaults.setUpdatedAt(OffsetDateTime.now());
             return settingsRepository.save(defaults);
         });
+
+        if (settings.getCalendarFeedToken() == null || settings.getCalendarFeedToken().isBlank()) {
+            settings.setCalendarFeedToken(generateCalendarFeedToken());
+            settings = settingsRepository.save(settings);
+        }
+
+        return settings;
+    }
+
+    public String regenerateCalendarFeedToken(UUID userId) {
+        UserSettings current = getByUserId(userId);
+        String newToken = generateCalendarFeedToken();
+        current.setCalendarFeedToken(newToken);
+        current.setUpdatedAt(OffsetDateTime.now());
+        settingsRepository.save(current);
+        return newToken;
+    }
+
+    public Optional<UUID> getUserIdByFeedToken(String token) {
+        if (token == null || token.isBlank()) {
+            return Optional.empty();
+        }
+        return settingsRepository.findByCalendarFeedToken(token).map(UserSettings::getUserId);
     }
 
     public UserSettings update(UUID userId, UserSettings incoming) {

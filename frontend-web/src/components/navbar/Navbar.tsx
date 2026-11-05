@@ -17,9 +17,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
     { path: "/timer", label: "Timer" },
-    { path: "/day", label: "Day" },
-    { path: "/week", label: "Week" },
-    { path: "/planner", label: "Planning" },
+    { path: "/calendar", label: "Calendar" },
     { path: "/subjects", label: "Subjects" },
     { path: "/dashboard", label: "Stats" },
 ];

@@ -5,12 +5,16 @@ import { useTimerContext } from '../context/TimerContext';
 import { useTheme, THEME_PRESETS, type ColorTheme } from '../context/ThemeContext';
 import { AVATAR_PRESETS, getRandomAvatarPreset, type AvatarPreset } from '../lib/avatar-presets';
 import { settingsService } from '../services/settings-service';
+import { calendarService } from '../services/calendar-service';
+import { subjectService } from '../services/subject-service';
 import { seedStudyData } from '../services/demo-seed-service';
 import { studyDataService } from '../services/study-data-service';
 import { getApiErrorMessage } from '../services/api';
 import type { SoundCategory } from '../hooks/useSound';
 import { TermsSection } from '../components/settings/TermsSection';
 import type { UpdateProfileDTO } from '../types/auth';
+import type { CalendarFeedInfo } from '../types/calendar';
+import type { Subject } from '../types/subject';
 import {
     User as UserIcon,
     Key,
@@ -34,6 +38,10 @@ import {
     BookOpen,
     ChevronUp,
     ChevronDown,
+    Radio,
+    Copy,
+    Download,
+    RefreshCw,
 } from 'lucide-react';
 
 type TabType =
@@ -172,6 +180,7 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
 
 const ALL_THEME_KEYS: ColorTheme[] = [
     'default',
+    'catppuccin',
     'glacier',
     'dusk',
     'fern',
@@ -288,6 +297,81 @@ export const SettingsPage: React.FC = () => {
     const [weekStartsOn, setWeekStartsOn] = useState(1);
     const [gradeScaleMax, setGradeScaleMax] = useState('10.0');
     const [passGrade, setPassGrade] = useState('5.0');
+
+    const [feedInfo, setFeedInfo] = useState<CalendarFeedInfo | null>(null);
+    const [selectedSyncSubjectId, setSelectedSyncSubjectId] = useState<number | 'all'>('all');
+    const [subjectsList, setSubjectsList] = useState<Subject[]>([]);
+    const [copiedWebcal, setCopiedWebcal] = useState(false);
+    const [copiedHttps, setCopiedHttps] = useState(false);
+    const [regenerating, setRegenerating] = useState(false);
+    const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+
+    useEffect(() => {
+        const loadCalendarSyncInfo = async () => {
+            try {
+                const [info, subs] = await Promise.all([
+                    calendarService.getFeedInfo(),
+                    subjectService.getAll(),
+                ]);
+                setFeedInfo(info);
+                setSubjectsList(subs);
+            } catch {
+            }
+        };
+        void loadCalendarSyncInfo();
+    }, []);
+
+    const baseWebcal = feedInfo?.webcalUrl || '';
+    const baseHttps = feedInfo?.httpsUrl || '';
+    const queryParam = selectedSyncSubjectId !== 'all' ? `?subjectId=${selectedSyncSubjectId}` : '';
+    const activeWebcalUrl = baseWebcal ? `${baseWebcal}${queryParam}` : '';
+    const activeHttpsUrl = baseHttps ? `${baseHttps}${queryParam}` : '';
+
+    const handleCopySyncLink = async (text: string, type: 'webcal' | 'https') => {
+        try {
+            await navigator.clipboard.writeText(text);
+            if (type === 'webcal') {
+                setCopiedWebcal(true);
+                setTimeout(() => setCopiedWebcal(false), 2000);
+            } else {
+                setCopiedHttps(true);
+                setTimeout(() => setCopiedHttps(false), 2000);
+            }
+            notify({ title: 'Link copied', description: 'Subscription URL copied to clipboard', tone: 'info' });
+        } catch {
+            notify({ title: 'Copy failed', description: 'Please copy the URL manually', tone: 'error' });
+        }
+    };
+
+    const handleDownloadIcsFile = async () => {
+        if (!feedInfo) return;
+        try {
+            const subjectId = selectedSyncSubjectId !== 'all' ? selectedSyncSubjectId : undefined;
+            const subjectName = subjectsList.find((s) => s.id === subjectId)?.name;
+            const filename = subjectName
+                ? `studyzen-${subjectName.toLowerCase().replace(/\s+/g, '-')}.ics`
+                : 'studyzen-calendar.ics';
+
+            await calendarService.downloadIcs(feedInfo.token, subjectId, filename);
+            notify({ title: 'Calendar downloaded', description: `${filename} saved successfully`, tone: 'info' });
+        } catch (err) {
+            notify({ title: 'Download failed', description: getApiErrorMessage(err), tone: 'error' });
+        }
+    };
+
+    const handleRegenerateFeedToken = async () => {
+        setRegenerating(true);
+        try {
+            const updated = await calendarService.regenerateFeedToken();
+            setFeedInfo(updated);
+            setConfirmRegenerate(false);
+            notify({ title: 'Secret link regenerated', description: 'Old subscription links will no longer synchronize', tone: 'info' });
+        } catch (err) {
+            notify({ title: 'Could not regenerate token', description: getApiErrorMessage(err), tone: 'error' });
+        } finally {
+            setRegenerating(false);
+        }
+    };
 
     const [accountError, setAccountError] = useState<string | null>(null);
     const [isSeeding, setIsSeeding] = useState(false);
@@ -1012,7 +1096,7 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'calendar' && (
                                 <div className="space-y-6 max-w-2xl">
-                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-4">
+                                    <div className="space-y-4">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Calendar Preferences</h3>
 
                                         <div>
@@ -1036,6 +1120,128 @@ export const SettingsPage: React.FC = () => {
                                         >
                                             Save Calendar Preferences
                                         </button>
+                                    </div>
+
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-4">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+                                                <Radio size={16} className="animate-pulse" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-[var(--app-text)] text-sm">Live Calendar Subscription &amp; Export</h3>
+                                                <p className="text-xs text-[var(--app-text-muted)]">Real-time synchronization via RFC 5545 iCalendar feed</p>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-[var(--app-text)] mb-1.5 uppercase tracking-wider">
+                                                Select Calendar Feed
+                                            </label>
+                                            <select
+                                                value={selectedSyncSubjectId}
+                                                onChange={(e) =>
+                                                    setSelectedSyncSubjectId(
+                                                        e.target.value === 'all' ? 'all' : Number(e.target.value)
+                                                    )
+                                                }
+                                                className="w-full px-4 py-2.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] text-sm text-[var(--app-text)] focus:outline-none focus:border-[var(--accent-color)]"
+                                            >
+                                                <option value="all">All Calendars &amp; Subjects (Full Schedule)</option>
+                                                {subjectsList.map((subject) => (
+                                                    <option key={subject.id} value={subject.id}>
+                                                        {subject.name} only
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-card-bg)]/50 p-4">
+                                            <div>
+                                                <span className="block text-xs font-semibold text-[var(--app-text)] mb-1">
+                                                    WebCal Subscription URL (Recommended for Apple / Outlook)
+                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        readOnly
+                                                        value={activeWebcalUrl || 'Loading URL...'}
+                                                        className="w-full truncate rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-3 py-2 text-xs font-mono text-[var(--app-text-muted)] focus:outline-none"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCopySyncLink(activeWebcalUrl, 'webcal')}
+                                                        className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--accent-color)] px-3 py-2 text-xs font-bold text-[var(--app-bg)] transition-opacity hover:opacity-90"
+                                                    >
+                                                        {copiedWebcal ? <Check size={14} /> : <Copy size={14} />}
+                                                        <span>{copiedWebcal ? 'Copied' : 'Copy'}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <span className="block text-xs font-semibold text-[var(--app-text)] mb-1">
+                                                    HTTPS Feed URL (Google Calendar "From URL")
+                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        readOnly
+                                                        value={activeHttpsUrl || 'Loading URL...'}
+                                                        className="w-full truncate rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-3 py-2 text-xs font-mono text-[var(--app-text-muted)] focus:outline-none"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCopySyncLink(activeHttpsUrl, 'https')}
+                                                        className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-3 py-2 text-xs font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)]"
+                                                    >
+                                                        {copiedHttps ? <Check size={14} /> : <Copy size={14} />}
+                                                        <span>{copiedHttps ? 'Copied' : 'Copy'}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                                            <button
+                                                type="button"
+                                                onClick={handleDownloadIcsFile}
+                                                disabled={!feedInfo}
+                                                className="inline-flex items-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-4 py-2.5 text-xs font-semibold text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] disabled:opacity-50"
+                                            >
+                                                <Download size={14} />
+                                                <span>Download .ics file</span>
+                                            </button>
+
+                                            {!confirmRegenerate ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setConfirmRegenerate(true)}
+                                                    className="inline-flex items-center gap-1.5 text-xs text-[var(--app-text-muted)] hover:text-rose-400 transition-colors"
+                                                >
+                                                    <RefreshCw size={12} />
+                                                    <span>Reset secret link</span>
+                                                </button>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[11px] text-rose-400 font-medium">Revoke old link?</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleRegenerateFeedToken}
+                                                        disabled={regenerating}
+                                                        className="rounded-lg bg-rose-500/20 px-2.5 py-1 text-[11px] font-bold text-rose-400 hover:bg-rose-500/30"
+                                                    >
+                                                        {regenerating ? 'Resetting...' : 'Yes, reset'}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setConfirmRegenerate(false)}
+                                                        className="text-[11px] text-[var(--app-text-muted)] hover:underline"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )}

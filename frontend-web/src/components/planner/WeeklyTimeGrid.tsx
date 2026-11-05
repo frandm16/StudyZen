@@ -1,18 +1,22 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { dateKey, localDateFromTimestamp } from '../../lib/planner-dates';
+import { getEventKindTheme } from '../../lib/calendar-theme';
+import { SubjectChip } from '../calendar/SubjectChip';
 import { buildGridSelection, getDisplayInterval, gridMinutesFromPointer, layoutWeekGridIntervals, WEEK_GRID_END_HOUR, WEEK_GRID_HEIGHT, WEEK_GRID_HOUR_HEIGHT, WEEK_GRID_START_HOUR, WEEK_GRID_MINUTES, type GridSelection } from '../../lib/week-grid';
 import type { ScheduledSession } from '../../types/scheduled-session';
 import type { Session } from '../../types/session';
 import type { Deadline } from '../../types/deadline';
 import type { Subject } from '../../types/subject';
 import type { Topic } from '../../types/topic';
+import type { Assessment } from '../../types/assessment';
 
 interface WeeklyTimeGridProps {
     dates: Date[];
     scheduled: ScheduledSession[];
     sessions: Session[];
     deadlines: Deadline[];
+    assessments?: Assessment[];
     subjects: Subject[];
     topics: Topic[];
     onCreate: (selection: GridSelection) => void;
@@ -30,13 +34,14 @@ interface DragState {
 
 const hourLabel = (hour: number) => `${String(hour).padStart(2, '0')}:00`;
 
-export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, subjects, topics, onCreate, onEdit, onEditStudySession, onMove }: WeeklyTimeGridProps) {
+export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, assessments = [], subjects, topics, onCreate, onEdit, onEditStudySession, onMove }: WeeklyTimeGridProps) {
     const [now, setNow] = useState(() => new Date());
     const [drag, setDrag] = useState<DragState | null>(null);
     const [moving, setMoving] = useState<{ item: ScheduledSession; date: string; start: number; currentDate: string; current: number; pointerId: number; originX: number; originY: number; didMove: boolean } | null>(null);
     const movingRef = useRef<typeof moving>(null);
     const suppressClickRef = useRef<number | null>(null);
     const gridRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const scrolledWeekRef = useRef<string | null>(null);
     const dragRef = useRef<DragState | null>(null);
 
@@ -46,14 +51,30 @@ export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, subjects
     }, []);
 
     useEffect(() => {
-        const container = gridRef.current?.parentElement;
         const weekKey = dates.map(dateKey).join(':');
         const today = dates.some((date) => dateKey(date) === dateKey(now));
-        if (!container || !today || now.getHours() < WEEK_GRID_START_HOUR || now.getHours() >= WEEK_GRID_END_HOUR || scrolledWeekRef.current === weekKey) return;
-        scrolledWeekRef.current = weekKey;
-        const minutes = now.getHours() * 60 + now.getMinutes() - WEEK_GRID_START_HOUR * 60;
-        const offset = minutes / 60 * WEEK_GRID_HOUR_HEIGHT;
-        container.scrollTop = Math.max(0, offset - container.clientHeight * 0.35);
+        if (!today || scrolledWeekRef.current === weekKey) return;
+
+        const performScroll = () => {
+            const container = scrollContainerRef.current;
+            if (!container) return;
+            scrolledWeekRef.current = weekKey;
+            const currentHour = now.getHours();
+            const currentMinutes = currentHour * 60 + now.getMinutes();
+            const boundedMinutes = Math.max(
+                WEEK_GRID_START_HOUR * 60,
+                Math.min(currentMinutes, WEEK_GRID_END_HOUR * 60)
+            );
+            const minutesSinceStart = boundedMinutes - WEEK_GRID_START_HOUR * 60;
+            const offset = (minutesSinceStart / 60) * WEEK_GRID_HOUR_HEIGHT;
+            container.scrollTop = Math.max(0, offset - container.clientHeight * 0.35);
+        };
+
+        const frame = requestAnimationFrame(() => {
+            performScroll();
+            setTimeout(performScroll, 50);
+        });
+        return () => cancelAnimationFrame(frame);
     }, [dates, now]);
     const topicById = new Map(topics.map((topic) => [topic.id, topic]));
     const subjectById = new Map(subjects.map((subject) => [subject.id, subject]));
@@ -90,9 +111,22 @@ export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, subjects
     const slots = visibleSlots.flatMap((slot) => {
         const layout = layoutByKey.get(slot.key);
         if (!layout) return [];
-        return [{ ...slot, lane: layout.lane, laneCount: layout.laneCount, laneSpan: layout.laneSpan, top: slot.startMinutes / 60 * WEEK_GRID_HOUR_HEIGHT, height: (slot.displayEndMinutes - slot.startMinutes) / 60 * WEEK_GRID_HOUR_HEIGHT }];
+        return [{ ...slot, lane: layout.lane, laneCount: layout.laneCount, laneSpan: layout.laneSpan, top: slot.startMinutes / 60 * WEEK_GRID_HOUR_HEIGHT, height: Math.max(22, (slot.displayEndMinutes - slot.startMinutes) / 60 * WEEK_GRID_HOUR_HEIGHT) }];
     });
-    const allDayDeadlines = deadlines.filter((deadline) => deadline.allDay);
+    const allDayDeadlines = [
+        ...deadlines.filter((deadline) => deadline.allDay),
+        ...(assessments || []).filter((a) => a.dueAt).map((a) => ({
+            id: a.id,
+            title: a.title,
+            dueAt: a.dueAt!,
+            allDay: true,
+            isCompleted: a.completed,
+            subjectId: a.subjectId,
+            topicId: undefined,
+            type: 'exam' as const,
+            urgency: 'high' as const,
+        })),
+    ];
     const timedDeadlines = deadlines.filter((deadline) => !deadline.allDay).flatMap((deadline) => {
         const due = localDateFromTimestamp(deadline.dueAt);
         if (!due || !visibleDays.has(dateKey(due))) return [];
@@ -184,26 +218,68 @@ export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, subjects
     };
 
     const quickCreate = (date: Date) => onCreate(buildGridSelection(date, 540, 600));
-    return <section className="overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] px-0 pb-3 pt-1 sm:pb-4 sm:pt-2" aria-label="Weekly study calendar">
-        <div className="max-h-[70vh] overflow-auto overscroll-contain">
-            <div className="min-w-[720px]">
-                {allDayDeadlines.length > 0 && <div className="grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)] bg-[var(--app-card-bg)]">
-                    <div className="flex items-start justify-end px-2 py-2 text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">All day</div>
-                    {dates.map((date) => {
-                        const dayDeadlines = allDayDeadlines.filter((deadline) => {
-                            const due = localDateFromTimestamp(deadline.dueAt);
-                            return due && dateKey(due) === dateKey(date);
-                        });
-                        return <div key={dateKey(date)} className="min-h-10 space-y-1 border-l border-[var(--app-border)] px-1.5 py-1.5">
-                            {dayDeadlines.map((deadline) => <div key={deadline.id} className={`truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${deadline.isCompleted ? 'line-through opacity-60' : ''}`} style={{ borderColor: `${subjectById.get(deadline.subjectId ?? topicById.get(deadline.topicId ?? -1)?.subjectId ?? -1)?.color ?? 'var(--accent-color)'}80`, backgroundColor: 'var(--app-bg)' }} title={deadline.title}>{deadline.title}</div>)}
-                        </div>;
-                    })}
-                </div>}
-                <div className="sticky top-0 z-30 grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))] border-b border-[var(--app-border)] bg-[var(--app-bg)]">
-                    <div className="pb-3" />
-                    {dates.map((date) => <div key={dateKey(date)} className="px-2 pb-2 pt-1 text-center"><p className="text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p><p className="mt-1 text-sm font-bold">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p></div>)}
+    const isSingleDay = dates.length === 1;
+    const gridColumnsStyle = { gridTemplateColumns: `4.25rem repeat(${dates.length}, minmax(0, 1fr))` };
+
+    return <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-bg)] px-0 pb-3 pt-1 sm:pb-4 sm:pt-2" aria-label="Study calendar grid">
+        <div className="min-h-0 flex-1 overflow-auto overscroll-contain">
+            <div className={isSingleDay ? 'w-full min-w-0' : 'min-w-[720px]'}>
+                <div className="sticky top-0 z-30 border-b border-[var(--app-border)] bg-[var(--app-bg)]">
+                    <div className="grid" style={gridColumnsStyle}>
+                        <div className="pb-2 pt-2 px-2" />
+                        {dates.map((date) => {
+                            const isToday = dateKey(date) === dateKey(now);
+                            return (
+                                <div key={dateKey(date)} className="border-l border-[var(--app-border)] px-2 pb-2 pt-1.5 text-center">
+                                    <p className={`text-[10px] font-bold uppercase tracking-wider ${isToday ? 'text-[var(--accent-color)]' : 'text-[var(--app-text-muted)]'}`}>
+                                        {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                                    </p>
+                                    <p className={`mt-0.5 text-sm font-bold ${isToday ? 'text-[var(--accent-color)]' : 'text-[var(--app-text)]'}`}>
+                                        {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    </p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {allDayDeadlines.length > 0 && (
+                        <div className="grid border-t border-[var(--app-border)] bg-[var(--app-card-bg)]" style={gridColumnsStyle}>
+                            <div className="flex items-start justify-end px-2.5 py-2 text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">
+                                All day
+                            </div>
+                            {dates.map((date) => {
+                                const dayDeadlines = allDayDeadlines.filter((deadline) => {
+                                    const due = localDateFromTimestamp(deadline.dueAt);
+                                    return due && dateKey(due) === dateKey(date);
+                                });
+                                return (
+                                    <div key={dateKey(date)} className="min-h-9 space-y-1 border-l border-[var(--app-border)] p-1.5">
+                                        {dayDeadlines.map((deadline) => {
+                                            const isExam = deadline.type === 'exam';
+                                            const theme = getEventKindTheme(isExam ? 'exam' : 'deadline');
+                                            const subject = subjectById.get(deadline.subjectId ?? topicById.get(deadline.topicId ?? -1)?.subjectId ?? -1);
+                                            return (
+                                                <div
+                                                    key={deadline.id}
+                                                    className={`flex items-center gap-1.5 truncate rounded-lg px-2 py-1 text-[10px] font-semibold shadow-xs ${deadline.isCompleted ? 'line-through opacity-60' : ''}`}
+                                                    style={{
+                                                        backgroundColor: theme.backgroundColor,
+                                                        color: theme.textColor,
+                                                        border: `1px solid ${theme.borderColor}`,
+                                                    }}
+                                                    title={deadline.title}
+                                                >
+                                                    <SubjectChip name={subject?.name} color={subject?.color} />
+                                                    <span className="truncate">{deadline.title}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
-                <div ref={gridRef} className="grid grid-cols-[4.25rem_repeat(7,minmax(0,1fr))]" onPointerMove={updateMove} onPointerUp={finishMove} onPointerCancel={() => { movingRef.current = null; setMoving(null); }}>
+                <div ref={gridRef} className="grid" style={gridColumnsStyle} onPointerMove={updateMove} onPointerUp={finishMove} onPointerCancel={() => { movingRef.current = null; setMoving(null); }}>
                     <div className="relative" style={{ height: WEEK_GRID_HEIGHT }}>{Array.from({ length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR + 1 }, (_, index) => { const hour = WEEK_GRID_START_HOUR + index; return <span key={hour} className="absolute right-2 -translate-y-1/2 text-[10px] leading-none text-[var(--app-text-muted)]" style={{ top: index === WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR ? '100%' : index * WEEK_GRID_HOUR_HEIGHT, transform: index === 0 ? 'translateY(6px)' : index === WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR ? 'translateY(calc(-100% + 4px))' : 'translateY(calc(-50% + 4px))' }}>{hourLabel(hour)}</span>; })}</div>
                     {dates.map((date) => {
                         const key = dateKey(date);
@@ -224,6 +300,7 @@ export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, subjects
                                 const movingDate = dates.find((candidate) => dateKey(candidate) === moving?.currentDate);
                                 const active = movingThis && movingDate && dateKey(movingDate) === key;
                                 const displayTop = active ? (moving?.current ?? 0) / 60 * WEEK_GRID_HOUR_HEIGHT : top;
+                                const theme = getEventKindTheme(kind === 'study' ? 'completed' : 'scheduled');
                                 return <div key={`${kind}-${item.id}-${key}`} role="button" tabIndex={0} aria-label={`${kind === 'study' ? 'Studied' : 'Scheduled'}: ${eventTitle}, ${localDateFromTimestamp(item.startedAt)?.toLocaleString('en-US')}. Press Enter to ${kind === 'study' ? 'edit details' : 'edit or drag to reschedule'}.`} onClick={() => {
                                     if (scheduledItem && suppressClickRef.current === scheduledItem.id) { suppressClickRef.current = null; return; }
                                     if (scheduledItem) onEdit(scheduledItem);
@@ -233,17 +310,30 @@ export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, subjects
                                     event.preventDefault();
                                     if (scheduledItem) onEdit(scheduledItem);
                                     if (studyItem) onEditStudySession(studyItem);
-                                }} onPointerMove={scheduledItem ? updateMove : undefined} onPointerUp={scheduledItem ? finishMove : undefined} onPointerCancel={scheduledItem ? () => { movingRef.current = null; setMoving(null); } : undefined} className={`absolute z-10 overflow-hidden rounded-lg border-l-[3px] px-1.5 text-[10px] shadow-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--accent-color)] sm:px-2 ${height <= 18 ? 'py-0' : 'py-1'} ${scheduledItem ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer border-dashed opacity-90'} ${movingThis ? 'opacity-60' : ''}`} data-calendar-event="true" style={{ top: displayTop, height, left: `calc(${(lane / laneCount) * 100}% + 0.25rem)`, width: `calc(${(laneSpan / laneCount) * 100}% - 0.5rem)`, borderColor: subject?.color || 'var(--accent-color)', backgroundColor: `${subject?.color || 'var(--accent-color)'}24`, color: 'var(--app-text)' }} title={`${kind === 'study' ? 'Studied' : 'Scheduled'} · ${eventTitle} · ${localDateFromTimestamp(item.startedAt)?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`} onPointerDown={scheduledItem ? (event) => startMove(event, scheduledItem, key, Math.round(top / WEEK_GRID_HOUR_HEIGHT * 60)) : undefined}><span className="block truncate font-semibold">{kind === 'study' ? '✓ Studied' : 'Scheduled'} · {eventTitle}</span>{height > 34 && <span className="block truncate opacity-75">{topic?.name || 'Study'}</span>}</div>;
+                                }} onPointerMove={scheduledItem ? updateMove : undefined} onPointerUp={scheduledItem ? finishMove : undefined} onPointerCancel={scheduledItem ? () => { movingRef.current = null; setMoving(null); } : undefined} className={`absolute z-10 overflow-hidden rounded-lg px-2 py-0.5 text-[10px] sm:text-[11px] shadow-sm transition-all focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--accent-color)] ${scheduledItem ? 'cursor-grab active:cursor-grabbing hover:brightness-105' : 'cursor-pointer hover:brightness-105'} ${movingThis ? 'opacity-60' : ''}`} data-calendar-event="true" style={{ top: displayTop, height, minHeight: 22, left: `calc(${(lane / laneCount) * 100}% + 0.25rem)`, width: `calc(${(laneSpan / laneCount) * 100}% - 0.5rem)`, backgroundColor: theme.backgroundColor, color: theme.textColor, border: `1px solid ${theme.borderColor}` }} title={`${kind === 'study' ? 'Studied' : 'Scheduled'} · ${eventTitle} · ${localDateFromTimestamp(item.startedAt)?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`} onPointerDown={scheduledItem ? (event) => startMove(event, scheduledItem, key, Math.round(top / WEEK_GRID_HOUR_HEIGHT * 60)) : undefined}>
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <SubjectChip name={subject?.name} color={subject?.color} />
+                                        <span className="truncate font-semibold text-[10px] sm:text-[11px] leading-tight">{eventTitle}</span>
+                                    </div>
+                                    {height > 38 && <span className="block truncate text-[10px] opacity-75 mt-0.5 pl-0.5">{topic?.name || 'Study'}</span>}
+                                </div>;
                             })}
                             {timedDeadlines.filter((item) => item.date === key).map(({ deadline, top }) => {
                                 const topic = deadline.topicId ? topicById.get(deadline.topicId) : undefined;
                                 const subjectId = topic?.subjectId ?? deadline.subjectId;
                                 const subject = subjectId ? subjectById.get(subjectId) : undefined;
-                                return <div key={`deadline-${deadline.id}`} className={`pointer-events-none absolute left-0 right-0 z-[5] border-t-2 border-dashed ${deadline.isCompleted ? 'opacity-40' : ''}`} style={{ top, borderColor: subject?.color || '#f59e0b' }} aria-label={`Deadline: ${deadline.title}`}><span className="absolute left-1 top-0 max-w-[95%] -translate-y-full truncate rounded bg-[var(--app-card-bg)] px-1 text-[9px] font-bold text-[var(--app-text)]">◆ {deadline.title}</span></div>;
+                                const isExam = deadline.type === 'exam';
+                                const theme = getEventKindTheme(isExam ? 'exam' : 'deadline');
+                                return <div key={`deadline-${deadline.id}`} className={`pointer-events-none absolute left-0 right-0 z-[5] border-t-2 ${deadline.isCompleted ? 'opacity-40' : ''}`} style={{ top, borderColor: theme.backgroundColor }} aria-label={`Deadline: ${deadline.title}`}>
+                                    <span className="absolute left-1 top-0 max-w-[95%] -translate-y-full truncate rounded px-1.5 py-0.5 text-[9px] font-bold shadow-sm flex items-center gap-1" style={{ backgroundColor: theme.backgroundColor, color: theme.textColor, border: `1px solid ${theme.borderColor}` }}>
+                                        <SubjectChip name={subject?.name} color={subject?.color} />
+                                        <span className="truncate">{deadline.title}</span>
+                                    </span>
+                                </div>;
                             })}
                             {moving && moving.currentDate === key && moving.date !== key && (() => {
                                 const movingSlot = slots.find((slot) => slot.kind === 'scheduled' && slot.item.id === moving.item.id);
-                                return movingSlot ? <div className="pointer-events-none absolute inset-x-1 z-20 rounded-lg border-2 border-dashed border-[var(--accent-color)] bg-[var(--accent-color)]/20 px-1.5 py-1 text-[10px] opacity-80 sm:inset-x-1.5 sm:px-2" style={{ top: moving.current / 60 * WEEK_GRID_HOUR_HEIGHT, height: movingSlot.height }} aria-hidden="true"><span className="block truncate font-semibold">{moving.item.title || movingSlot.topic?.name || 'Study session'}</span></div> : null;
+                                return movingSlot ? <div className="pointer-events-none absolute inset-x-1 z-20 rounded-lg border-2 border-dashed border-[var(--accent-color)] bg-[var(--accent-color)]/20 px-1.5 py-1 text-[10px] opacity-80 sm:inset-x-1.5 sm:px-2" style={{ top: moving.current / 60 * WEEK_GRID_HOUR_HEIGHT, height: Math.max(22, movingSlot.height) }} aria-hidden="true"><span className="block truncate font-semibold">{moving.item.title || movingSlot.topic?.name || 'Study session'}</span></div> : null;
                             })()}
                             {range && <div className="pointer-events-none absolute inset-x-1 z-20 rounded-lg border-2 border-[var(--accent-color)] bg-[var(--accent-color)]/20" style={{ top: range.startMinutes / 60 * WEEK_GRID_HOUR_HEIGHT, height: Math.max(16, (range.endMinutes - range.startMinutes) / 60 * WEEK_GRID_HOUR_HEIGHT) }} aria-hidden="true" />}
                             <button type="button" onClick={() => quickCreate(date)} className="absolute right-1 top-1 z-30 flex h-7 w-7 items-center justify-center rounded-full border border-[var(--app-border)] bg-[var(--app-card-bg)] text-[var(--app-text-muted)] opacity-0 shadow-sm transition-opacity hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] focus:opacity-100 focus-visible:outline-2 focus-visible:outline-[var(--accent-color)] group-hover:opacity-100" aria-label={`Schedule a session on ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} from 9 to 10 AM`}><Plus size={14} /></button>

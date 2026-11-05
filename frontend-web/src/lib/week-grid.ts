@@ -25,13 +25,15 @@ export interface WeekGridLayout extends WeekGridInterval {
     laneSpan: number;
 }
 
+export const MIN_EVENT_DISPLAY_MINUTES = 20;
+
 export function getDisplayInterval(startMinutes: number, endMinutes: number): Pick<WeekGridInterval, 'startMinutes' | 'endMinutes'> {
     if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes) || endMinutes <= startMinutes) {
         return { startMinutes, endMinutes };
     }
     return {
         startMinutes,
-        endMinutes: Math.min(WEEK_GRID_MINUTES, Math.max(endMinutes, startMinutes + WEEK_GRID_SNAP_MINUTES)),
+        endMinutes: Math.min(WEEK_GRID_MINUTES, Math.max(endMinutes, startMinutes + MIN_EVENT_DISPLAY_MINUTES)),
     };
 }
 

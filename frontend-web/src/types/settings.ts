@@ -15,7 +15,7 @@ export interface UserSettings {
     countdownDefaultMinutes: number;
     stopwatchTargetHours: number;
     colorMode: 'dark' | 'light';
-    colorTheme: 'default' | 'glacier' | 'dusk' | 'fern' | 'blaze' | 'solar' | 'sakura' | 'mocha';
+    colorTheme: 'default' | 'catppuccin' | 'cappuccino' | 'glacier' | 'dusk' | 'fern' | 'blaze' | 'solar' | 'sakura' | 'mocha';
     masterVolume: number;
     alarmVolume: number;
     notificationVolume: number;
