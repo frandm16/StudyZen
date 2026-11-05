@@ -222,7 +222,7 @@ export function EvaluationModal({
                                     type="time"
                                     value={dueTime}
                                     onChange={(e) => setDueTime(e.target.value)}
-                                    className={`${fieldClass} min-w-0 w-28 shrink-0`}
+                                    className="w-auto shrink-0 select-text rounded-xl border border-[var(--app-border)] bg-[var(--app-bg)] px-2.5 py-2.5 text-sm text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)]/60 focus:border-[var(--accent-color)] focus:outline-none"
                                 />
                             )}
                         </div>
