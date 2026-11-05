@@ -41,6 +41,7 @@ public class AssessmentController {
                 decimal(body.get("maxGrade")),
                 decimal(body.get("weightPercent")),
                 DateTimeUtils.parseFlexibleOffset((String) body.get("dueAt")),
+                booleanValue(body.get("allDay")),
                 (Boolean) body.get("isCompleted")
         );
     }
@@ -57,6 +58,7 @@ public class AssessmentController {
                 decimal(body.get("maxGrade")),
                 decimal(body.get("weightPercent")),
                 DateTimeUtils.parseFlexibleOffset((String) body.get("dueAt")),
+                booleanValue(body.get("allDay")),
                 (Boolean) body.get("isCompleted")
         );
     }
@@ -75,6 +77,7 @@ public class AssessmentController {
                 body.containsKey("dueAt")
                         ? DateTimeUtils.parseFlexibleOffset(body.get("dueAt") != null ? body.get("dueAt").toString() : null)
                         : null,
+                body.containsKey("allDay") ? booleanValue(body.get("allDay")) : null,
                 (Boolean) body.get("isCompleted"),
                 body.containsKey("dueAt"),
                 body.containsKey("grade")
@@ -99,5 +102,11 @@ public class AssessmentController {
         if (value == null) return "other";
         String str = value.toString().trim();
         return str.isBlank() ? "other" : str;
+    }
+
+    private Boolean booleanValue(Object value) {
+        if (value == null) return null;
+        if (value instanceof Boolean) return (Boolean) value;
+        return Boolean.parseBoolean(value.toString());
     }
 }

@@ -11,6 +11,7 @@ export interface Assessment {
     maxGrade: number;
     weightPercent: number;
     dueAt?: string | null;
+    allDay: boolean;
     completed: boolean;
     completedAt?: string | null;
     createdAt?: string;
@@ -26,6 +27,7 @@ export interface CreateAssessmentDTO {
     maxGrade: number;
     weightPercent: number;
     dueAt?: string | null;
+    allDay?: boolean;
 }
 
 export interface UpdateAssessmentDTO {
@@ -36,5 +38,6 @@ export interface UpdateAssessmentDTO {
     maxGrade?: number;
     weightPercent?: number;
     dueAt?: string | null;
+    allDay?: boolean;
     isCompleted?: boolean;
 }

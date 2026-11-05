@@ -379,6 +379,9 @@ export function CalendarPage() {
             const dueD = localDateFromTimestamp(d.dueAt);
             if (!dueD) continue;
             const key = dateKey(dueD);
+            const timeLabel = !d.allDay
+                ? `${String(dueD.getHours()).padStart(2, '0')}:${String(dueD.getMinutes()).padStart(2, '0')}`
+                : undefined;
             const subj = d.subjectId ? subjectById.get(d.subjectId) : undefined;
             const isExam = d.type === 'exam';
             chips.push({
@@ -387,6 +390,7 @@ export function CalendarPage() {
                 kind: isExam ? 'assessment' : 'deadline',
                 title: d.title,
                 dateKey: key,
+                timeLabel,
                 color: subj?.color || 'var(--accent-color)',
                 subjectColor: subj?.color || 'var(--accent-color)',
                 completed: d.isCompleted,
@@ -401,6 +405,9 @@ export function CalendarPage() {
             const dueD = localDateFromTimestamp(a.dueAt);
             if (!dueD) continue;
             const key = dateKey(dueD);
+            const timeLabel = !a.allDay
+                ? `${String(dueD.getHours()).padStart(2, '0')}:${String(dueD.getMinutes()).padStart(2, '0')}`
+                : undefined;
             const subj = a.subjectId ? subjectById.get(a.subjectId) : undefined;
             chips.push({
                 id: `assessment-${a.id}`,
@@ -408,6 +415,7 @@ export function CalendarPage() {
                 kind: 'assessment',
                 title: a.title,
                 dateKey: key,
+                timeLabel,
                 color: subj?.color || 'var(--accent-color)',
                 subjectColor: subj?.color || 'var(--accent-color)',
                 completed: a.completed,

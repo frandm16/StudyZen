@@ -88,18 +88,24 @@ export function formatMinutes(mins: number): string {
     return `${hours}h ${rem}m`;
 }
 
-export function formatDateDisplay(dateStr?: string | null): string {
+export function formatDateDisplay(dateStr?: string | null, allDay = true): string {
     if (!dateStr) return '';
 
     try {
-        const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
         const d = match
-            ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+            ? new Date(
+                Number(match[1]),
+                Number(match[2]) - 1,
+                Number(match[3]),
+                !allDay && match[4] ? Number(match[4]) : 0,
+                !allDay && match[5] ? Number(match[5]) : 0
+            )
             : new Date(dateStr);
 
         if (Number.isNaN(d.getTime())) return dateStr;
 
-        return d.toLocaleDateString(undefined, {
+        const datePart = d.toLocaleDateString(undefined, {
             month: 'short',
             day: 'numeric',
             year:
@@ -107,6 +113,12 @@ export function formatDateDisplay(dateStr?: string | null): string {
                     ? 'numeric'
                     : undefined,
         });
+
+        if (!allDay && match && match[4] && match[5]) {
+            return `${datePart} · ${match[4]}:${match[5]}`;
+        }
+
+        return datePart;
     } catch {
         return dateStr;
     }

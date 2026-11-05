@@ -35,7 +35,7 @@ public class AssessmentService {
 
     public Assessment create(Long subjectId, String type, String title, String description,
                              BigDecimal grade, BigDecimal maxGrade, BigDecimal weightPercent,
-                             OffsetDateTime dueAt, Boolean isCompleted) {
+                             OffsetDateTime dueAt, Boolean allDay, Boolean isCompleted) {
         requireSubject(subjectId);
         validateTotalWeight(subjectId, weightPercent, null);
         Assessment assessment = new Assessment();
@@ -49,6 +49,7 @@ public class AssessmentService {
         assessment.setMaxGrade(maxGrade);
         assessment.setWeightPercent(weightPercent);
         assessment.setDueAt(dueAt);
+        assessment.setAllDay(allDay != null ? allDay : true);
         boolean completed = Boolean.TRUE.equals(isCompleted);
         assessment.setCompleted(completed);
         assessment.setCompletedAt(completed ? OffsetDateTime.now() : null);
@@ -58,7 +59,7 @@ public class AssessmentService {
 
     public Assessment fullUpdate(Long id, Long subjectId, String type, String title, String description,
                                  BigDecimal grade, BigDecimal maxGrade, BigDecimal weightPercent,
-                                 OffsetDateTime dueAt, Boolean isCompleted) {
+                                 OffsetDateTime dueAt, Boolean allDay, Boolean isCompleted) {
         Assessment assessment = getById(id);
         requireSubject(subjectId);
         validateTotalWeight(subjectId, weightPercent, assessment.getId());
@@ -70,6 +71,7 @@ public class AssessmentService {
         assessment.setMaxGrade(maxGrade);
         assessment.setWeightPercent(weightPercent);
         assessment.setDueAt(dueAt);
+        if (allDay != null) assessment.setAllDay(allDay);
         applyCompleted(assessment, Boolean.TRUE.equals(isCompleted));
         assessment.setUpdatedAt(OffsetDateTime.now());
         return assessmentRepository.save(assessment);
@@ -77,7 +79,7 @@ public class AssessmentService {
 
     public Assessment partialUpdate(Long id, Long subjectId, String type, String title, String description,
                                     BigDecimal grade, BigDecimal maxGrade, BigDecimal weightPercent,
-                                    OffsetDateTime dueAt, Boolean isCompleted, boolean dueAtPresent, boolean gradePresent) {
+                                    OffsetDateTime dueAt, Boolean allDay, Boolean isCompleted, boolean dueAtPresent, boolean gradePresent) {
         Assessment assessment = getById(id);
         Long targetSubjectId = subjectId != null ? subjectId : assessment.getSubjectId();
         if (subjectId != null) {
@@ -95,6 +97,7 @@ public class AssessmentService {
         if (maxGrade != null) assessment.setMaxGrade(maxGrade);
         if (weightPercent != null) assessment.setWeightPercent(weightPercent);
         if (dueAtPresent) assessment.setDueAt(dueAt);
+        if (allDay != null) assessment.setAllDay(allDay);
         if (isCompleted != null) applyCompleted(assessment, isCompleted);
         assessment.setUpdatedAt(OffsetDateTime.now());
         return assessmentRepository.save(assessment);

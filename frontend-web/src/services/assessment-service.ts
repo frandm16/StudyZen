@@ -1,4 +1,5 @@
 import { api } from './api';
+import { formatApiTimestamp, parseApiTimestamp } from '../lib/api-datetime';
 import type { Assessment, CreateAssessmentDTO, UpdateAssessmentDTO } from '../types/assessment';
 
 function normalize(raw: unknown): Assessment {
@@ -13,11 +14,20 @@ function normalize(raw: unknown): Assessment {
         grade: r.grade as number | null | undefined,
         maxGrade: Number(r.maxGrade ?? 100),
         weightPercent: Number(r.weightPercent ?? 0),
-        dueAt: r.dueAt as string | null | undefined,
+        dueAt: parseApiTimestamp(r.dueAt as string | null | undefined),
+        allDay: Boolean(r.allDay ?? true),
         completed: Boolean(r.completed ?? r.isCompleted ?? false),
         completedAt: r.completedAt as string | null | undefined,
         createdAt: r.createdAt as string | undefined,
         updatedAt: r.updatedAt as string | undefined,
+    };
+}
+
+function formatDates<T extends { dueAt?: string | null }>(dto: T): T {
+    if (!dto.dueAt) return dto;
+    return {
+        ...dto,
+        dueAt: formatApiTimestamp(dto.dueAt) ?? dto.dueAt,
     };
 }
 
@@ -33,12 +43,12 @@ export const assessmentService = {
     },
 
     create: async (dto: CreateAssessmentDTO): Promise<Assessment> => {
-        const res = await api.post<unknown>('/assessments', dto);
+        const res = await api.post<unknown>('/assessments', formatDates(dto));
         return normalize(res.data);
     },
 
     update: async (id: number, dto: UpdateAssessmentDTO): Promise<Assessment> => {
-        const res = await api.patch<unknown>(`/assessments/${id}`, dto);
+        const res = await api.patch<unknown>(`/assessments/${id}`, formatDates(dto));
         return normalize(res.data);
     },
 

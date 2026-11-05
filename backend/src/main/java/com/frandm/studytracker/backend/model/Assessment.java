@@ -39,6 +39,9 @@ public class Assessment {
     @Column(name = "due_at")
     private OffsetDateTime dueAt;
 
+    @Column(name = "all_day", nullable = false)
+    private boolean allDay = true;
+
     @Column(name = "is_completed", nullable = false)
     private boolean isCompleted = false;
 
@@ -91,6 +94,10 @@ public class Assessment {
 
     public OffsetDateTime getDueAt() { return dueAt; }
     public void setDueAt(OffsetDateTime dueAt) { this.dueAt = dueAt; }
+
+    public boolean isAllDay() { return allDay; }
+    public boolean getAllDay() { return allDay; }
+    public void setAllDay(boolean allDay) { this.allDay = allDay; }
 
     public boolean isCompleted() { return isCompleted; }
     public void setCompleted(boolean completed) { isCompleted = completed; }

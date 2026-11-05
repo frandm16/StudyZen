@@ -861,7 +861,7 @@ export function DayPage({ onStudy, onStudyNow }: DayPageProps) {
                     title: values.title.trim(),
                     type: 'assignment',
                     urgency: values.urgency as any,
-                    dueAt: `${selectedKey}T${values.allDay ? '23:59' : values.time}:00`,
+                    dueAt: `${selectedKey}T${values.allDay ? '00:00' : values.time}:00`,
                     allDay: values.allDay,
                     subjectId: dialogTopic.subjectId,
                     topicId: dialogTopic.id,

@@ -120,7 +120,7 @@ export function DeadlinesSection({
                 kind: 'assessment',
                 title: a.title,
                 dueAt: a.dueAt,
-                allDay: false,
+                allDay: a.allDay,
                 isCompleted: a.completed,
                 subjectId: a.subjectId,
                 typeLabel: a.type,
@@ -148,8 +148,7 @@ export function DeadlinesSection({
 
         setSaving(true);
         try {
-            const timePart = allDay ? '23:59:00' : `${dueTime}:00`;
-            const dueAt = `${dueDate}T${timePart}`;
+            const dueAt = allDay ? `${dueDate} 00:00:00` : `${dueDate} ${dueTime}:00`;
 
             if (createKind === 'assessment') {
                 const subId = subjectId ? Number(subjectId) : subjects[0]?.id;
@@ -167,6 +166,7 @@ export function DeadlinesSection({
                     title: trimmed,
                     type: assessmentType,
                     dueAt,
+                    allDay,
                     weightPercent: Number(weightPercent) || 0,
                     maxGrade: 100,
                 });

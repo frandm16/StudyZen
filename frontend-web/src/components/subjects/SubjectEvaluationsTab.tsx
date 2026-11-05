@@ -286,7 +286,7 @@ export function SubjectEvaluationsTab({
 
                                         <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--app-text-muted)] font-medium">
                                             <Calendar className="h-3.5 w-3.5" />
-                                            <span>{formatDateDisplay(evaluation.dueAt) || 'No date set'}</span>
+                                            <span>{formatDateDisplay(evaluation.dueAt, evaluation.allDay) || 'No date set'}</span>
                                         </div>
                                     </div>
                                 </div>

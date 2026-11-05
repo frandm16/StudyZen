@@ -1,6 +1,7 @@
 package com.frandm.studytracker.backend.util;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -41,6 +42,9 @@ public final class DateTimeUtils {
             return null;
         }
         String timestamp = value.trim();
+        if (timestamp.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            return LocalDate.parse(timestamp).atStartOfDay();
+        }
         try {
             return LocalDateTime.parse(timestamp, API_TIMESTAMP_FORMAT);
         } catch (DateTimeParseException ignored) {

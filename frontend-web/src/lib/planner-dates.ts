@@ -51,6 +51,18 @@ export function dateKeyFromTimestamp(value: string | undefined): string | null {
     return date ? dateKey(date) : null;
 }
 
+export function dateKeyDirect(value: string | undefined | null): string | null {
+    if (!value) return null;
+    const match = /^(\d{4}-\d{2}-\d{2})/.exec(value);
+    return match ? match[1] : null;
+}
+
+export function localDateFromDateKey(value: string | undefined | null): Date | null {
+    if (!value) return null;
+    const key = dateKeyDirect(value);
+    return key ? parseDateKey(key) : null;
+}
+
 export function weekRange(date: Date, weekStartsOn: number): { start: Date; end: Date } {
     const start = startOfWeek(date, weekStartsOn);
     return { start, end: addDays(start, 7) };

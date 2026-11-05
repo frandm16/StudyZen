@@ -32,6 +32,8 @@ export function EvaluationModal({
     const [type, setType] = useState('Exam');
     const [description, setDescription] = useState('');
     const [dueDate, setDueDate] = useState(today);
+    const [allDay, setAllDay] = useState(true);
+    const [dueTime, setDueTime] = useState('09:00');
     const [weightPercent, setWeightPercent] = useState<number>(15);
     const [maxGrade, setMaxGrade] = useState<number>(100);
     const [grade, setGrade] = useState<string>('');
@@ -53,6 +55,13 @@ export function EvaluationModal({
             setType(editingEvaluation.type || 'Exam');
             setDescription(editingEvaluation.description || '');
             setDueDate(editingEvaluation.dueAt ? editingEvaluation.dueAt.slice(0, 10) : today);
+            const isAll = editingEvaluation.allDay ?? true;
+            setAllDay(isAll);
+            if (!isAll && editingEvaluation.dueAt && editingEvaluation.dueAt.length >= 16) {
+                setDueTime(editingEvaluation.dueAt.slice(11, 16));
+            } else {
+                setDueTime('09:00');
+            }
             setWeightPercent(editingEvaluation.weightPercent ?? 0);
             setMaxGrade(editingEvaluation.maxGrade ?? 100);
             setGrade(editingEvaluation.grade !== null && editingEvaluation.grade !== undefined ? String(editingEvaluation.grade) : '');
@@ -61,6 +70,8 @@ export function EvaluationModal({
             setType('Exam');
             setDescription('');
             setDueDate(today);
+            setAllDay(true);
+            setDueTime('09:00');
             const defaultWeight = Math.min(15, maxAvailableWeight);
             setWeightPercent(defaultWeight);
             setMaxGrade(100);
@@ -107,7 +118,7 @@ export function EvaluationModal({
 
         setSubmitting(true);
         try {
-            const dueAt = dueDate ? `${dueDate}T23:59:59` : null;
+            const dueAt = dueDate ? (allDay ? `${dueDate} 00:00:00` : `${dueDate} ${dueTime}:00`) : null;
 
             await onSave({
                 subjectId,
@@ -115,6 +126,7 @@ export function EvaluationModal({
                 type: type.trim(),
                 description: description.trim() || undefined,
                 dueAt,
+                allDay,
                 weightPercent: numericWeight,
                 maxGrade: Number(maxGrade),
                 grade: parsedGrade,
@@ -168,8 +180,8 @@ export function EvaluationModal({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="sm:col-span-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
                         <label className="block text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider mb-1.5">
                             Title
                         </label>
@@ -184,16 +196,35 @@ export function EvaluationModal({
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider mb-1.5">
-                            Due / Exam Date
-                        </label>
-                        <div className="relative">
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
+                                Due / Exam Date
+                            </label>
+                            <label className="flex items-center gap-1.5 text-xs text-[var(--app-text-muted)] cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={allDay}
+                                    onChange={(e) => setAllDay(e.target.checked)}
+                                    className="h-3.5 w-3.5 rounded border-[var(--app-border)] text-[var(--accent-color)] focus:ring-0"
+                                />
+                                <span>All day</span>
+                            </label>
+                        </div>
+                        <div className="flex items-center gap-2">
                             <input
                                 type="date"
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
                                 className={fieldClass}
                             />
+                            {!allDay && (
+                                <input
+                                    type="time"
+                                    value={dueTime}
+                                    onChange={(e) => setDueTime(e.target.value)}
+                                    className={`${fieldClass} w-32 shrink-0`}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

@@ -115,7 +115,7 @@ export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, assessme
     });
     const allDayDeadlines = [
         ...deadlines.filter((deadline) => deadline.allDay),
-        ...(assessments || []).filter((a) => a.dueAt).map((a) => ({
+        ...(assessments || []).filter((a) => a.dueAt && a.allDay).map((a) => ({
             id: a.id,
             title: a.title,
             dueAt: a.dueAt!,
@@ -127,7 +127,20 @@ export function WeeklyTimeGrid({ dates, scheduled, sessions, deadlines, assessme
             urgency: 'high' as const,
         })),
     ];
-    const timedDeadlines = deadlines.filter((deadline) => !deadline.allDay).flatMap((deadline) => {
+    const timedDeadlines = [
+        ...deadlines.filter((deadline) => !deadline.allDay),
+        ...(assessments || []).filter((a) => a.dueAt && !a.allDay).map((a) => ({
+            id: a.id,
+            title: a.title,
+            dueAt: a.dueAt!,
+            allDay: false,
+            isCompleted: a.completed,
+            subjectId: a.subjectId,
+            topicId: undefined,
+            type: 'exam' as const,
+            urgency: 'high' as const,
+        })),
+    ].flatMap((deadline) => {
         const due = localDateFromTimestamp(deadline.dueAt);
         if (!due || !visibleDays.has(dateKey(due))) return [];
         const dayStart = new Date(due.getFullYear(), due.getMonth(), due.getDate(), WEEK_GRID_START_HOUR);
