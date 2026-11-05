@@ -180,8 +180,8 @@ export function EvaluationModal({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
+                    <div className="min-w-0">
                         <label className="block text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider mb-1.5">
                             Title
                         </label>
@@ -195,12 +195,12 @@ export function EvaluationModal({
                         />
                     </div>
 
-                    <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                            <label className="text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider">
+                    <div className="min-w-0">
+                        <div className="flex items-center justify-between mb-1.5 gap-2">
+                            <label className="text-xs font-semibold text-[var(--app-text-muted)] uppercase tracking-wider truncate">
                                 Due / Exam Date
                             </label>
-                            <label className="flex items-center gap-1.5 text-xs text-[var(--app-text-muted)] cursor-pointer select-none">
+                            <label className="flex items-center gap-1.5 text-xs text-[var(--app-text-muted)] cursor-pointer select-none shrink-0">
                                 <input
                                     type="checkbox"
                                     checked={allDay}
@@ -210,19 +210,19 @@ export function EvaluationModal({
                                 <span>All day</span>
                             </label>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                             <input
                                 type="date"
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
-                                className={fieldClass}
+                                className={`${fieldClass} min-w-0 flex-1`}
                             />
                             {!allDay && (
                                 <input
                                     type="time"
                                     value={dueTime}
                                     onChange={(e) => setDueTime(e.target.value)}
-                                    className={`${fieldClass} w-32 shrink-0`}
+                                    className={`${fieldClass} min-w-0 w-28 shrink-0`}
                                 />
                             )}
                         </div>

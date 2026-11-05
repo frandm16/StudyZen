@@ -44,7 +44,7 @@ export function Modal({ title, onClose, size = 'md', children }: ModalProps) {
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
-            className={`m-auto max-h-[92vh] ${SIZES[size]} flex flex-col overflow-auto rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-0 text-[var(--app-text)] shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm`}
+            className={`m-auto max-h-[92vh] ${SIZES[size]} flex flex-col overflow-y-auto overflow-x-hidden rounded-3xl border border-[var(--app-border)] bg-[var(--app-card-bg)] p-0 text-[var(--app-text)] shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm`}
         >
             <div className="flex flex-1 flex-col p-6 sm:p-8">
                 <h2 id={titleId} className="font-pt text-2xl font-bold text-[var(--app-text)]">
