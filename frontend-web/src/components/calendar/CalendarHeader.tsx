@@ -104,7 +104,7 @@ export function CalendarHeader({
                     </button>
                 </div>
 
-                <h1 className="text-sm font-bold tracking-tight text-[var(--app-text)] sm:text-base">
+                <h1 className="text-xs font-bold tracking-tight text-[var(--app-text)] sm:text-sm md:text-base truncate max-w-[130px] sm:max-w-none">
                     {formattedTitle}
                 </h1>
             </div>

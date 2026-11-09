@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { CalendarHeader } from '../components/calendar/CalendarHeader';
 import { CalendarSidebar } from '../components/calendar/CalendarSidebar';
 import { PlanningDrawer } from '../components/calendar/planning/PlanningDrawer';
@@ -9,6 +10,7 @@ import { WeeklyTimeGrid } from '../components/planner/WeeklyTimeGrid';
 import { SessionModal } from '../components/subjects/modals/SessionModal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useToast } from '../context/ToastContext';
+import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import {
     addDays,
     dateKey,
@@ -60,12 +62,15 @@ export function CalendarPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const notify = useToast();
 
-    const viewParam = (searchParams.get('view') as CalendarView) || 'week';
+    const viewParam = searchParams.get('view') as CalendarView | null;
     const dateParam = searchParams.get('date');
 
     const view: CalendarView = useMemo(() => {
         if (viewParam === 'day' || viewParam === 'month' || viewParam === 'week') {
             return viewParam;
+        }
+        if (typeof window !== 'undefined' && window.innerWidth < 640) {
+            return 'day';
         }
         return 'week';
     }, [viewParam]);
@@ -430,7 +435,7 @@ export function CalendarPage() {
 
     const handleToday = () => setDate(new Date());
 
-    const handlePrev = () => {
+    const handlePrev = useCallback(() => {
         if (view === 'day') {
             setDate(addDays(currentDate, -1));
         } else if (view === 'week') {
@@ -438,9 +443,9 @@ export function CalendarPage() {
         } else {
             setDate(moveMonth(currentDate, -1));
         }
-    };
+    }, [view, currentDate, setDate]);
 
-    const handleNext = () => {
+    const handleNext = useCallback(() => {
         if (view === 'day') {
             setDate(addDays(currentDate, 1));
         } else if (view === 'week') {
@@ -448,7 +453,14 @@ export function CalendarPage() {
         } else {
             setDate(moveMonth(currentDate, 1));
         }
-    };
+    }, [view, currentDate, setDate]);
+
+    const calendarMainRef = useRef<HTMLDivElement>(null);
+
+    useSwipeGesture(calendarMainRef, {
+        onSwipeLeft: handleNext,
+        onSwipeRight: handlePrev,
+    });
 
     const handleToggleSubject = (id: number) => {
         const next = new Set(visibleSubjectIds);
@@ -589,7 +601,7 @@ export function CalendarPage() {
                     }
                 />
 
-                <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 sm:p-4">
+                <main ref={calendarMainRef} className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-2 sm:p-4 touch-pan-y">
                     {loading && scheduled.length === 0 && sessions.length === 0 ? (
                         <div className="space-y-4" role="status" aria-label="Loading calendar">
                             <div className="grid grid-cols-7 gap-2">
@@ -642,6 +654,21 @@ export function CalendarPage() {
                         </div>
                     )}
                 </main>
+
+                <button
+                    type="button"
+                    onClick={() =>
+                        setSelection({
+                            date: currentDate,
+                            startMinutes: 540,
+                            endMinutes: 600,
+                        })
+                    }
+                    aria-label="Create new event"
+                    className="fixed right-4 bottom-20 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-color)] text-white shadow-xl shadow-black/30 active:scale-95 transition-transform lg:hidden"
+                >
+                    <Plus size={22} strokeWidth={2.5} />
+                </button>
 
                 <PlanningDrawer
                     open={planningDrawerOpen}

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/navbar/Navbar.tsx';
+import { FloatingDock } from './components/navbar/FloatingDock.tsx';
 import { TimerProvider } from './context/TimerContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -28,7 +29,7 @@ function AppContent() {
         <div className="flex flex-col h-screen w-screen overflow-hidden select-none bg-[var(--app-bg,#0b0f17)] text-[var(--app-text,#f9fafb)] transition-colors duration-200">
             {showNavbar && <Navbar />}
 
-            <main className={`flex-1 min-h-0 relative z-10 ${isCalendar ? 'overflow-hidden flex flex-col' : 'overflow-auto'}`}>
+            <main className={`flex-1 min-h-0 relative z-10 ${isCalendar ? 'overflow-hidden flex flex-col' : 'overflow-auto'} ${showNavbar ? 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0' : ''}`}>
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
@@ -105,6 +106,8 @@ function AppContent() {
                     <Route path="*" element={<Navigate to="/timer" replace />} />
                 </Routes>
             </main>
+
+            {showNavbar && <FloatingDock />}
         </div>
     );
 }

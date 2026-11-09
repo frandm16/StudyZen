@@ -57,14 +57,14 @@ export function PlanningDrawer({
     return (
         <>
             <div
-                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden"
+                className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden"
                 onClick={onClose}
                 aria-hidden="true"
             />
 
             <aside
                 aria-label="Planning desk"
-                className="fixed inset-y-0 right-0 z-40 flex h-full w-80 max-w-[90vw] flex-col border-l border-[var(--app-border)] bg-[var(--app-bg)] text-[var(--app-text)] shadow-2xl transition-transform lg:static lg:z-auto lg:w-80 lg:shadow-none xl:w-96"
+                className="fixed inset-y-0 right-0 z-50 flex h-full w-84 max-w-[90vw] flex-col border-l border-[var(--app-border)] bg-[var(--app-bg)] pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] text-[var(--app-text)] shadow-2xl transition-transform lg:static lg:z-auto lg:w-80 lg:pb-0 lg:shadow-none xl:w-96"
             >
                 <div className="flex items-center justify-between border-b border-[var(--app-border)] px-4 py-3">
                     <div className="flex items-center gap-2">

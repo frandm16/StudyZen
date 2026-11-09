@@ -8,6 +8,7 @@ import {
     ChevronDown,
     ChevronRight,
     Plus,
+    X,
 } from 'lucide-react';
 import { MiniMonthPicker } from './MiniMonthPicker';
 import type { Subject } from '../../types/subject';
@@ -58,11 +59,22 @@ export function CalendarSidebar({
     return (
         <>
             <div
-                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden"
+                className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs lg:hidden"
                 onClick={onCloseSidebar}
             />
-            <aside className="fixed inset-y-0 left-0 z-40 flex h-full w-72 flex-col gap-4 overflow-y-auto border-r border-[var(--app-border)] bg-[var(--app-bg)] p-3 text-[var(--app-text)] shadow-xl transition-transform lg:static lg:z-auto lg:w-64 lg:shadow-none">
-            <button
+            <aside className="fixed inset-y-0 left-0 z-50 flex h-full w-80 max-w-[85vw] flex-col gap-4 overflow-y-auto border-r border-[var(--app-border)] bg-[var(--app-bg)] p-3 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] text-[var(--app-text)] shadow-2xl transition-transform lg:static lg:z-auto lg:w-64 lg:pb-3 lg:shadow-none">
+                <div className="flex items-center justify-between pb-1 border-b border-[var(--app-border)] lg:hidden">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[var(--app-text-muted)]">Calendar Tools</span>
+                    <button
+                        type="button"
+                        onClick={onCloseSidebar}
+                        aria-label="Close sidebar"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--app-text-muted)] hover:bg-neutral-500/10 hover:text-[var(--app-text)]"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+                <button
                 type="button"
                 onClick={onCreateEvent}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent-color)] px-4 py-2.5 text-sm font-bold text-[var(--app-bg)] shadow-md transition-all hover:opacity-90 active:scale-[0.98]"

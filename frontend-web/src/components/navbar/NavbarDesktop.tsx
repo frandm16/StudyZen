@@ -15,10 +15,10 @@ interface PillState {
 }
 
 export const NavbarDesktop: React.FC<NavbarDesktopProps> = ({
-                                                                pathname,
-                                                                items,
-                                                                focusRing,
-                                                            }) => {
+    pathname,
+    items,
+    focusRing,
+}) => {
     const linksRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
 
@@ -71,7 +71,7 @@ export const NavbarDesktop: React.FC<NavbarDesktopProps> = ({
     return (
         <nav
             aria-label="Main navigation"
-            className="relative hidden h-10 items-center rounded-full bg-neutral-500/10 p-1 md:flex"
+            className="relative hidden h-10 items-center rounded-full bg-neutral-500/10 p-1 lg:flex"
         >
             <div
                 ref={linksRef}

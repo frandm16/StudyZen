@@ -1,14 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { NavbarDesktop } from "./NavbarDesktop";
-import { NavbarMobile } from "./NavbarMobile";
 import { UserProfile } from "./UserProfile";
 import { NotificationCenter } from "./NotificationCenter";
-import {
-    Logo,
-    MenuIcon,
-} from "./NavbarIcons";
+import { Logo } from "./NavbarIcons";
 
 export interface NavItem {
     path: string;
@@ -27,59 +23,18 @@ export const focusRing =
 
 export const Navbar: React.FC = () => {
     const { pathname } = useLocation();
-    const [menuOpen, setMenuOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        setMenuOpen(false);
-    }, [pathname]);
-
-    useEffect(() => {
-        if (!menuOpen) return;
-
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "Escape") {
-                setMenuOpen(false);
-            }
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [menuOpen]);
-
-    useEffect(() => {
-        if (!menuOpen) return;
-
-        const handlePointerDown = (event: PointerEvent) => {
-            if (
-                menuRef.current &&
-                !menuRef.current.contains(event.target as Node)
-            ) {
-                setMenuOpen(false);
-            }
-        };
-
-        document.addEventListener("pointerdown", handlePointerDown);
-
-        return () => {
-            document.removeEventListener("pointerdown", handlePointerDown);
-        };
-    }, [menuOpen]);
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-[var(--app-border)] bg-[var(--app-bg,#fff)]/95 backdrop-blur-xl">
-            <div className="mx-auto max-w-6xl px-4 sm:px-6">
-                <div className="relative grid h-[4.5rem] grid-cols-[1fr_auto_1fr] items-center">
+        <header className="sticky top-0 z-40 w-full border-b border-[var(--app-border)] bg-[var(--app-bg,#fff)]/95 backdrop-blur-xl">
+            <div className="mx-auto max-w-6xl px-3 sm:px-6">
+                <div className="relative flex h-14 sm:h-16 lg:grid lg:h-[4.5rem] lg:grid-cols-[1fr_auto_1fr] items-center justify-between">
                     <Link
                         to="/timer"
-                        className={`group flex w-fit items-center gap-2.5 rounded-xl ${focusRing}`}
+                        className={`group flex w-fit items-center gap-2 sm:gap-2.5 rounded-xl ${focusRing}`}
                     >
-                        <Logo className="h-10 w-10 text-[var(--app-text)]" />
+                        <Logo className="h-8 w-8 sm:h-10 sm:w-10 text-[var(--app-text)]" />
 
-                        <span className="font-pt text-[1.5rem] font-bold tracking-[-0.02em] text-[var(--app-text)]">
+                        <span className="font-pt text-[1.25rem] sm:text-[1.5rem] font-bold tracking-[-0.02em] text-[var(--app-text)]">
                             StudyZen
                         </span>
                     </Link>
@@ -90,38 +45,12 @@ export const Navbar: React.FC = () => {
                         focusRing={focusRing}
                     />
 
-                    <div className="col-start-3 flex items-center justify-end gap-1.5">
+                    <div className="flex items-center justify-end gap-1.5 lg:col-start-3">
                         <NotificationCenter />
                         <UserProfile focusRing={focusRing} />
-
-                        <button
-                            type="button"
-                            onClick={() => setMenuOpen((open) => !open)}
-                            aria-expanded={menuOpen}
-                            aria-controls="mobile-nav"
-                            className={[
-                                "flex h-10 w-10 items-center justify-center rounded-xl",
-                                "text-[var(--app-text)] transition-colors",
-                                "hover:bg-neutral-500/10",
-                                "md:hidden",
-                                focusRing,
-                            ].join(" ")}
-                        >
-                            <MenuIcon open={menuOpen} />
-                        </button>
                     </div>
                 </div>
-
-                <div ref={menuRef}>
-                    <NavbarMobile
-                        pathname={pathname}
-                        open={menuOpen}
-                        items={NAV_ITEMS}
-                        focusRing={focusRing}
-                    />
-                </div>
             </div>
-
         </header>
     );
 };
