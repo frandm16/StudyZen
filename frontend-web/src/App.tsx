@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/navbar/Navbar.tsx';
 import { FloatingDock } from './components/navbar/FloatingDock.tsx';
+import { FullscreenClock } from './components/clock/FullscreenClock.tsx';
 import { TimerProvider } from './context/TimerContext';
 import { AuthProvider } from './context/AuthContext';
+import { ClockProvider, useClock } from './context/ClockContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { TimerPage } from './pages/TimerPage';
 import { CalendarPage } from './pages/CalendarPage';
@@ -22,6 +24,7 @@ const PUBLIC_ROUTES = ['/', '/login', '/register', '/auth/callback', '/forgot-pa
 
 function AppContent() {
     const { pathname } = useLocation();
+    const { isOpen, closeClock } = useClock();
     const showNavbar = !PUBLIC_ROUTES.includes(pathname);
     const isCalendar = pathname === '/calendar';
 
@@ -108,6 +111,8 @@ function AppContent() {
             </main>
 
             {showNavbar && <FloatingDock />}
+
+            <FullscreenClock isOpen={isOpen} onClose={closeClock} />
         </div>
     );
 }
@@ -117,11 +122,13 @@ export function App() {
         <ThemeProvider>
             <AuthProvider>
                 <TimerProvider>
-                    <ToastProvider>
-                        <BrowserRouter>
-                            <AppContent />
-                        </BrowserRouter>
-                    </ToastProvider>
+                    <ClockProvider>
+                        <ToastProvider>
+                            <BrowserRouter>
+                                <AppContent />
+                            </BrowserRouter>
+                        </ToastProvider>
+                    </ClockProvider>
                 </TimerProvider>
             </AuthProvider>
         </ThemeProvider>

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { Clock } from 'lucide-react';
 import { SaveSessionDialog, type SaveValues } from '../components/timer/SaveSessionDialog';
 import { TaskTagDialog } from '../components/timer/TaskTagDialog';
 import { TodayPanels } from '../components/timer/TodayPanels';
 import { useTimerContext } from '../context/TimerContext';
+import { useClock } from '../context/ClockContext';
 import { useShortcuts } from '../hooks/useShortcuts';
 import type { TimerMode, TimerPhase } from '../hooks/useTimer';
 import { formatRequiredApiTimestamp } from '../lib/api-datetime';
@@ -64,6 +66,7 @@ function ChevronIcon({ className = '' }: { className?: string }) {
 
 export function TimerPage() {
     const timer = useTimerContext();
+    const { openClock } = useClock();
     const { selectedTagId, setSelectedTagId, selectedTaskId, setSelectedTaskId } = timer;
 
     const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -161,8 +164,7 @@ export function TimerPage() {
     };
 
     const toggleFullscreen = () => {
-        if (document.fullscreenElement) void document.exitFullscreen();
-        else void document.documentElement.requestFullscreen().catch(() => {});
+        openClock();
     };
 
     useShortcuts(
@@ -204,8 +206,18 @@ export function TimerPage() {
             <div className="flex w-full max-w-2xl flex-col items-center gap-4">
                 <section
                     aria-label="Study timer"
-                    className="w-full rounded-[2rem] border border-[var(--app-border)] bg-[var(--app-card-bg)]/65 p-6 transition-colors sm:p-10"
+                    className="relative w-full rounded-[2rem] border border-[var(--app-border)] bg-[var(--app-card-bg)]/65 p-6 transition-colors sm:p-10"
                 >
+                    <button
+                        type="button"
+                        onClick={openClock}
+                        aria-label="Open Zen Fullscreen Clock"
+                        title="Zen Flip Clock (F)"
+                        className={`absolute right-4 top-4 sm:right-6 sm:top-6 flex h-9 w-9 items-center justify-center rounded-xl text-[var(--app-text-muted)] transition-colors hover:bg-neutral-500/10 hover:text-[var(--app-text)] ${focusRing}`}
+                    >
+                        <Clock size={18} />
+                    </button>
+
                     <div
                         role="radiogroup"
                         aria-label="Timer mode"

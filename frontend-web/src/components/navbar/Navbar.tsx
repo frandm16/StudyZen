@@ -1,10 +1,12 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { Clock } from "lucide-react";
 
 import { NavbarDesktop } from "./NavbarDesktop";
 import { UserProfile } from "./UserProfile";
 import { NotificationCenter } from "./NotificationCenter";
 import { Logo } from "./NavbarIcons";
+import { useClock } from "../../context/ClockContext";
 
 export interface NavItem {
     path: string;
@@ -23,6 +25,7 @@ export const focusRing =
 
 export const Navbar: React.FC = () => {
     const { pathname } = useLocation();
+    const { openClock } = useClock();
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-[var(--app-border)] bg-[var(--app-bg,#fff)]/95 backdrop-blur-xl">
@@ -45,7 +48,16 @@ export const Navbar: React.FC = () => {
                         focusRing={focusRing}
                     />
 
-                    <div className="flex items-center justify-end gap-1.5 lg:col-start-3">
+                    <div className="flex items-center justify-end gap-1 sm:gap-1.5 lg:col-start-3">
+                        <button
+                            type="button"
+                            onClick={openClock}
+                            aria-label="Open Zen Fullscreen Clock"
+                            title="Zen Clock"
+                            className={`flex h-10 w-10 items-center justify-center rounded-xl text-[var(--app-text-muted)] transition-colors hover:bg-neutral-500/10 hover:text-[var(--app-text)] ${focusRing}`}
+                        >
+                            <Clock size={19} />
+                        </button>
                         <NotificationCenter />
                         <UserProfile focusRing={focusRing} />
                     </div>
