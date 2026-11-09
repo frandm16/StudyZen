@@ -60,7 +60,7 @@ export function FlipCard({ value, cardStyle, onFlip }: FlipCardProps) {
         >
             <div className="absolute inset-0 flex flex-col overflow-hidden rounded-[inherit]">
                 <div className="relative h-1/2 w-full overflow-hidden bg-gradient-to-b from-[#222226] via-[#1d1d20] to-[#18181a] text-[#bebec2]">
-                    <span className="absolute inset-x-0 top-0 flex h-[200%] items-center justify-center leading-none tabular-nums">
+                    <span className="absolute inset-x-0 top-0 flex h-[200%] items-center justify-center leading-none tabular-nums whitespace-nowrap">
                         {staticTopValue}
                     </span>
                     {isFlipping && (
@@ -77,7 +77,7 @@ export function FlipCard({ value, cardStyle, onFlip }: FlipCardProps) {
                 </div>
 
                 <div className="relative h-1/2 w-full overflow-hidden bg-gradient-to-b from-[#18181a] via-[#141416] to-[#0f0f11] text-[#b5b5b9]">
-                    <span className="absolute inset-x-0 bottom-0 flex h-[200%] items-center justify-center leading-none tabular-nums">
+                    <span className="absolute inset-x-0 bottom-0 flex h-[200%] items-center justify-center leading-none tabular-nums whitespace-nowrap">
                         {staticBottomValue}
                     </span>
                     {isFlipping && (
@@ -106,7 +106,7 @@ export function FlipCard({ value, cardStyle, onFlip }: FlipCardProps) {
                             animation: 'studyzenFlipTop 220ms cubic-bezier(0.4, 0.0, 1, 1) forwards',
                         }}
                     >
-                        <span className="absolute inset-x-0 top-0 flex h-[200%] items-center justify-center leading-none tabular-nums">
+                        <span className="absolute inset-x-0 top-0 flex h-[200%] items-center justify-center leading-none tabular-nums whitespace-nowrap">
                             {flipState.prev}
                         </span>
                         <div
@@ -130,7 +130,7 @@ export function FlipCard({ value, cardStyle, onFlip }: FlipCardProps) {
                             animation: 'studyzenFlipBottom 240ms cubic-bezier(0.18, 0.89, 0.32, 1.15) 200ms forwards',
                         }}
                     >
-                        <span className="absolute inset-x-0 bottom-0 flex h-[200%] items-center justify-center leading-none tabular-nums">
+                        <span className="absolute inset-x-0 bottom-0 flex h-[200%] items-center justify-center leading-none tabular-nums whitespace-nowrap">
                             {flipState.next}
                         </span>
                         <div

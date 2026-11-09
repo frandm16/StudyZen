@@ -13,17 +13,17 @@ export interface FlipClockRendererProps {
 function computeCardStyle(cardCount: number): CSSProperties {
     if (cardCount <= 2) {
         return {
-            width: 'min(45vw, calc(74vh * 0.92))',
-            height: 'min(76vh, calc(45vw * 1.12))',
-            fontSize: 'min(58vh, 31vw)',
-            borderRadius: 'clamp(1.5rem, 3.8vw, 4.25rem)',
+            width: 'min(43vw, 58vh)',
+            height: 'calc(min(43vw, 58vh) * 1.2)',
+            fontSize: 'calc(min(43vw, 58vh) * 0.64)',
+            borderRadius: 'clamp(1rem, min(3vw, 4vh), 3.25rem)',
         };
     }
     return {
-        width: 'min(30vw, calc(65vh * 0.88))',
-        height: 'min(68vh, calc(30vw * 1.12))',
-        fontSize: 'min(48vh, 19vw)',
-        borderRadius: 'clamp(1rem, 2.5vw, 3rem)',
+        width: 'min(29vw, 40vh)',
+        height: 'calc(min(29vw, 40vh) * 1.2)',
+        fontSize: 'calc(min(29vw, 40vh) * 0.64)',
+        borderRadius: 'clamp(0.75rem, min(2vw, 3vh), 2.25rem)',
     };
 }
 
@@ -39,11 +39,11 @@ export function FlipClockRenderer({
     const cardStyle = useMemo(() => computeCardStyle(cardCount), [cardCount]);
 
     const gapStyle: CSSProperties = {
-        gap: cardCount <= 2 ? 'clamp(0.75rem, 2vw, 2.5rem)' : 'clamp(0.5rem, 1.2vw, 1.5rem)',
+        gap: cardCount <= 2 ? 'clamp(0.5rem, min(2vw, 2.5vh), 2.5rem)' : 'clamp(0.375rem, min(1.2vw, 1.8vh), 1.5rem)',
     };
 
     return (
-        <div className="relative flex items-center justify-center select-none w-full">
+        <div className="relative flex items-center justify-center select-none">
             <div className="flex items-center justify-center" style={gapStyle}>
                 {hours !== undefined && (
                     <FlipCard value={hours} cardStyle={cardStyle} onFlip={onFlip} />
@@ -57,8 +57,8 @@ export function FlipClockRenderer({
             </div>
 
             {ampm && (
-                <div className="absolute -top-8 right-2 sm:-top-12 sm:right-6">
-                    <span className="inline-flex items-center justify-center px-3 py-1 sm:px-4 sm:py-1.5 rounded-lg border border-neutral-800 bg-[#141416] text-neutral-300 shadow-xl text-xs sm:text-sm font-bold tracking-widest uppercase">
+                <div className="absolute -top-7 right-1 sm:-top-11 sm:right-4">
+                    <span className="inline-flex items-center justify-center px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-md sm:rounded-lg border border-neutral-800 bg-[#141416] text-neutral-300 shadow-xl text-[10px] sm:text-xs font-bold tracking-widest uppercase">
                         {ampm}
                     </span>
                 </div>

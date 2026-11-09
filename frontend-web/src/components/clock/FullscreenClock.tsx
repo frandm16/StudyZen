@@ -227,7 +227,7 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
               : 'Countdown';
 
     const controlButtonClass =
-        'flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-white/10 bg-[#121214]/80 text-neutral-300 backdrop-blur-xl shadow-lg transition-all hover:bg-neutral-800 hover:text-white active:scale-95';
+        'flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl border border-white/10 bg-[#121214]/80 text-neutral-300 backdrop-blur-xl shadow-lg transition-all hover:bg-neutral-800 hover:text-white active:scale-95';
 
     return (
         <div
@@ -241,7 +241,7 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                     showControlsTemporarily();
                 }
             }}
-            className={`fixed inset-0 z-50 flex flex-col items-center justify-between select-none overflow-hidden bg-black text-neutral-100 transition-colors duration-500 p-4 sm:p-8 lg:p-12 ${
+            className={`fixed inset-0 z-50 select-none overflow-hidden bg-black text-neutral-100 transition-colors duration-500 ${
                 controlsVisible ? '' : 'cursor-none'
             }`}
         >
@@ -249,9 +249,14 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
 
             <header
                 onClick={(e) => e.stopPropagation()}
-                className={`w-full flex items-center justify-between transition-opacity duration-300 z-30 ${
+                className={`absolute top-0 inset-x-0 z-30 flex items-center justify-between p-3 sm:p-6 lg:p-8 transition-opacity duration-300 ${
                     controlsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
                 }`}
+                style={{
+                    paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
+                    paddingLeft: 'max(0.75rem, env(safe-area-inset-left))',
+                    paddingRight: 'max(0.75rem, env(safe-area-inset-right))',
+                }}
             >
                 <div className="flex items-center gap-2">
                     <div
@@ -266,7 +271,7 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                                 setClockMode('timer');
                                 showControlsTemporarily();
                             }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            className={`flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                 clockMode === 'timer'
                                     ? 'bg-white/15 text-white shadow-sm'
                                     : 'text-neutral-400 hover:text-neutral-200'
@@ -284,7 +289,7 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                                 setClockMode('realtime');
                                 showControlsTemporarily();
                             }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            className={`flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                 clockMode === 'realtime'
                                     ? 'bg-white/15 text-white shadow-sm'
                                     : 'text-neutral-400 hover:text-neutral-200'
@@ -299,7 +304,7 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                         <button
                             type="button"
                             onClick={handleToggle24Hour}
-                            className="px-2.5 py-1.5 rounded-lg border border-white/10 bg-[#121214]/80 text-neutral-300 hover:bg-neutral-800 text-xs font-bold uppercase transition-colors backdrop-blur-md"
+                            className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-white/10 bg-[#121214]/80 text-neutral-300 hover:bg-neutral-800 text-xs font-bold uppercase transition-colors backdrop-blur-md"
                             title="Toggle 12/24 hour display"
                         >
                             {is24Hour ? '24H' : '12H'}
@@ -307,7 +312,20 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                     )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                {clockMode === 'timer' && (
+                    <div className="hidden md:flex items-center gap-2">
+                        <span
+                            className={`inline-block h-2 w-2 rounded-full ${
+                                isTimerRunning ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                            }`}
+                        />
+                        <span className="text-xs font-bold tracking-widest uppercase text-neutral-400">
+                            {phaseTitle}
+                        </span>
+                    </div>
+                )}
+
+                <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
                         type="button"
                         onClick={handleToggleSeconds}
@@ -328,7 +346,7 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                         aria-label="Toggle Flip Sound"
                         className={controlButtonClass}
                     >
-                        {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                        {isMuted ? <VolumeX size={17} /> : <Volume2 size={17} />}
                     </button>
 
                     <button
@@ -341,7 +359,7 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                         aria-label="Toggle Browser Fullscreen"
                         className={controlButtonClass}
                     >
-                        {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                        {isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
                     </button>
 
                     <button
@@ -351,72 +369,77 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                         aria-label="Exit Fullscreen Clock"
                         className={controlButtonClass}
                     >
-                        <X size={18} />
+                        <X size={17} />
                     </button>
                 </div>
             </header>
 
-            <main className="relative flex flex-col items-center justify-center my-auto w-full max-w-full">
-                {clockMode === 'timer' && (
-                    <div
-                        className={`mb-4 sm:mb-8 flex items-center gap-2 transition-opacity duration-300 ${
-                            controlsVisible ? 'opacity-80' : 'opacity-0'
-                        }`}
-                    >
-                        <span
-                            className={`inline-block h-2 w-2 rounded-full ${
-                                isTimerRunning ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+            <main className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                <div className="pointer-events-auto relative flex flex-col items-center">
+                    {clockMode === 'timer' && (
+                        <div
+                            className={`md:hidden absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5 transition-opacity duration-300 ${
+                                controlsVisible ? 'opacity-80' : 'opacity-0'
                             }`}
-                        />
-                        <span className="text-xs sm:text-sm font-bold tracking-widest uppercase text-neutral-400">
-                            {phaseTitle}
-                        </span>
-                    </div>
-                )}
-
-                {clockMode === 'timer' ? (
-                    <FlipClockRenderer
-                        hours={displayTimerHours}
-                        minutes={displayTimerMinutes}
-                        seconds={displayTimerSeconds}
-                        showSeconds={showSeconds}
-                        onFlip={playFlip}
-                    />
-                ) : (
-                    <FlipClockRenderer
-                        hours={displayRealHours}
-                        minutes={realMinutes}
-                        seconds={realSeconds}
-                        showSeconds={showSeconds}
-                        ampm={displayAmpm}
-                        onFlip={playFlip}
-                    />
-                )}
-
-                {actionFeedback && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-300 scale-105 z-40">
-                        <div className="flex items-center gap-3 px-6 py-3 rounded-full backdrop-blur-2xl shadow-2xl border border-white/20 bg-black/90 text-white">
-                            {actionFeedback === 'play' ? (
-                                <>
-                                    <Play size={22} className="fill-current text-emerald-400" />
-                                    <span className="text-sm font-bold tracking-wider uppercase">Running</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Pause size={22} className="fill-current text-amber-400" />
-                                    <span className="text-sm font-bold tracking-wider uppercase">Paused</span>
-                                </>
-                            )}
+                        >
+                            <span
+                                className={`inline-block h-1.5 w-1.5 rounded-full ${
+                                    isTimerRunning ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                                }`}
+                            />
+                            <span className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 whitespace-nowrap">
+                                {phaseTitle}
+                            </span>
                         </div>
-                    </div>
-                )}
+                    )}
+
+                    {clockMode === 'timer' ? (
+                        <FlipClockRenderer
+                            hours={displayTimerHours}
+                            minutes={displayTimerMinutes}
+                            seconds={displayTimerSeconds}
+                            showSeconds={showSeconds}
+                            onFlip={playFlip}
+                        />
+                    ) : (
+                        <FlipClockRenderer
+                            hours={displayRealHours}
+                            minutes={realMinutes}
+                            seconds={realSeconds}
+                            showSeconds={showSeconds}
+                            ampm={displayAmpm}
+                            onFlip={playFlip}
+                        />
+                    )}
+                </div>
             </main>
+
+            {actionFeedback && (
+                <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none transition-transform duration-300 scale-105">
+                    <div className="flex items-center gap-3 px-6 py-3 rounded-full backdrop-blur-2xl shadow-2xl border border-white/20 bg-black/90 text-white">
+                        {actionFeedback === 'play' ? (
+                            <>
+                                <Play size={22} className="fill-current text-emerald-400" />
+                                <span className="text-sm font-bold tracking-wider uppercase">Running</span>
+                            </>
+                        ) : (
+                            <>
+                                <Pause size={22} className="fill-current text-amber-400" />
+                                <span className="text-sm font-bold tracking-wider uppercase">Paused</span>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <footer
                 onClick={(e) => e.stopPropagation()}
-                className={`w-full flex flex-col items-center gap-3 transition-opacity duration-300 z-30 ${
+                className={`absolute bottom-0 inset-x-0 z-30 flex flex-col items-center p-3 sm:p-6 lg:p-8 transition-opacity duration-300 ${
                     controlsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
                 }`}
+                style={{
+                    paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+                }}
             >
                 {clockMode === 'timer' && (
                     <div className="flex items-center gap-3">
@@ -428,16 +451,16 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                             }}
                             disabled={timer.status === 'idle'}
                             title="Reset Timer"
-                            className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl border border-white/10 bg-[#121214]/80 text-neutral-300 backdrop-blur-xl transition-all hover:bg-neutral-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl border border-white/10 bg-[#121214]/80 text-neutral-300 backdrop-blur-xl transition-all hover:bg-neutral-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                         >
-                            <RotateCcw size={18} />
+                            <RotateCcw size={16} />
                         </button>
 
                         <button
                             type="button"
                             onClick={handleToggleTimer}
                             title={isTimerRunning ? 'Pause (Space)' : 'Start (Space)'}
-                            className={`flex items-center gap-2.5 px-7 py-3 sm:px-8 sm:py-3.5 rounded-2xl font-bold text-sm transition-all shadow-xl active:scale-95 ${
+                            className={`flex items-center gap-2 px-6 py-2.5 sm:px-8 sm:py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all shadow-xl active:scale-95 ${
                                 isTimerRunning
                                     ? 'bg-neutral-800 text-white hover:bg-neutral-700 border border-neutral-700'
                                     : 'bg-[var(--accent-color,#2563eb)] text-white hover:opacity-90'
@@ -445,12 +468,12 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                         >
                             {isTimerRunning ? (
                                 <>
-                                    <Pause size={18} className="fill-current" />
+                                    <Pause size={16} className="fill-current" />
                                     <span>Pause</span>
                                 </>
                             ) : (
                                 <>
-                                    <Play size={18} className="fill-current" />
+                                    <Play size={16} className="fill-current" />
                                     <span>{timer.status === 'paused' ? 'Resume' : 'Start'}</span>
                                 </>
                             )}
@@ -465,9 +488,9 @@ export function FullscreenClock({ isOpen, onClose }: FullscreenClockProps) {
                                 }}
                                 disabled={timer.status === 'idle'}
                                 title="Skip Phase"
-                                className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl border border-white/10 bg-[#121214]/80 text-neutral-300 backdrop-blur-xl transition-all hover:bg-neutral-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl border border-white/10 bg-[#121214]/80 text-neutral-300 backdrop-blur-xl transition-all hover:bg-neutral-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                             >
-                                <SkipForward size={18} />
+                                <SkipForward size={16} />
                             </button>
                         )}
                     </div>
