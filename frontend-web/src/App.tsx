@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/navbar/Navbar.tsx';
 import { FloatingDock } from './components/navbar/FloatingDock.tsx';
@@ -19,14 +20,21 @@ import { LandingPage } from './pages/LandingPage';
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from './pages/AuthRecoveryPages';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
+import { isAppSubdomain, isLandingSubdomain, getAppUrl } from './lib/domain';
 
 const PUBLIC_ROUTES = ['/', '/login', '/register', '/auth/callback', '/forgot-password', '/reset-password', '/verify-email'];
 
 function AppContent() {
-    const { pathname } = useLocation();
+    const { pathname, search } = useLocation();
     const { isOpen, closeClock } = useClock();
     const showNavbar = !PUBLIC_ROUTES.includes(pathname);
     const isCalendar = pathname === '/calendar';
+
+    useEffect(() => {
+        if (isLandingSubdomain() && pathname !== '/') {
+            window.location.replace(getAppUrl(pathname + search));
+        }
+    }, [pathname, search]);
 
     return (
         <div className="flex flex-col h-screen w-screen overflow-hidden select-none bg-[var(--app-bg,#0b0f17)] text-[var(--app-text,#f9fafb)] transition-colors duration-200">
@@ -41,7 +49,7 @@ function AppContent() {
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/" element={isAppSubdomain() ? <Navigate to="/timer" replace /> : <LandingPage />} />
                     <Route
                         path="/timer"
                         element={

@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { getAppUrl } from '../../lib/domain';
 
 export function LandingClosingCta() {
     return (
@@ -17,13 +17,13 @@ export function LandingClosingCta() {
                     </p>
 
                     <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-                        <Link
-                            to="/timer"
+                        <a
+                            href={getAppUrl('/timer')}
                             className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-color)] px-6 text-sm font-semibold text-[var(--app-bg)] shadow-sm transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent-color)] motion-reduce:transform-none sm:w-auto"
                         >
                             Get started
                             <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                        </Link>
+                        </a>
 
                         <a
                             href="https://github.com/frandm16/StudyZen"

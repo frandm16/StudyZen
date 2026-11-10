@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Sun, Moon, ArrowUpRight } from 'lucide-react';
 import { Logo } from '../navbar/NavbarIcons';
 import { useTheme } from '../../context/ThemeContext';
+import { getAppUrl } from '../../lib/domain';
 
 export function LandingHeader() {
     const { colorMode, toggleColorMode } = useTheme();
@@ -46,12 +47,12 @@ export function LandingHeader() {
                         <span className="sr-only">GitHub repository (opens in a new tab)</span>
                     </a>
 
-                    <Link
-                        to="/timer"
+                    <a
+                        href={getAppUrl('/timer')}
                         className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--accent-color)] px-4 text-sm font-semibold text-[var(--app-bg)] shadow-xs transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
                     >
                         Get started
-                    </Link>
+                    </a>
                 </nav>
             </div>
         </header>
