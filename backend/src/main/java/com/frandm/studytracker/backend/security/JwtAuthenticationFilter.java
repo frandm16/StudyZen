@@ -34,17 +34,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String token = extractTokenFromRequest(request);
         if (token != null && jwtTokenProvider.validateToken(token)) {
-            UUID userId = jwtTokenProvider.extractUserId(token);
-            if (userRepository.findById(userId).filter(com.frandm.studytracker.backend.model.User::isActive).isEmpty()) {
-                filterChain.doFilter(request, response);
-                return;
+            try {
+                UUID userId = jwtTokenProvider.extractUserId(token);
+                if (userRepository.findById(userId).filter(com.frandm.studytracker.backend.model.User::isActive).isEmpty()) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userId, null, List.of());
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (IllegalArgumentException ignored) {
+                SecurityContextHolder.clearContext();
             }
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userId, null, List.of());
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);
     }
