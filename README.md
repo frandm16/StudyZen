@@ -139,6 +139,9 @@ The root `.env.example` configures the entire stack. Key variables:
 | `GOOGLE_CLIENT_ID` | Optional Google OAuth2 client ID | (empty) |
 | `GOOGLE_CLIENT_SECRET` | Optional Google OAuth2 client secret | (empty) |
 | `SMTP_*` | Optional mail delivery configuration for password recovery | (empty) |
+| `NOTIFICATION_CENTER_URL` | NotificationCenter API base URL | `https://notifications.frandm.dev` |
+| `NOTIFICATION_CENTER_TOKEN` | Bearer token for NotificationCenter | (empty) |
+| `NOTIFICATION_CENTER_ENABLED` | Enable external NotificationCenter delivery | `true` |
 | `VITE_API_BASE_URL` | Frontend API path prefix (proxied by Nginx) | `/api` |
 
 Never commit the `.env` file with production secrets to version control.

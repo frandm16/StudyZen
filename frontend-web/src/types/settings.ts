@@ -21,6 +21,17 @@ export interface UserSettings {
     notificationVolume: number;
     backgroundVolume: number;
     alarmPreset: string;
+    notifyExam7d: boolean;
+    notifyExam3d: boolean;
+    notifyExam24h: boolean;
+    notifyDeadline7d: boolean;
+    notifyDeadline3d: boolean;
+    notifyDeadline24h: boolean;
+    notifyDeadlineCompleted: boolean;
+    notifySessionLogged: boolean;
+    notifyTopicMastered: boolean;
+    notifyGoalReached: boolean;
+    notifyGoal80pct: boolean;
     updatedAt?: string;
 }
 

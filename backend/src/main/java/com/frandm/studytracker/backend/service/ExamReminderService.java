@@ -37,25 +37,29 @@ public class ExamReminderService {
     private final SubjectRepository subjectRepository;
     private final NotificationRepository notificationRepository;
     private final UserSettingsRepository userSettingsRepository;
+    private final NotificationCenterClient notificationCenterClient;
     private final Clock clock;
 
     @Autowired
     public ExamReminderService(AssessmentRepository assessmentRepository,
                                SubjectRepository subjectRepository,
                                NotificationRepository notificationRepository,
-                               UserSettingsRepository userSettingsRepository) {
-        this(assessmentRepository, subjectRepository, notificationRepository, userSettingsRepository, Clock.systemUTC());
+                               UserSettingsRepository userSettingsRepository,
+                               NotificationCenterClient notificationCenterClient) {
+        this(assessmentRepository, subjectRepository, notificationRepository, userSettingsRepository, notificationCenterClient, Clock.systemUTC());
     }
 
     ExamReminderService(AssessmentRepository assessmentRepository,
                         SubjectRepository subjectRepository,
                         NotificationRepository notificationRepository,
                         UserSettingsRepository userSettingsRepository,
+                        NotificationCenterClient notificationCenterClient,
                         Clock clock) {
         this.assessmentRepository = assessmentRepository;
         this.subjectRepository = subjectRepository;
         this.notificationRepository = notificationRepository;
         this.userSettingsRepository = userSettingsRepository;
+        this.notificationCenterClient = notificationCenterClient;
         this.clock = clock;
     }
 
@@ -98,6 +102,7 @@ public class ExamReminderService {
                 String reminderKey = "exam:" + assessment.getId() + ":" + dueDate + ":" + window.label();
 
                 notificationRepository.insertExamReminder(userId, title, body, reminderKey);
+                notificationCenterClient.send(title, body, "warning", reminderKey);
             }
         }
     }

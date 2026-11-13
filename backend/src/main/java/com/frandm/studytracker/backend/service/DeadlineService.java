@@ -20,15 +20,18 @@ public class DeadlineService {
     private final SubjectRepository subjectRepository;
     private final TopicRepository topicRepository;
     private final NotificationEventService notificationEventService;
+    private final NotificationCenterClient notificationCenterClient;
 
     public DeadlineService(DeadlineRepository deadlineRepository,
                            SubjectRepository subjectRepository,
                            TopicRepository topicRepository,
-                           NotificationEventService notificationEventService) {
+                           NotificationEventService notificationEventService,
+                           NotificationCenterClient notificationCenterClient) {
         this.deadlineRepository = deadlineRepository;
         this.subjectRepository = subjectRepository;
         this.topicRepository = topicRepository;
         this.notificationEventService = notificationEventService;
+        this.notificationCenterClient = notificationCenterClient;
     }
 
     public List<Deadline> list(OffsetDateTime start, OffsetDateTime end) {
@@ -238,6 +241,7 @@ public class DeadlineService {
         Deadline saved = deadlineRepository.save(deadline);
         if (newCompleted) {
             notificationEventService.onDeadlineCompleted(userId, deadline.getTitle());
+            notificationCenterClient.send("Deadline completed", "You completed \"" + deadline.getTitle() + "\".", "info", null);
         }
         return saved;
     }

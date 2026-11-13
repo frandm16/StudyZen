@@ -54,6 +54,7 @@ type TabType =
     | 'grades'
     | 'terms'
     | 'sound'
+    | 'notifications'
     | 'data-management'
     | 'developer';
 
@@ -154,6 +155,13 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
                 breadcrumb: 'Settings / Notifications',
                 description: 'Adjust audio volumes, alarm presets, and notification tones.',
                 icon: Volume2,
+            },
+            {
+                id: 'notifications',
+                label: 'Notification Events',
+                breadcrumb: 'Settings / Notifications / Events',
+                description: 'Choose which events generate in-app notifications.',
+                icon: Radio,
             },
         ],
     },
@@ -298,6 +306,18 @@ export const SettingsPage: React.FC = () => {
     const [gradeScaleMax, setGradeScaleMax] = useState('10.0');
     const [passGrade, setPassGrade] = useState('5.0');
 
+    const [notifyExam7d, setNotifyExam7d] = useState(true);
+    const [notifyExam3d, setNotifyExam3d] = useState(true);
+    const [notifyExam24h, setNotifyExam24h] = useState(true);
+    const [notifyDeadline7d, setNotifyDeadline7d] = useState(true);
+    const [notifyDeadline3d, setNotifyDeadline3d] = useState(true);
+    const [notifyDeadline24h, setNotifyDeadline24h] = useState(true);
+    const [notifyDeadlineCompleted, setNotifyDeadlineCompleted] = useState(true);
+    const [notifySessionLogged, setNotifySessionLogged] = useState(false);
+    const [notifyTopicMastered, setNotifyTopicMastered] = useState(true);
+    const [notifyGoalReached, setNotifyGoalReached] = useState(true);
+    const [notifyGoal80pct, setNotifyGoal80pct] = useState(false);
+
     const [feedInfo, setFeedInfo] = useState<CalendarFeedInfo | null>(null);
     const [selectedSyncSubjectId, setSelectedSyncSubjectId] = useState<number | 'all'>('all');
     const [subjectsList, setSubjectsList] = useState<Subject[]>([]);
@@ -437,6 +457,17 @@ export const SettingsPage: React.FC = () => {
                 if (s.autoStartBreaks !== undefined) timer.setAutoStartBreaks(s.autoStartBreaks);
                 if (s.autoStartWork !== undefined) timer.setAutoStartWork(s.autoStartWork);
                 if (s.countBreakTime !== undefined) timer.setCountBreakTime(s.countBreakTime);
+                if (s.notifyExam7d !== undefined) setNotifyExam7d(s.notifyExam7d);
+                if (s.notifyExam3d !== undefined) setNotifyExam3d(s.notifyExam3d);
+                if (s.notifyExam24h !== undefined) setNotifyExam24h(s.notifyExam24h);
+                if (s.notifyDeadline7d !== undefined) setNotifyDeadline7d(s.notifyDeadline7d);
+                if (s.notifyDeadline3d !== undefined) setNotifyDeadline3d(s.notifyDeadline3d);
+                if (s.notifyDeadline24h !== undefined) setNotifyDeadline24h(s.notifyDeadline24h);
+                if (s.notifyDeadlineCompleted !== undefined) setNotifyDeadlineCompleted(s.notifyDeadlineCompleted);
+                if (s.notifySessionLogged !== undefined) setNotifySessionLogged(s.notifySessionLogged);
+                if (s.notifyTopicMastered !== undefined) setNotifyTopicMastered(s.notifyTopicMastered);
+                if (s.notifyGoalReached !== undefined) setNotifyGoalReached(s.notifyGoalReached);
+                if (s.notifyGoal80pct !== undefined) setNotifyGoal80pct(s.notifyGoal80pct);
             } catch (err) {
                 notify({ title: 'Could not load settings', description: getApiErrorMessage(err), tone: 'error', persist: false });
             }
@@ -1340,6 +1371,93 @@ export const SettingsPage: React.FC = () => {
                                                 <Play className="w-3.5 h-3.5 text-[var(--accent-color)]" /> Test Notification
                                             </button>
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'notifications' && (
+                                <div className="space-y-8 max-w-2xl">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
+                                        <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Exams & Assessments</h3>
+                                        <p className="text-[11px] text-[var(--app-text-muted)]">Scheduled reminders fire up to 30 minutes after the window opens.</p>
+                                        <ToggleSwitch
+                                            label="7 days before exam"
+                                            description="Notify when an exam or midterm is one week away"
+                                            checked={notifyExam7d}
+                                            onChange={(val) => { setNotifyExam7d(val); saveAutosetting('notifyExam7d', { notifyExam7d: val }); }}
+                                        />
+                                        <ToggleSwitch
+                                            label="3 days before exam"
+                                            description="Notify when an exam or midterm is three days away"
+                                            checked={notifyExam3d}
+                                            onChange={(val) => { setNotifyExam3d(val); saveAutosetting('notifyExam3d', { notifyExam3d: val }); }}
+                                        />
+                                        <ToggleSwitch
+                                            label="24 hours before exam"
+                                            description="Notify when an exam or midterm is due within 24 hours"
+                                            checked={notifyExam24h}
+                                            onChange={(val) => { setNotifyExam24h(val); saveAutosetting('notifyExam24h', { notifyExam24h: val }); }}
+                                        />
+                                    </div>
+
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
+                                        <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Deadlines</h3>
+                                        <ToggleSwitch
+                                            label="7 days before deadline"
+                                            description="Notify when a deadline is one week away"
+                                            checked={notifyDeadline7d}
+                                            onChange={(val) => { setNotifyDeadline7d(val); saveAutosetting('notifyDeadline7d', { notifyDeadline7d: val }); }}
+                                        />
+                                        <ToggleSwitch
+                                            label="3 days before deadline"
+                                            description="Notify when a deadline is three days away"
+                                            checked={notifyDeadline3d}
+                                            onChange={(val) => { setNotifyDeadline3d(val); saveAutosetting('notifyDeadline3d', { notifyDeadline3d: val }); }}
+                                        />
+                                        <ToggleSwitch
+                                            label="24 hours before deadline"
+                                            description="Notify when a deadline is due within 24 hours"
+                                            checked={notifyDeadline24h}
+                                            onChange={(val) => { setNotifyDeadline24h(val); saveAutosetting('notifyDeadline24h', { notifyDeadline24h: val }); }}
+                                        />
+                                        <ToggleSwitch
+                                            label="Deadline completed"
+                                            description="Notify when you mark a deadline as completed"
+                                            checked={notifyDeadlineCompleted}
+                                            onChange={(val) => { setNotifyDeadlineCompleted(val); saveAutosetting('notifyDeadlineCompleted', { notifyDeadlineCompleted: val }); }}
+                                        />
+                                    </div>
+
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
+                                        <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Study Activity</h3>
+                                        <ToggleSwitch
+                                            label="Session logged"
+                                            description="Notify each time a study session is saved"
+                                            checked={notifySessionLogged}
+                                            onChange={(val) => { setNotifySessionLogged(val); saveAutosetting('notifySessionLogged', { notifySessionLogged: val }); }}
+                                        />
+                                        <ToggleSwitch
+                                            label="Topic mastered"
+                                            description="Notify when you mark a topic as mastered"
+                                            checked={notifyTopicMastered}
+                                            onChange={(val) => { setNotifyTopicMastered(val); saveAutosetting('notifyTopicMastered', { notifyTopicMastered: val }); }}
+                                        />
+                                    </div>
+
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
+                                        <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Study Goals</h3>
+                                        <ToggleSwitch
+                                            label="Goal reached"
+                                            description="Notify when you hit your daily or weekly study goal"
+                                            checked={notifyGoalReached}
+                                            onChange={(val) => { setNotifyGoalReached(val); saveAutosetting('notifyGoalReached', { notifyGoalReached: val }); }}
+                                        />
+                                        <ToggleSwitch
+                                            label="80% of goal reached"
+                                            description="Notify when you're close to your daily or weekly study goal"
+                                            checked={notifyGoal80pct}
+                                            onChange={(val) => { setNotifyGoal80pct(val); saveAutosetting('notifyGoal80pct', { notifyGoal80pct: val }); }}
+                                        />
                                     </div>
                                 </div>
                             )}

@@ -62,6 +62,10 @@ app:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:7777}
   cookies:
     secure: ${COOKIE_SECURE:true}
+  notification-center:
+    url: ${NOTIFICATION_CENTER_URL:}
+    token: ${NOTIFICATION_CENTER_TOKEN:}
+    enabled: ${NOTIFICATION_CENTER_ENABLED:true}
 
 server:
   port: ${BACKEND_PRIVATE_PORT:8080}

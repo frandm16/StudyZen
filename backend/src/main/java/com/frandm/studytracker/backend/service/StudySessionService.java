@@ -20,15 +20,18 @@ public class StudySessionService {
     private final TopicRepository topicRepository;
     private final ScheduledSessionRepository scheduledSessionRepository;
     private final NotificationEventService notificationEventService;
+    private final NotificationCenterClient notificationCenterClient;
 
     public StudySessionService(StudySessionRepository studySessionRepository,
                                TopicRepository topicRepository,
                                ScheduledSessionRepository scheduledSessionRepository,
-                               NotificationEventService notificationEventService) {
+                               NotificationEventService notificationEventService,
+                               NotificationCenterClient notificationCenterClient) {
         this.studySessionRepository = studySessionRepository;
         this.topicRepository = topicRepository;
         this.scheduledSessionRepository = scheduledSessionRepository;
         this.notificationEventService = notificationEventService;
+        this.notificationCenterClient = notificationCenterClient;
     }
 
     public List<StudySession> getAll() {
@@ -55,6 +58,12 @@ public class StudySessionService {
         applyFields(session, body, true);
         StudySession saved = studySessionRepository.save(session);
         notificationEventService.onSessionLogged(saved.getUserId(), saved.getTotalMinutes(), saved.getTopicId());
+        notificationCenterClient.send(
+                "Study session logged",
+                "You studied for " + saved.getTotalMinutes() + " minutes" + (saved.getTopicId() != null ? " on topic #" + saved.getTopicId() : "") + ".",
+                "info",
+                null
+        );
         return saved;
     }
 
