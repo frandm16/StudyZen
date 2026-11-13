@@ -317,6 +317,7 @@ export const SettingsPage: React.FC = () => {
     const [notifyTopicMastered, setNotifyTopicMastered] = useState(true);
     const [notifyGoalReached, setNotifyGoalReached] = useState(true);
     const [notifyGoal80pct, setNotifyGoal80pct] = useState(false);
+    const [notificationCenterEnabled, setNotificationCenterEnabled] = useState(false);
 
     const [feedInfo, setFeedInfo] = useState<CalendarFeedInfo | null>(null);
     const [selectedSyncSubjectId, setSelectedSyncSubjectId] = useState<number | 'all'>('all');
@@ -468,6 +469,7 @@ export const SettingsPage: React.FC = () => {
                 if (s.notifyTopicMastered !== undefined) setNotifyTopicMastered(s.notifyTopicMastered);
                 if (s.notifyGoalReached !== undefined) setNotifyGoalReached(s.notifyGoalReached);
                 if (s.notifyGoal80pct !== undefined) setNotifyGoal80pct(s.notifyGoal80pct);
+                if (s.notificationCenterEnabled !== undefined) setNotificationCenterEnabled(s.notificationCenterEnabled);
             } catch (err) {
                 notify({ title: 'Could not load settings', description: getApiErrorMessage(err), tone: 'error', persist: false });
             }
@@ -1377,6 +1379,16 @@ export const SettingsPage: React.FC = () => {
 
                             {activeTab === 'notifications' && (
                                 <div className="space-y-8 max-w-2xl">
+                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
+                                        <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">External delivery</h3>
+                                        <ToggleSwitch
+                                            label="NotificationCenter integration"
+                                            description="Send selected notifications to your configured NotificationCenter service"
+                                            checked={notificationCenterEnabled}
+                                            onChange={(val) => { setNotificationCenterEnabled(val); saveAutosetting('notificationCenterEnabled', { notificationCenterEnabled: val }); }}
+                                        />
+                                    </div>
+
                                     <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
                                         <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Exams & Assessments</h3>
                                         <p className="text-[11px] text-[var(--app-text-muted)]">Scheduled reminders fire up to 30 minutes after the window opens.</p>

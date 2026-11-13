@@ -241,7 +241,7 @@ public class DeadlineService {
         Deadline saved = deadlineRepository.save(deadline);
         if (newCompleted) {
             notificationEventService.onDeadlineCompleted(userId, deadline.getTitle());
-            notificationCenterClient.send("Deadline completed", "You completed \"" + deadline.getTitle() + "\".", "info", null);
+            notificationCenterClient.send(userId, "Deadline completed", "You completed \"" + deadline.getTitle() + "\".", "info", null);
         }
         return saved;
     }

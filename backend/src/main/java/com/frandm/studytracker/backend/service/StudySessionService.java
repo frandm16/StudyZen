@@ -58,7 +58,10 @@ public class StudySessionService {
         applyFields(session, body, true);
         StudySession saved = studySessionRepository.save(session);
         notificationEventService.onSessionLogged(saved.getUserId(), saved.getTotalMinutes(), saved.getTopicId());
+        notificationEventService.onGoalProgress(saved.getUserId(), null, com.frandm.studytracker.backend.model.enums.GoalPeriod.daily);
+        notificationEventService.onGoalProgress(saved.getUserId(), null, com.frandm.studytracker.backend.model.enums.GoalPeriod.weekly);
         notificationCenterClient.send(
+                saved.getUserId(),
                 "Study session logged",
                 "You studied for " + saved.getTotalMinutes() + " minutes" + (saved.getTopicId() != null ? " on topic #" + saved.getTopicId() : "") + ".",
                 "info",

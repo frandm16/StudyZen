@@ -32,6 +32,7 @@ export interface UserSettings {
     notifyTopicMastered: boolean;
     notifyGoalReached: boolean;
     notifyGoal80pct: boolean;
+    notificationCenterEnabled: boolean;
     updatedAt?: string;
 }
 

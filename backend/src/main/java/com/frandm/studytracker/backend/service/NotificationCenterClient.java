@@ -12,8 +12,10 @@ import org.springframework.web.client.RestClient;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.frandm.studytracker.backend.repository.UserSettingsRepository;
 
 @Service
 public class NotificationCenterClient {
@@ -21,11 +23,14 @@ public class NotificationCenterClient {
     private static final Logger log = LoggerFactory.getLogger(NotificationCenterClient.class);
 
     private final NotificationCenterProperties props;
+    private final UserSettingsRepository userSettingsRepository;
     private final RestClient restClient;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-    public NotificationCenterClient(NotificationCenterProperties props) {
+    public NotificationCenterClient(NotificationCenterProperties props,
+                                    UserSettingsRepository userSettingsRepository) {
         this.props = props;
+        this.userSettingsRepository = userSettingsRepository;
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(5));
         requestFactory.setReadTimeout(Duration.ofSeconds(5));
@@ -34,8 +39,11 @@ public class NotificationCenterClient {
                 .build();
     }
 
-    public void send(String title, String body, String level, String dedupKey) {
+    public void send(UUID userId, String title, String body, String level, String dedupKey) {
         if (!props.enabled()) return;
+        if (userId == null || userSettingsRepository.findById(userId)
+                .map(settings -> !Boolean.TRUE.equals(settings.getNotificationCenterEnabled()))
+                .orElse(true)) return;
         if (props.url() == null || props.url().isBlank()) return;
         if (props.token() == null || props.token().isBlank()) return;
 

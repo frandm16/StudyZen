@@ -112,6 +112,9 @@ public class UserSettings {
     @Column(name = "notify_goal_80pct", nullable = false)
     private Boolean notifyGoal80pct;
 
+    @Column(name = "notification_center_enabled", nullable = false)
+    private Boolean notificationCenterEnabled;
+
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
@@ -225,6 +228,9 @@ public class UserSettings {
 
     public Boolean getNotifyGoal80pct() { return notifyGoal80pct; }
     public void setNotifyGoal80pct(Boolean notifyGoal80pct) { this.notifyGoal80pct = notifyGoal80pct; }
+
+    public Boolean getNotificationCenterEnabled() { return notificationCenterEnabled; }
+    public void setNotificationCenterEnabled(Boolean notificationCenterEnabled) { this.notificationCenterEnabled = notificationCenterEnabled; }
 
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }

@@ -102,7 +102,7 @@ public class ExamReminderService {
                 String reminderKey = "exam:" + assessment.getId() + ":" + dueDate + ":" + window.label();
 
                 notificationRepository.insertExamReminder(userId, title, body, reminderKey);
-                notificationCenterClient.send(title, body, "warning", reminderKey);
+                notificationCenterClient.send(userId, title, body, "warning", reminderKey);
             }
         }
     }

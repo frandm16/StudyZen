@@ -4,6 +4,7 @@ import com.frandm.studytracker.backend.model.UserSettings;
 import com.frandm.studytracker.backend.repository.NotificationRepository;
 import com.frandm.studytracker.backend.repository.StudySessionRepository;
 import com.frandm.studytracker.backend.repository.StudyGoalRepository;
+import com.frandm.studytracker.backend.repository.TopicRepository;
 import com.frandm.studytracker.backend.repository.UserSettingsRepository;
 import com.frandm.studytracker.backend.model.StudyGoal;
 import com.frandm.studytracker.backend.model.enums.GoalPeriod;
@@ -22,15 +23,18 @@ public class NotificationEventService {
     private final UserSettingsRepository userSettingsRepository;
     private final StudySessionRepository studySessionRepository;
     private final StudyGoalRepository studyGoalRepository;
+    private final TopicRepository topicRepository;
 
     public NotificationEventService(NotificationRepository notificationRepository,
                                     UserSettingsRepository userSettingsRepository,
                                     StudySessionRepository studySessionRepository,
-                                    StudyGoalRepository studyGoalRepository) {
+                                    StudyGoalRepository studyGoalRepository,
+                                    TopicRepository topicRepository) {
         this.notificationRepository = notificationRepository;
         this.userSettingsRepository = userSettingsRepository;
         this.studySessionRepository = studySessionRepository;
         this.studyGoalRepository = studyGoalRepository;
+        this.topicRepository = topicRepository;
     }
 
     private Optional<UserSettings> settings(UUID userId) {
@@ -122,7 +126,9 @@ public class NotificationEventService {
     }
 
     private Long getSubjectIdForSession(com.frandm.studytracker.backend.model.StudySession session) {
-        return null;
+        return topicRepository.findById(session.getTopicId())
+                .map(topic -> topic.getSubjectId())
+                .orElse(null);
     }
 
     private String currentPeriodKey(GoalPeriod period) {

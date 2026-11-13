@@ -60,6 +60,7 @@ public class UserSettingsService {
             defaults.setNotifyTopicMastered(true);
             defaults.setNotifyGoalReached(true);
             defaults.setNotifyGoal80pct(false);
+            defaults.setNotificationCenterEnabled(false);
             defaults.setUpdatedAt(OffsetDateTime.now());
             return settingsRepository.save(defaults);
         });
@@ -186,6 +187,9 @@ public class UserSettingsService {
         }
         if (incoming.getNotifyGoal80pct() != null) {
             current.setNotifyGoal80pct(incoming.getNotifyGoal80pct());
+        }
+        if (incoming.getNotificationCenterEnabled() != null) {
+            current.setNotificationCenterEnabled(incoming.getNotificationCenterEnabled());
         }
 
         current.setUpdatedAt(OffsetDateTime.now());
