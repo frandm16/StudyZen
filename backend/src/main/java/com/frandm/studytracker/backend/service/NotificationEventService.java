@@ -9,6 +9,7 @@ import com.frandm.studytracker.backend.repository.UserSettingsRepository;
 import com.frandm.studytracker.backend.model.StudyGoal;
 import com.frandm.studytracker.backend.model.enums.GoalPeriod;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.IsoFields;
@@ -17,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class NotificationEventService {
 
     private final NotificationRepository notificationRepository;
