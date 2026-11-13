@@ -1,5 +1,7 @@
 package com.frandm.studytracker.backend.security;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+
 import java.util.UUID;
 
 /**
@@ -9,7 +11,7 @@ public record UserPrincipal(UUID userId) {
 
     public static UUID fromAuthentication(
             org.springframework.security.core.Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
             throw new IllegalStateException("No authenticated user in context");
         }
         Object principal = auth.getPrincipal();
