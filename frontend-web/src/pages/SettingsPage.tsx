@@ -318,6 +318,8 @@ export const SettingsPage: React.FC = () => {
     const [notifyGoalReached, setNotifyGoalReached] = useState(true);
     const [notifyGoal80pct, setNotifyGoal80pct] = useState(false);
     const [notificationCenterEnabled, setNotificationCenterEnabled] = useState(false);
+    const [notificationCenterUrl, setNotificationCenterUrl] = useState('');
+    const [notificationCenterToken, setNotificationCenterToken] = useState('');
 
     const [feedInfo, setFeedInfo] = useState<CalendarFeedInfo | null>(null);
     const [selectedSyncSubjectId, setSelectedSyncSubjectId] = useState<number | 'all'>('all');
@@ -470,6 +472,8 @@ export const SettingsPage: React.FC = () => {
                 if (s.notifyGoalReached !== undefined) setNotifyGoalReached(s.notifyGoalReached);
                 if (s.notifyGoal80pct !== undefined) setNotifyGoal80pct(s.notifyGoal80pct);
                 if (s.notificationCenterEnabled !== undefined) setNotificationCenterEnabled(s.notificationCenterEnabled);
+                if (s.notificationCenterUrl !== undefined) setNotificationCenterUrl(s.notificationCenterUrl || '');
+                if (s.notificationCenterToken !== undefined) setNotificationCenterToken(s.notificationCenterToken || '');
             } catch (err) {
                 notify({ title: 'Could not load settings', description: getApiErrorMessage(err), tone: 'error', persist: false });
             }
@@ -1387,6 +1391,33 @@ export const SettingsPage: React.FC = () => {
                                             checked={notificationCenterEnabled}
                                             onChange={(val) => { setNotificationCenterEnabled(val); saveAutosetting('notificationCenterEnabled', { notificationCenterEnabled: val }); }}
                                         />
+                                        <div className="space-y-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)] p-4">
+                                            <div>
+                                                <label htmlFor="notification-center-url" className="block text-xs font-semibold text-[var(--app-text)] mb-1.5">NotificationCenter URL</label>
+                                                <input
+                                                    id="notification-center-url"
+                                                    type="url"
+                                                    value={notificationCenterUrl}
+                                                    onChange={(event) => setNotificationCenterUrl(event.target.value)}
+                                                    onBlur={() => saveAutosetting('notificationCenterUrl', { notificationCenterUrl })}
+                                                    placeholder="https://notifications.example.com"
+                                                    className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-3 py-2.5 text-sm text-[var(--app-text)] focus:border-[var(--accent-color)] focus:outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="notification-center-token" className="block text-xs font-semibold text-[var(--app-text)] mb-1.5">NotificationCenter token</label>
+                                                <input
+                                                    id="notification-center-token"
+                                                    type="password"
+                                                    value={notificationCenterToken}
+                                                    onChange={(event) => setNotificationCenterToken(event.target.value)}
+                                                    onBlur={() => saveAutosetting('notificationCenterToken', { notificationCenterToken })}
+                                                    placeholder="Paste your personal token"
+                                                    autoComplete="off"
+                                                    className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-3 py-2.5 text-sm text-[var(--app-text)] focus:border-[var(--accent-color)] focus:outline-none"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="border-t border-[var(--app-border)] pt-6 space-y-3">

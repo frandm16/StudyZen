@@ -63,8 +63,6 @@ app:
   cookies:
     secure: ${COOKIE_SECURE:true}
   notification-center:
-    url: ${NOTIFICATION_CENTER_URL:}
-    token: ${NOTIFICATION_CENTER_TOKEN:}
     enabled: ${NOTIFICATION_CENTER_ENABLED:false}
 
 server:

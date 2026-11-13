@@ -1,5 +1,6 @@
 package com.frandm.studytracker.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -114,6 +115,13 @@ public class UserSettings {
 
     @Column(name = "notification_center_enabled", nullable = false)
     private Boolean notificationCenterEnabled;
+
+    @Column(name = "notification_center_url", length = 500)
+    private String notificationCenterUrl;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "notification_center_token", length = 1000)
+    private String notificationCenterToken;
 
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
@@ -231,6 +239,12 @@ public class UserSettings {
 
     public Boolean getNotificationCenterEnabled() { return notificationCenterEnabled; }
     public void setNotificationCenterEnabled(Boolean notificationCenterEnabled) { this.notificationCenterEnabled = notificationCenterEnabled; }
+
+    public String getNotificationCenterUrl() { return notificationCenterUrl; }
+    public void setNotificationCenterUrl(String notificationCenterUrl) { this.notificationCenterUrl = notificationCenterUrl; }
+
+    public String getNotificationCenterToken() { return notificationCenterToken; }
+    public void setNotificationCenterToken(String notificationCenterToken) { this.notificationCenterToken = notificationCenterToken; }
 
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }

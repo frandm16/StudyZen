@@ -33,6 +33,8 @@ export interface UserSettings {
     notifyGoalReached: boolean;
     notifyGoal80pct: boolean;
     notificationCenterEnabled: boolean;
+    notificationCenterUrl?: string;
+    notificationCenterToken?: string;
     updatedAt?: string;
 }
 

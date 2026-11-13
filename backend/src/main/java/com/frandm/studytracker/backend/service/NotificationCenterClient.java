@@ -40,12 +40,12 @@ public class NotificationCenterClient {
     }
 
     public void send(UUID userId, String title, String body, String level, String dedupKey) {
-        if (!props.enabled()) return;
-        if (userId == null || userSettingsRepository.findById(userId)
-                .map(settings -> !Boolean.TRUE.equals(settings.getNotificationCenterEnabled()))
-                .orElse(true)) return;
-        if (props.url() == null || props.url().isBlank()) return;
-        if (props.token() == null || props.token().isBlank()) return;
+        if (!props.enabled() || userId == null) return;
+        var settings = userSettingsRepository.findById(userId).orElse(null);
+        if (settings == null || !Boolean.TRUE.equals(settings.getNotificationCenterEnabled())) return;
+        String url = settings.getNotificationCenterUrl();
+        String token = settings.getNotificationCenterToken();
+        if (url == null || url.isBlank() || token == null || token.isBlank()) return;
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("title", title);
@@ -58,8 +58,8 @@ public class NotificationCenterClient {
         executor.execute(() -> {
             try {
                 restClient.post()
-                        .uri(props.url().replaceAll("/+$", "") + "/notifications")
-                        .header("Authorization", "Bearer " + props.token())
+                        .uri(url.replaceAll("/+$", "") + "/notifications")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(payload)
                         .retrieve()

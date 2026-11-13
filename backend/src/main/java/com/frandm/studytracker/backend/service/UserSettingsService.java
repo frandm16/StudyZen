@@ -191,6 +191,12 @@ public class UserSettingsService {
         if (incoming.getNotificationCenterEnabled() != null) {
             current.setNotificationCenterEnabled(incoming.getNotificationCenterEnabled());
         }
+        if (incoming.getNotificationCenterUrl() != null) {
+            current.setNotificationCenterUrl(incoming.getNotificationCenterUrl().trim());
+        }
+        if (incoming.getNotificationCenterToken() != null) {
+            current.setNotificationCenterToken(incoming.getNotificationCenterToken().trim());
+        }
 
         current.setUpdatedAt(OffsetDateTime.now());
         return settingsRepository.save(current);
