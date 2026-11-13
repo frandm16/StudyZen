@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,4 +20,7 @@ public interface AssessmentRepository extends JpaRepository<Assessment, Long> {
 
     @Query(value = "SELECT * FROM assessments a WHERE a.due_at IS NOT NULL AND a.is_completed = FALSE AND (LOWER(CAST(a.type AS text)) LIKE '%exam%' OR LOWER(CAST(a.type AS text)) LIKE '%midterm%') AND (a.due_at AT TIME ZONE 'UTC')::date BETWEEN :fromDate AND :throughDate", nativeQuery = true)
     List<Assessment> findReminderCandidates(@Param("fromDate") LocalDate fromDate, @Param("throughDate") LocalDate throughDate);
+
+    @Query(value = "SELECT * FROM assessments a WHERE a.due_at IS NOT NULL AND a.is_completed = FALSE AND (LOWER(CAST(a.type AS text)) LIKE '%exam%' OR LOWER(CAST(a.type AS text)) LIKE '%midterm%') AND a.due_at BETWEEN :from AND :to", nativeQuery = true)
+    List<Assessment> findReminderCandidatesInRange(@Param("from") OffsetDateTime from, @Param("to") OffsetDateTime to);
 }

@@ -15,10 +15,14 @@ public class TopicService {
 
     private final TopicRepository topicRepository;
     private final SubjectRepository subjectRepository;
+    private final NotificationEventService notificationEventService;
 
-    public TopicService(TopicRepository topicRepository, SubjectRepository subjectRepository) {
+    public TopicService(TopicRepository topicRepository,
+                        SubjectRepository subjectRepository,
+                        NotificationEventService notificationEventService) {
         this.topicRepository = topicRepository;
         this.subjectRepository = subjectRepository;
+        this.notificationEventService = notificationEventService;
     }
 
     public List<Topic> getAll(Long subjectId) {
@@ -51,6 +55,7 @@ public class TopicService {
 
     public Topic fullUpdate(Long id, String name, Long subjectId, String description, TopicStatus status, Short confidence, Integer sortOrder) {
         Topic topic = getById(id);
+        TopicStatus prevStatus = topic.getStatus();
         requireSubject(subjectId);
         rejectDuplicate(subjectId, name, topic.getId());
         topic.setName(name);
@@ -60,11 +65,16 @@ public class TopicService {
         topic.setConfidence(confidence);
         topic.setSortOrder(sortOrder != null ? sortOrder : 0);
         topic.setUpdatedAt(OffsetDateTime.now());
-        return topicRepository.save(topic);
+        Topic saved = topicRepository.save(topic);
+        if (status == TopicStatus.mastered && prevStatus != TopicStatus.mastered) {
+            notificationEventService.onTopicMastered(CurrentUser.id(), saved.getName());
+        }
+        return saved;
     }
 
     public Topic partialUpdate(Long id, String name, Long subjectId, String description, TopicStatus status, Short confidence, Integer sortOrder) {
         Topic topic = getById(id);
+        TopicStatus prevStatus = topic.getStatus();
         Long nextSubjectId = subjectId != null ? subjectId : topic.getSubjectId();
         String nextName = name != null ? name : topic.getName();
         if (subjectId != null) {
@@ -80,7 +90,11 @@ public class TopicService {
         if (confidence != null) topic.setConfidence(confidence);
         if (sortOrder != null) topic.setSortOrder(sortOrder);
         topic.setUpdatedAt(OffsetDateTime.now());
-        return topicRepository.save(topic);
+        Topic saved = topicRepository.save(topic);
+        if (status == TopicStatus.mastered && prevStatus != TopicStatus.mastered) {
+            notificationEventService.onTopicMastered(CurrentUser.id(), saved.getName());
+        }
+        return saved;
     }
 
     public void delete(Long id) {

@@ -19,13 +19,16 @@ public class DeadlineService {
     private final DeadlineRepository deadlineRepository;
     private final SubjectRepository subjectRepository;
     private final TopicRepository topicRepository;
+    private final NotificationEventService notificationEventService;
 
     public DeadlineService(DeadlineRepository deadlineRepository,
                            SubjectRepository subjectRepository,
-                           TopicRepository topicRepository) {
+                           TopicRepository topicRepository,
+                           NotificationEventService notificationEventService) {
         this.deadlineRepository = deadlineRepository;
         this.subjectRepository = subjectRepository;
         this.topicRepository = topicRepository;
+        this.notificationEventService = notificationEventService;
     }
 
     public List<Deadline> list(OffsetDateTime start, OffsetDateTime end) {
@@ -232,7 +235,11 @@ public class DeadlineService {
             deadline.setCompletedAt(null);
         }
         deadline.setUpdatedAt(OffsetDateTime.now());
-        return deadlineRepository.save(deadline);
+        Deadline saved = deadlineRepository.save(deadline);
+        if (newCompleted) {
+            notificationEventService.onDeadlineCompleted(userId, deadline.getTitle());
+        }
+        return saved;
     }
 
     private DeadlineType parseType(Object value) {

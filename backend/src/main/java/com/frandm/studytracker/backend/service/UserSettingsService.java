@@ -49,6 +49,17 @@ public class UserSettingsService {
             defaults.setBackgroundVolume(35);
             defaults.setAlarmPreset("bells");
             defaults.setCalendarFeedToken(generateCalendarFeedToken());
+            defaults.setNotifyExam7d(true);
+            defaults.setNotifyExam3d(true);
+            defaults.setNotifyExam24h(true);
+            defaults.setNotifyDeadline7d(true);
+            defaults.setNotifyDeadline3d(true);
+            defaults.setNotifyDeadline24h(true);
+            defaults.setNotifyDeadlineCompleted(true);
+            defaults.setNotifySessionLogged(false);
+            defaults.setNotifyTopicMastered(true);
+            defaults.setNotifyGoalReached(true);
+            defaults.setNotifyGoal80pct(false);
             defaults.setUpdatedAt(OffsetDateTime.now());
             return settingsRepository.save(defaults);
         });
@@ -142,6 +153,39 @@ public class UserSettingsService {
         }
         if (incoming.getAlarmPreset() != null) {
             current.setAlarmPreset(incoming.getAlarmPreset());
+        }
+        if (incoming.getNotifyExam7d() != null) {
+            current.setNotifyExam7d(incoming.getNotifyExam7d());
+        }
+        if (incoming.getNotifyExam3d() != null) {
+            current.setNotifyExam3d(incoming.getNotifyExam3d());
+        }
+        if (incoming.getNotifyExam24h() != null) {
+            current.setNotifyExam24h(incoming.getNotifyExam24h());
+        }
+        if (incoming.getNotifyDeadline7d() != null) {
+            current.setNotifyDeadline7d(incoming.getNotifyDeadline7d());
+        }
+        if (incoming.getNotifyDeadline3d() != null) {
+            current.setNotifyDeadline3d(incoming.getNotifyDeadline3d());
+        }
+        if (incoming.getNotifyDeadline24h() != null) {
+            current.setNotifyDeadline24h(incoming.getNotifyDeadline24h());
+        }
+        if (incoming.getNotifyDeadlineCompleted() != null) {
+            current.setNotifyDeadlineCompleted(incoming.getNotifyDeadlineCompleted());
+        }
+        if (incoming.getNotifySessionLogged() != null) {
+            current.setNotifySessionLogged(incoming.getNotifySessionLogged());
+        }
+        if (incoming.getNotifyTopicMastered() != null) {
+            current.setNotifyTopicMastered(incoming.getNotifyTopicMastered());
+        }
+        if (incoming.getNotifyGoalReached() != null) {
+            current.setNotifyGoalReached(incoming.getNotifyGoalReached());
+        }
+        if (incoming.getNotifyGoal80pct() != null) {
+            current.setNotifyGoal80pct(incoming.getNotifyGoal80pct());
         }
 
         current.setUpdatedAt(OffsetDateTime.now());

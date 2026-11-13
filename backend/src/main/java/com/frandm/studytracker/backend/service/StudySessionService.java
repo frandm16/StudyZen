@@ -19,13 +19,16 @@ public class StudySessionService {
     private final StudySessionRepository studySessionRepository;
     private final TopicRepository topicRepository;
     private final ScheduledSessionRepository scheduledSessionRepository;
+    private final NotificationEventService notificationEventService;
 
     public StudySessionService(StudySessionRepository studySessionRepository,
                                TopicRepository topicRepository,
-                               ScheduledSessionRepository scheduledSessionRepository) {
+                               ScheduledSessionRepository scheduledSessionRepository,
+                               NotificationEventService notificationEventService) {
         this.studySessionRepository = studySessionRepository;
         this.topicRepository = topicRepository;
         this.scheduledSessionRepository = scheduledSessionRepository;
+        this.notificationEventService = notificationEventService;
     }
 
     public List<StudySession> getAll() {
@@ -50,7 +53,9 @@ public class StudySessionService {
         session.setUserId(CurrentUser.id());
         session.setCreatedAt(OffsetDateTime.now());
         applyFields(session, body, true);
-        return studySessionRepository.save(session);
+        StudySession saved = studySessionRepository.save(session);
+        notificationEventService.onSessionLogged(saved.getUserId(), saved.getTotalMinutes(), saved.getTopicId());
+        return saved;
     }
 
     public StudySession fullUpdate(Long id, Map<String, Object> body) {

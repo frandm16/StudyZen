@@ -79,6 +79,39 @@ public class UserSettings {
     @Column(name = "calendar_feed_token", unique = true, length = 64)
     private String calendarFeedToken;
 
+    @Column(name = "notify_exam_7d", nullable = false)
+    private Boolean notifyExam7d;
+
+    @Column(name = "notify_exam_3d", nullable = false)
+    private Boolean notifyExam3d;
+
+    @Column(name = "notify_exam_24h", nullable = false)
+    private Boolean notifyExam24h;
+
+    @Column(name = "notify_deadline_7d", nullable = false)
+    private Boolean notifyDeadline7d;
+
+    @Column(name = "notify_deadline_3d", nullable = false)
+    private Boolean notifyDeadline3d;
+
+    @Column(name = "notify_deadline_24h", nullable = false)
+    private Boolean notifyDeadline24h;
+
+    @Column(name = "notify_deadline_completed", nullable = false)
+    private Boolean notifyDeadlineCompleted;
+
+    @Column(name = "notify_session_logged", nullable = false)
+    private Boolean notifySessionLogged;
+
+    @Column(name = "notify_topic_mastered", nullable = false)
+    private Boolean notifyTopicMastered;
+
+    @Column(name = "notify_goal_reached", nullable = false)
+    private Boolean notifyGoalReached;
+
+    @Column(name = "notify_goal_80pct", nullable = false)
+    private Boolean notifyGoal80pct;
+
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
@@ -159,6 +192,39 @@ public class UserSettings {
 
     public String getCalendarFeedToken() { return calendarFeedToken; }
     public void setCalendarFeedToken(String calendarFeedToken) { this.calendarFeedToken = calendarFeedToken; }
+
+    public Boolean getNotifyExam7d() { return notifyExam7d; }
+    public void setNotifyExam7d(Boolean notifyExam7d) { this.notifyExam7d = notifyExam7d; }
+
+    public Boolean getNotifyExam3d() { return notifyExam3d; }
+    public void setNotifyExam3d(Boolean notifyExam3d) { this.notifyExam3d = notifyExam3d; }
+
+    public Boolean getNotifyExam24h() { return notifyExam24h; }
+    public void setNotifyExam24h(Boolean notifyExam24h) { this.notifyExam24h = notifyExam24h; }
+
+    public Boolean getNotifyDeadline7d() { return notifyDeadline7d; }
+    public void setNotifyDeadline7d(Boolean notifyDeadline7d) { this.notifyDeadline7d = notifyDeadline7d; }
+
+    public Boolean getNotifyDeadline3d() { return notifyDeadline3d; }
+    public void setNotifyDeadline3d(Boolean notifyDeadline3d) { this.notifyDeadline3d = notifyDeadline3d; }
+
+    public Boolean getNotifyDeadline24h() { return notifyDeadline24h; }
+    public void setNotifyDeadline24h(Boolean notifyDeadline24h) { this.notifyDeadline24h = notifyDeadline24h; }
+
+    public Boolean getNotifyDeadlineCompleted() { return notifyDeadlineCompleted; }
+    public void setNotifyDeadlineCompleted(Boolean notifyDeadlineCompleted) { this.notifyDeadlineCompleted = notifyDeadlineCompleted; }
+
+    public Boolean getNotifySessionLogged() { return notifySessionLogged; }
+    public void setNotifySessionLogged(Boolean notifySessionLogged) { this.notifySessionLogged = notifySessionLogged; }
+
+    public Boolean getNotifyTopicMastered() { return notifyTopicMastered; }
+    public void setNotifyTopicMastered(Boolean notifyTopicMastered) { this.notifyTopicMastered = notifyTopicMastered; }
+
+    public Boolean getNotifyGoalReached() { return notifyGoalReached; }
+    public void setNotifyGoalReached(Boolean notifyGoalReached) { this.notifyGoalReached = notifyGoalReached; }
+
+    public Boolean getNotifyGoal80pct() { return notifyGoal80pct; }
+    public void setNotifyGoal80pct(Boolean notifyGoal80pct) { this.notifyGoal80pct = notifyGoal80pct; }
 
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }

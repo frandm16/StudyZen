@@ -22,6 +22,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     int insertExamReminder(@Param("userId") UUID userId, @Param("title") String title, @Param("body") String body, @Param("reminderKey") String reminderKey);
 
     @Modifying
+    @Query(value = "INSERT INTO notifications (user_id, type, title, body, is_read, reminder_key) VALUES (:userId, :type, :title, :body, FALSE, :reminderKey) ON CONFLICT (reminder_key) WHERE reminder_key IS NOT NULL DO NOTHING", nativeQuery = true)
+    int insertReminder(@Param("userId") UUID userId, @Param("type") String type, @Param("title") String title, @Param("body") String body, @Param("reminderKey") String reminderKey);
+
+    @Modifying
     @Query("UPDATE Notification n SET n.read = true WHERE n.userId = :userId AND n.read = false")
     int markAllRead(@Param("userId") UUID userId);
 }

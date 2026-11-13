@@ -25,4 +25,8 @@ public interface DeadlineRepository extends JpaRepository<Deadline, Long> {
             @Param("start") OffsetDateTime start,
             @Param("end") OffsetDateTime end
     );
+
+    @Query(value = "SELECT * FROM deadlines d WHERE d.due_at IS NOT NULL AND d.is_completed = FALSE " +
+            "AND d.due_at BETWEEN :from AND :to", nativeQuery = true)
+    List<Deadline> findReminderCandidates(@Param("from") OffsetDateTime from, @Param("to") OffsetDateTime to);
 }
