@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +51,7 @@ public class NotificationCenterClient {
         Map<String, Object> payload = new HashMap<>();
         payload.put("title", title);
         payload.put("body", body);
-        payload.put("level", level);
+        payload.put("level", level.toUpperCase(Locale.ROOT));
         if (dedupKey != null) {
             payload.put("dedupKey", dedupKey);
         }
@@ -58,7 +59,7 @@ public class NotificationCenterClient {
         executor.execute(() -> {
             try {
                 restClient.post()
-                        .uri(url.replaceAll("/+$", "") + "/notifications")
+                        .uri(buildNotificationsUri(url))
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(payload)
@@ -68,6 +69,14 @@ public class NotificationCenterClient {
                 log.error("NotificationCenter request failed: {}", e.getMessage());
             }
         });
+    }
+
+    private String buildNotificationsUri(String configuredUrl) {
+        String baseUrl = configuredUrl.replaceAll("/+$", "");
+        if (baseUrl.endsWith("/api/v1")) {
+            return baseUrl + "/notifications";
+        }
+        return baseUrl + "/api/v1/notifications";
     }
 
     @PreDestroy
