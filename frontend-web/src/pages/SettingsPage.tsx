@@ -220,10 +220,12 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ checked, onChange, label, d
                 }
             }}
         >
-            <div className="pr-4">
-                <p className="text-xs font-bold text-[var(--app-text)] group-hover:text-[var(--accent-color)] transition-colors">{label}</p>
-                <p className="text-[11px] text-[var(--app-text-muted)] mt-0.5">{description}</p>
-            </div>
+            {(label || description) && (
+                <div className="pr-4">
+                    {label && <p className="text-xs font-bold text-[var(--app-text)] group-hover:text-[var(--accent-color)] transition-colors">{label}</p>}
+                    {description && <p className="text-[11px] text-[var(--app-text-muted)] mt-0.5">{description}</p>}
+                </div>
+            )}
             <div
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
                     checked ? 'bg-[var(--accent-color)] shadow-sm' : 'bg-neutral-500/25'
@@ -238,6 +240,62 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ checked, onChange, label, d
         </div>
     );
 };
+
+interface NotificationToggleProps {
+    checked: boolean;
+    label: string;
+    onChange: (checked: boolean) => void;
+}
+
+const NotificationToggle: React.FC<NotificationToggleProps> = ({ checked, label, onChange }) => (
+    <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)] ${
+            checked ? 'bg-[var(--accent-color)] shadow-sm' : 'bg-neutral-500/25'
+        }`}
+    >
+        <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                checked ? 'translate-x-5' : 'translate-x-0'
+            }`}
+        />
+    </button>
+);
+
+interface NotificationPreferenceRowProps {
+    label: string;
+    description: string;
+    internalChecked: boolean;
+    externalChecked: boolean;
+    onInternalChange: (checked: boolean) => void;
+    onExternalChange: (checked: boolean) => void;
+}
+
+const NotificationPreferenceRow: React.FC<NotificationPreferenceRowProps> = ({
+    label,
+    description,
+    internalChecked,
+    externalChecked,
+    onInternalChange,
+    onExternalChange,
+}) => (
+    <tr className="border-t border-[var(--app-border)]">
+        <th scope="row" className="px-4 py-3.5 text-left align-middle">
+            <p className="text-xs font-bold text-[var(--app-text)]">{label}</p>
+            <p className="mt-0.5 text-[11px] font-normal leading-4 text-[var(--app-text-muted)]">{description}</p>
+        </th>
+        <td className="w-28 px-4 py-3.5 text-center align-middle">
+            <NotificationToggle checked={internalChecked} label={`${label}: internal`} onChange={onInternalChange} />
+        </td>
+        <td className="w-36 px-4 py-3.5 text-center align-middle">
+            <NotificationToggle checked={externalChecked} label={`${label}: notification center`} onChange={onExternalChange} />
+        </td>
+    </tr>
+);
 
 interface NumberStepperProps {
     value: number;
@@ -1446,123 +1504,33 @@ export const SettingsPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
-                                        <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Exams & Assessments</h3>
-                                        <p className="text-[11px] text-[var(--app-text-muted)]">Scheduled reminders fire up to 30 minutes after the window opens.</p>
-                                        <ToggleSwitch
-                                            label="7 days before exam"
-                                            description="Notify when an exam or midterm is one week away"
-                                            checked={notifyExam7d}
-                                            onChange={(val) => { setNotifyExam7d(val); saveAutosetting('notifyExam7d', { notifyExam7d: val }); }}
-                                        />
-                                        <ToggleSwitch
-                                            label="3 days before exam"
-                                            description="Notify when an exam or midterm is three days away"
-                                            checked={notifyExam3d}
-                                            onChange={(val) => { setNotifyExam3d(val); saveAutosetting('notifyExam3d', { notifyExam3d: val }); }}
-                                        />
-                                        <ToggleSwitch
-                                            label="24 hours before exam"
-                                            description="Notify when an exam or midterm is due within 24 hours"
-                                            checked={notifyExam24h}
-                                            onChange={(val) => { setNotifyExam24h(val); saveAutosetting('notifyExam24h', { notifyExam24h: val }); }}
-                                        />
-                                    </div>
-
-                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
-                                        <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Deadlines</h3>
-                                        <ToggleSwitch
-                                            label="7 days before deadline"
-                                            description="Notify when a deadline is one week away"
-                                            checked={notifyDeadline7d}
-                                            onChange={(val) => { setNotifyDeadline7d(val); saveAutosetting('notifyDeadline7d', { notifyDeadline7d: val }); }}
-                                        />
-                                        <ToggleSwitch
-                                            label="3 days before deadline"
-                                            description="Notify when a deadline is three days away"
-                                            checked={notifyDeadline3d}
-                                            onChange={(val) => { setNotifyDeadline3d(val); saveAutosetting('notifyDeadline3d', { notifyDeadline3d: val }); }}
-                                        />
-                                        <ToggleSwitch
-                                            label="24 hours before deadline"
-                                            description="Notify when a deadline is due within 24 hours"
-                                            checked={notifyDeadline24h}
-                                            onChange={(val) => { setNotifyDeadline24h(val); saveAutosetting('notifyDeadline24h', { notifyDeadline24h: val }); }}
-                                        />
-                                        <ToggleSwitch
-                                            label="Deadline completed"
-                                            description="Notify when you mark a deadline as completed"
-                                            checked={notifyDeadlineCompleted}
-                                            onChange={(val) => { setNotifyDeadlineCompleted(val); saveAutosetting('notifyDeadlineCompleted', { notifyDeadlineCompleted: val }); }}
-                                        />
-                                    </div>
-
-                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
-                                        <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Study Activity</h3>
-                                        <ToggleSwitch
-                                            label="Session logged"
-                                            description="Notify each time a study session is saved"
-                                            checked={notifySessionLogged}
-                                            onChange={(val) => { setNotifySessionLogged(val); saveAutosetting('notifySessionLogged', { notifySessionLogged: val }); }}
-                                        />
-                                        <ToggleSwitch
-                                            label="Topic mastered"
-                                            description="Notify when you mark a topic as mastered"
-                                            checked={notifyTopicMastered}
-                                            onChange={(val) => { setNotifyTopicMastered(val); saveAutosetting('notifyTopicMastered', { notifyTopicMastered: val }); }}
-                                        />
-                                    </div>
-
-                                    <div className="border-t border-[var(--app-border)] pt-6 space-y-3">
-                                        <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Study Goals</h3>
-                                        <ToggleSwitch
-                                            label="Goal reached"
-                                            description="Notify when you hit your daily or weekly study goal"
-                                            checked={notifyGoalReached}
-                                            onChange={(val) => { setNotifyGoalReached(val); saveAutosetting('notifyGoalReached', { notifyGoalReached: val }); }}
-                                        />
-                                        <ToggleSwitch
-                                            label="80% of goal reached"
-                                            description="Notify when you're close to your daily or weekly study goal"
-                                            checked={notifyGoal80pct}
-                                            onChange={(val) => { setNotifyGoal80pct(val); saveAutosetting('notifyGoal80pct', { notifyGoal80pct: val }); }}
-                                        />
-                                    </div>
-
-                                    {notificationCenterEnabled && (
-                                        <div className="border-t border-[var(--app-border)] pt-6 space-y-4">
-                                            <div>
-                                                <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">NotificationCenter delivery</h3>
-                                                <p className="text-[11px] text-[var(--app-text-muted)]">Choose which events are sent to NotificationCenter. Internal StudyZen notifications are controlled above.</p>
-                                            </div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                {([
-                                                    ['notifyCenterExam7d', 'Exam reminders · 7 days'],
-                                                    ['notifyCenterExam3d', 'Exam reminders · 3 days'],
-                                                    ['notifyCenterExam24h', 'Exam reminders · 24 hours'],
-                                                    ['notifyCenterDeadline7d', 'Deadline reminders · 7 days'],
-                                                    ['notifyCenterDeadline3d', 'Deadline reminders · 3 days'],
-                                                    ['notifyCenterDeadline24h', 'Deadline reminders · 24 hours'],
-                                                    ['notifyCenterDeadlineCompleted', 'Deadline completed'],
-                                                    ['notifyCenterSessionLogged', 'Study session logged'],
-                                                    ['notifyCenterTopicMastered', 'Topic mastered'],
-                                                    ['notifyCenterGoalReached', 'Study goal reached'],
-                                                    ['notifyCenterGoal80pct', '80% of study goal'],
-                                                ] as const).map(([key, label]) => (
-                                                    <ToggleSwitch
-                                                        key={key}
-                                                        label={label}
-                                                        description="Send this event externally"
-                                                        checked={centerToggles[key]}
-                                                        onChange={(val) => {
-                                                            setCenterToggles((current) => ({ ...current, [key]: val }));
-                                                            saveAutosetting(key, { [key]: val });
-                                                        }}
-                                                    />
-                                                ))}
-                                            </div>
+                                    <div className="border-t border-[var(--app-border)] pt-6">
+                                        <h3 className="mb-3 font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">Notification events</h3>
+                                        <div className="overflow-x-auto rounded-2xl border border-[var(--app-border)] bg-[var(--app-bg)]">
+                                            <table className="w-full min-w-[560px] border-collapse">
+                                                <thead>
+                                                    <tr className="bg-neutral-500/5">
+                                                        <th scope="col" className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">Notification</th>
+                                                        <th scope="col" className="w-28 px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">Internal</th>
+                                                        <th scope="col" className="w-36 px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wide text-[var(--app-text-muted)]">Notification center</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <NotificationPreferenceRow label="7 days before exam" description="Exam or midterm is one week away" internalChecked={notifyExam7d} externalChecked={centerToggles.notifyCenterExam7d} onInternalChange={(val) => { setNotifyExam7d(val); saveAutosetting('notifyExam7d', { notifyExam7d: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterExam7d: val })); saveAutosetting('notifyCenterExam7d', { notifyCenterExam7d: val }); }} />
+                                                    <NotificationPreferenceRow label="3 days before exam" description="Exam or midterm is three days away" internalChecked={notifyExam3d} externalChecked={centerToggles.notifyCenterExam3d} onInternalChange={(val) => { setNotifyExam3d(val); saveAutosetting('notifyExam3d', { notifyExam3d: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterExam3d: val })); saveAutosetting('notifyCenterExam3d', { notifyCenterExam3d: val }); }} />
+                                                    <NotificationPreferenceRow label="24 hours before exam" description="Exam or midterm is due within 24 hours" internalChecked={notifyExam24h} externalChecked={centerToggles.notifyCenterExam24h} onInternalChange={(val) => { setNotifyExam24h(val); saveAutosetting('notifyExam24h', { notifyExam24h: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterExam24h: val })); saveAutosetting('notifyCenterExam24h', { notifyCenterExam24h: val }); }} />
+                                                    <NotificationPreferenceRow label="7 days before deadline" description="Deadline is one week away" internalChecked={notifyDeadline7d} externalChecked={centerToggles.notifyCenterDeadline7d} onInternalChange={(val) => { setNotifyDeadline7d(val); saveAutosetting('notifyDeadline7d', { notifyDeadline7d: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterDeadline7d: val })); saveAutosetting('notifyCenterDeadline7d', { notifyCenterDeadline7d: val }); }} />
+                                                    <NotificationPreferenceRow label="3 days before deadline" description="Deadline is three days away" internalChecked={notifyDeadline3d} externalChecked={centerToggles.notifyCenterDeadline3d} onInternalChange={(val) => { setNotifyDeadline3d(val); saveAutosetting('notifyDeadline3d', { notifyDeadline3d: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterDeadline3d: val })); saveAutosetting('notifyCenterDeadline3d', { notifyCenterDeadline3d: val }); }} />
+                                                    <NotificationPreferenceRow label="24 hours before deadline" description="Deadline is due within 24 hours" internalChecked={notifyDeadline24h} externalChecked={centerToggles.notifyCenterDeadline24h} onInternalChange={(val) => { setNotifyDeadline24h(val); saveAutosetting('notifyDeadline24h', { notifyDeadline24h: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterDeadline24h: val })); saveAutosetting('notifyCenterDeadline24h', { notifyCenterDeadline24h: val }); }} />
+                                                    <NotificationPreferenceRow label="Deadline completed" description="You mark a deadline as completed" internalChecked={notifyDeadlineCompleted} externalChecked={centerToggles.notifyCenterDeadlineCompleted} onInternalChange={(val) => { setNotifyDeadlineCompleted(val); saveAutosetting('notifyDeadlineCompleted', { notifyDeadlineCompleted: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterDeadlineCompleted: val })); saveAutosetting('notifyCenterDeadlineCompleted', { notifyCenterDeadlineCompleted: val }); }} />
+                                                    <NotificationPreferenceRow label="Session logged" description="A study session is saved" internalChecked={notifySessionLogged} externalChecked={centerToggles.notifyCenterSessionLogged} onInternalChange={(val) => { setNotifySessionLogged(val); saveAutosetting('notifySessionLogged', { notifySessionLogged: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterSessionLogged: val })); saveAutosetting('notifyCenterSessionLogged', { notifyCenterSessionLogged: val }); }} />
+                                                    <NotificationPreferenceRow label="Topic mastered" description="A topic is marked as mastered" internalChecked={notifyTopicMastered} externalChecked={centerToggles.notifyCenterTopicMastered} onInternalChange={(val) => { setNotifyTopicMastered(val); saveAutosetting('notifyTopicMastered', { notifyTopicMastered: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterTopicMastered: val })); saveAutosetting('notifyCenterTopicMastered', { notifyCenterTopicMastered: val }); }} />
+                                                    <NotificationPreferenceRow label="Goal reached" description="Daily or weekly study goal reaches 100%" internalChecked={notifyGoalReached} externalChecked={centerToggles.notifyCenterGoalReached} onInternalChange={(val) => { setNotifyGoalReached(val); saveAutosetting('notifyGoalReached', { notifyGoalReached: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterGoalReached: val })); saveAutosetting('notifyCenterGoalReached', { notifyCenterGoalReached: val }); }} />
+                                                    <NotificationPreferenceRow label="80% of goal reached" description="Daily or weekly study goal reaches 80%" internalChecked={notifyGoal80pct} externalChecked={centerToggles.notifyCenterGoal80pct} onInternalChange={(val) => { setNotifyGoal80pct(val); saveAutosetting('notifyGoal80pct', { notifyGoal80pct: val }); }} onExternalChange={(val) => { setCenterToggles((current) => ({ ...current, notifyCenterGoal80pct: val })); saveAutosetting('notifyCenterGoal80pct', { notifyCenterGoal80pct: val }); }} />
+                                                </tbody>
+                                            </table>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             )}
 
