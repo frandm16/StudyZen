@@ -7,6 +7,7 @@ import com.frandm.studytracker.backend.repository.DeadlineRepository;
 import com.frandm.studytracker.backend.repository.NotificationRepository;
 import com.frandm.studytracker.backend.repository.SubjectRepository;
 import com.frandm.studytracker.backend.repository.UserSettingsRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class DeadlineReminderService {
     private final UserSettingsRepository userSettingsRepository;
     private final Clock clock;
 
+    @Autowired
     public DeadlineReminderService(DeadlineRepository deadlineRepository,
                                    SubjectRepository subjectRepository,
                                    NotificationRepository notificationRepository,
