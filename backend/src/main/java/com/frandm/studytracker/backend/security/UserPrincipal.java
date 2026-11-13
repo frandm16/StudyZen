@@ -16,6 +16,13 @@ public record UserPrincipal(UUID userId) {
         if (principal instanceof UUID uuid) {
             return uuid;
         }
-        throw new IllegalStateException("Unexpected principal type: " + principal.getClass());
+        if (principal instanceof String value) {
+            try {
+                return UUID.fromString(value);
+            } catch (IllegalArgumentException ignored) {
+                throw new IllegalStateException("Authenticated principal is not a valid UUID");
+            }
+        }
+        throw new IllegalStateException("Unexpected principal type: " + (principal == null ? "null" : principal.getClass()));
     }
 }
