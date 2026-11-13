@@ -318,6 +318,19 @@ export const SettingsPage: React.FC = () => {
     const [notifyGoalReached, setNotifyGoalReached] = useState(true);
     const [notifyGoal80pct, setNotifyGoal80pct] = useState(false);
     const [notificationCenterEnabled, setNotificationCenterEnabled] = useState(false);
+    const [centerToggles, setCenterToggles] = useState({
+        notifyCenterExam7d: false,
+        notifyCenterExam3d: false,
+        notifyCenterExam24h: false,
+        notifyCenterDeadline7d: false,
+        notifyCenterDeadline3d: false,
+        notifyCenterDeadline24h: false,
+        notifyCenterDeadlineCompleted: false,
+        notifyCenterSessionLogged: false,
+        notifyCenterTopicMastered: false,
+        notifyCenterGoalReached: false,
+        notifyCenterGoal80pct: false,
+    });
     const [notificationCenterUrl, setNotificationCenterUrl] = useState('');
     const [notificationCenterToken, setNotificationCenterToken] = useState('');
 
@@ -474,6 +487,19 @@ export const SettingsPage: React.FC = () => {
                 if (s.notificationCenterEnabled !== undefined) setNotificationCenterEnabled(s.notificationCenterEnabled);
                 if (s.notificationCenterUrl !== undefined) setNotificationCenterUrl(s.notificationCenterUrl || '');
                 setNotificationCenterToken('');
+                setCenterToggles({
+                    notifyCenterExam7d: s.notifyCenterExam7d ?? false,
+                    notifyCenterExam3d: s.notifyCenterExam3d ?? false,
+                    notifyCenterExam24h: s.notifyCenterExam24h ?? false,
+                    notifyCenterDeadline7d: s.notifyCenterDeadline7d ?? false,
+                    notifyCenterDeadline3d: s.notifyCenterDeadline3d ?? false,
+                    notifyCenterDeadline24h: s.notifyCenterDeadline24h ?? false,
+                    notifyCenterDeadlineCompleted: s.notifyCenterDeadlineCompleted ?? false,
+                    notifyCenterSessionLogged: s.notifyCenterSessionLogged ?? false,
+                    notifyCenterTopicMastered: s.notifyCenterTopicMastered ?? false,
+                    notifyCenterGoalReached: s.notifyCenterGoalReached ?? false,
+                    notifyCenterGoal80pct: s.notifyCenterGoal80pct ?? false,
+                });
             } catch (err) {
                 notify({ title: 'Could not load settings', description: getApiErrorMessage(err), tone: 'error', persist: false });
             }
@@ -1502,6 +1528,41 @@ export const SettingsPage: React.FC = () => {
                                             onChange={(val) => { setNotifyGoal80pct(val); saveAutosetting('notifyGoal80pct', { notifyGoal80pct: val }); }}
                                         />
                                     </div>
+
+                                    {notificationCenterEnabled && (
+                                        <div className="border-t border-[var(--app-border)] pt-6 space-y-4">
+                                            <div>
+                                                <h3 className="font-bold text-[var(--app-text)] text-sm uppercase tracking-wider text-[var(--app-text-muted)]">NotificationCenter delivery</h3>
+                                                <p className="text-[11px] text-[var(--app-text-muted)]">Choose which events are sent to NotificationCenter. Internal StudyZen notifications are controlled above.</p>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {([
+                                                    ['notifyCenterExam7d', 'Exam reminders · 7 days'],
+                                                    ['notifyCenterExam3d', 'Exam reminders · 3 days'],
+                                                    ['notifyCenterExam24h', 'Exam reminders · 24 hours'],
+                                                    ['notifyCenterDeadline7d', 'Deadline reminders · 7 days'],
+                                                    ['notifyCenterDeadline3d', 'Deadline reminders · 3 days'],
+                                                    ['notifyCenterDeadline24h', 'Deadline reminders · 24 hours'],
+                                                    ['notifyCenterDeadlineCompleted', 'Deadline completed'],
+                                                    ['notifyCenterSessionLogged', 'Study session logged'],
+                                                    ['notifyCenterTopicMastered', 'Topic mastered'],
+                                                    ['notifyCenterGoalReached', 'Study goal reached'],
+                                                    ['notifyCenterGoal80pct', '80% of study goal'],
+                                                ] as const).map(([key, label]) => (
+                                                    <ToggleSwitch
+                                                        key={key}
+                                                        label={label}
+                                                        description="Send this event externally"
+                                                        checked={centerToggles[key]}
+                                                        onChange={(val) => {
+                                                            setCenterToggles((current) => ({ ...current, [key]: val }));
+                                                            saveAutosetting(key, { [key]: val });
+                                                        }}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

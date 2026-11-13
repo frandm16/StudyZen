@@ -108,7 +108,7 @@ public class DeadlineReminderService {
 
                 int inserted = notificationRepository.insertReminder(userId, "warning", title, body, reminderKey);
                 if (inserted > 0) {
-                    notificationCenterClient.send(userId, title, body, "warning", reminderKey);
+                    notificationCenterClient.send(userId, title, body, "warning", reminderKey, "deadline" + window.label());
                 }
             }
         }

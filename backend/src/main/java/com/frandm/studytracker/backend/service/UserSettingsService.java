@@ -62,6 +62,17 @@ public class UserSettingsService {
             defaults.setNotifyGoalReached(true);
             defaults.setNotifyGoal80pct(false);
             defaults.setNotificationCenterEnabled(false);
+            defaults.setNotifyCenterExam7d(false);
+            defaults.setNotifyCenterExam3d(false);
+            defaults.setNotifyCenterExam24h(false);
+            defaults.setNotifyCenterDeadline7d(false);
+            defaults.setNotifyCenterDeadline3d(false);
+            defaults.setNotifyCenterDeadline24h(false);
+            defaults.setNotifyCenterDeadlineCompleted(false);
+            defaults.setNotifyCenterSessionLogged(false);
+            defaults.setNotifyCenterTopicMastered(false);
+            defaults.setNotifyCenterGoalReached(false);
+            defaults.setNotifyCenterGoal80pct(false);
             defaults.setUpdatedAt(OffsetDateTime.now());
             return settingsRepository.save(defaults);
         });
@@ -206,6 +217,17 @@ public class UserSettingsService {
         if (incoming.getNotificationCenterToken() != null) {
             current.setNotificationCenterToken(incoming.getNotificationCenterToken().trim());
         }
+        if (incoming.getNotifyCenterExam7d() != null) current.setNotifyCenterExam7d(incoming.getNotifyCenterExam7d());
+        if (incoming.getNotifyCenterExam3d() != null) current.setNotifyCenterExam3d(incoming.getNotifyCenterExam3d());
+        if (incoming.getNotifyCenterExam24h() != null) current.setNotifyCenterExam24h(incoming.getNotifyCenterExam24h());
+        if (incoming.getNotifyCenterDeadline7d() != null) current.setNotifyCenterDeadline7d(incoming.getNotifyCenterDeadline7d());
+        if (incoming.getNotifyCenterDeadline3d() != null) current.setNotifyCenterDeadline3d(incoming.getNotifyCenterDeadline3d());
+        if (incoming.getNotifyCenterDeadline24h() != null) current.setNotifyCenterDeadline24h(incoming.getNotifyCenterDeadline24h());
+        if (incoming.getNotifyCenterDeadlineCompleted() != null) current.setNotifyCenterDeadlineCompleted(incoming.getNotifyCenterDeadlineCompleted());
+        if (incoming.getNotifyCenterSessionLogged() != null) current.setNotifyCenterSessionLogged(incoming.getNotifyCenterSessionLogged());
+        if (incoming.getNotifyCenterTopicMastered() != null) current.setNotifyCenterTopicMastered(incoming.getNotifyCenterTopicMastered());
+        if (incoming.getNotifyCenterGoalReached() != null) current.setNotifyCenterGoalReached(incoming.getNotifyCenterGoalReached());
+        if (incoming.getNotifyCenterGoal80pct() != null) current.setNotifyCenterGoal80pct(incoming.getNotifyCenterGoal80pct());
 
         current.setUpdatedAt(OffsetDateTime.now());
         return settingsRepository.save(current);

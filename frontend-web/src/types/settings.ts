@@ -35,6 +35,17 @@ export interface UserSettings {
     notificationCenterEnabled: boolean;
     notificationCenterUrl?: string;
     notificationCenterToken?: string;
+    notifyCenterExam7d: boolean;
+    notifyCenterExam3d: boolean;
+    notifyCenterExam24h: boolean;
+    notifyCenterDeadline7d: boolean;
+    notifyCenterDeadline3d: boolean;
+    notifyCenterDeadline24h: boolean;
+    notifyCenterDeadlineCompleted: boolean;
+    notifyCenterSessionLogged: boolean;
+    notifyCenterTopicMastered: boolean;
+    notifyCenterGoalReached: boolean;
+    notifyCenterGoal80pct: boolean;
     updatedAt?: string;
 }
 

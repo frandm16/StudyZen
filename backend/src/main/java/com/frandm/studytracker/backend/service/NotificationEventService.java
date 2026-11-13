@@ -6,6 +6,7 @@ import com.frandm.studytracker.backend.repository.StudySessionRepository;
 import com.frandm.studytracker.backend.repository.StudyGoalRepository;
 import com.frandm.studytracker.backend.repository.TopicRepository;
 import com.frandm.studytracker.backend.repository.UserSettingsRepository;
+import com.frandm.studytracker.backend.repository.SubjectRepository;
 import com.frandm.studytracker.backend.model.StudyGoal;
 import com.frandm.studytracker.backend.model.enums.GoalPeriod;
 import org.springframework.stereotype.Service;
@@ -26,17 +27,23 @@ public class NotificationEventService {
     private final StudySessionRepository studySessionRepository;
     private final StudyGoalRepository studyGoalRepository;
     private final TopicRepository topicRepository;
+    private final SubjectRepository subjectRepository;
+    private final NotificationCenterClient notificationCenterClient;
 
     public NotificationEventService(NotificationRepository notificationRepository,
                                     UserSettingsRepository userSettingsRepository,
                                     StudySessionRepository studySessionRepository,
                                     StudyGoalRepository studyGoalRepository,
-                                    TopicRepository topicRepository) {
+                                    TopicRepository topicRepository,
+                                    SubjectRepository subjectRepository,
+                                    NotificationCenterClient notificationCenterClient) {
         this.notificationRepository = notificationRepository;
         this.userSettingsRepository = userSettingsRepository;
         this.studySessionRepository = studySessionRepository;
         this.studyGoalRepository = studyGoalRepository;
         this.topicRepository = topicRepository;
+        this.subjectRepository = subjectRepository;
+        this.notificationCenterClient = notificationCenterClient;
     }
 
     private Optional<UserSettings> settings(UUID userId) {
@@ -49,29 +56,41 @@ public class NotificationEventService {
 
     public void onDeadlineCompleted(UUID userId, String deadlineTitle) {
         settings(userId).ifPresent(s -> {
-            if (!Boolean.TRUE.equals(s.getNotifyDeadlineCompleted())) return;
             String title = limit("Deadline completed: " + deadlineTitle, 200);
-            String body = limit("You completed \"" + deadlineTitle + "\". Well done!", 2000);
-            notificationRepository.insertReminder(userId, "success", title, body, null);
+            String body = limit("You completed the deadline \"" + deadlineTitle + "\". Your task is now marked as finished in StudyZen.", 2000);
+            if (Boolean.TRUE.equals(s.getNotifyDeadlineCompleted())) {
+                notificationRepository.insertReminder(userId, "success", title, body, null);
+            }
+            notificationCenterClient.send(userId, title, body, "success", null, "deadlineCompleted");
         });
     }
 
     public void onTopicMastered(UUID userId, String topicName) {
         settings(userId).ifPresent(s -> {
-            if (!Boolean.TRUE.equals(s.getNotifyTopicMastered())) return;
             String title = limit("Topic mastered: " + topicName, 200);
             String body = limit("You marked \"" + topicName + "\" as mastered. Keep it up!", 2000);
-            notificationRepository.insertReminder(userId, "success", title, body, null);
+            if (Boolean.TRUE.equals(s.getNotifyTopicMastered())) {
+                notificationRepository.insertReminder(userId, "success", title, body, null);
+            }
+            notificationCenterClient.send(userId, title, body, "success", null, "topicMastered");
         });
     }
 
     public void onSessionLogged(UUID userId, int totalMinutes, Long topicId) {
         settings(userId).ifPresent(s -> {
-            if (!Boolean.TRUE.equals(s.getNotifySessionLogged())) return;
+            String topicName = topicId == null ? null : topicRepository.findById(topicId).map(topic -> topic.getName()).orElse(null);
+            String subjectName = topicId == null ? null : topicRepository.findById(topicId)
+                    .flatMap(topic -> subjectRepository.findById(topic.getSubjectId()))
+                    .map(subject -> subject.getName()).orElse(null);
+            String context = subjectName != null || topicName != null
+                    ? " Subject: " + (subjectName != null ? subjectName : "Unknown") + ", topic: " + (topicName != null ? topicName : "Unknown") + "."
+                    : "";
             String title = "Study session logged";
-            String body = limit("You studied for " + totalMinutes + " minutes" +
-                    (topicId != null ? " on topic #" + topicId : "") + ".", 2000);
-            notificationRepository.insertReminder(userId, "info", title, body, null);
+            String body = limit("You completed a " + totalMinutes + "-minute study session." + context + " Your progress has been recorded in StudyZen.", 2000);
+            if (Boolean.TRUE.equals(s.getNotifySessionLogged())) {
+                notificationRepository.insertReminder(userId, "info", title, body, null);
+            }
+            notificationCenterClient.send(userId, title, body, "info", null, "sessionLogged");
         });
     }
 
@@ -100,11 +119,13 @@ public class NotificationEventService {
                 String title = "Study goal reached!";
                 String body = limit("You reached your " + periodLabel + " study goal of " + target + " minutes. Great work!", 2000);
                 notificationRepository.insertReminder(userId, "success", title, body, key);
+                notificationCenterClient.send(userId, title, body, "success", key, "goalReached");
             } else if (notify80 && pct >= 80 && actual < target) {
                 String key = "goal-80pct:" + userId + ":" + (subjectId != null ? subjectId : "all") + ":" + period + ":" + currentPeriodKey(period);
                 String title = "Almost at your study goal!";
                 String body = limit("You're at " + pct + "% of your " + periodLabel + " goal (" + actual + "/" + target + " min). Keep going!", 2000);
                 notificationRepository.insertReminder(userId, "info", title, body, key);
+                notificationCenterClient.send(userId, title, body, "info", key, "goal80pct");
             }
         });
     }

@@ -103,7 +103,7 @@ public class ExamReminderService {
 
                 int inserted = notificationRepository.insertExamReminder(userId, title, body, reminderKey);
                 if (inserted > 0) {
-                    notificationCenterClient.send(userId, title, body, "warning", reminderKey);
+                    notificationCenterClient.send(userId, title, body, "warning", reminderKey, "exam" + window.label());
                 }
             }
         }

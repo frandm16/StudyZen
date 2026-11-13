@@ -201,13 +201,15 @@ public class DeadlineService {
             deadline.setDueAt((OffsetDateTime) body.get("dueAt"));
         }
 
+        boolean becameCompleted = false;
         if (body.containsKey("isCompleted") || body.containsKey("completed")) {
             Object completedRaw = body.get("isCompleted") != null ? body.get("isCompleted") : body.get("completed");
             Boolean isCompleted = completedRaw instanceof Boolean b ? b : (completedRaw instanceof String s ? Boolean.parseBoolean(s) : null);
             if (isCompleted != null) {
                 boolean wasCompleted = deadline.isCompleted();
                 deadline.setCompleted(isCompleted);
-                if (isCompleted && !wasCompleted) {
+                becameCompleted = isCompleted && !wasCompleted;
+                if (becameCompleted) {
                     deadline.setCompletedAt(OffsetDateTime.now());
                 } else if (!isCompleted && wasCompleted) {
                     deadline.setCompletedAt(null);
@@ -216,7 +218,11 @@ public class DeadlineService {
         }
 
         deadline.setUpdatedAt(OffsetDateTime.now());
-        return deadlineRepository.save(deadline);
+        Deadline saved = deadlineRepository.save(deadline);
+        if (becameCompleted) {
+            notificationEventService.onDeadlineCompleted(userId, saved.getTitle());
+        }
+        return saved;
     }
 
     public void delete(Long id) {
@@ -241,7 +247,6 @@ public class DeadlineService {
         Deadline saved = deadlineRepository.save(deadline);
         if (newCompleted) {
             notificationEventService.onDeadlineCompleted(userId, deadline.getTitle());
-            notificationCenterClient.send(userId, "Deadline completed", "You completed \"" + deadline.getTitle() + "\".", "info", null);
         }
         return saved;
     }

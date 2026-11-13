@@ -123,6 +123,29 @@ public class UserSettings {
     @Column(name = "notification_center_token", length = 1000)
     private String notificationCenterToken;
 
+    @Column(name = "notify_center_exam_7d", nullable = false)
+    private Boolean notifyCenterExam7d;
+    @Column(name = "notify_center_exam_3d", nullable = false)
+    private Boolean notifyCenterExam3d;
+    @Column(name = "notify_center_exam_24h", nullable = false)
+    private Boolean notifyCenterExam24h;
+    @Column(name = "notify_center_deadline_7d", nullable = false)
+    private Boolean notifyCenterDeadline7d;
+    @Column(name = "notify_center_deadline_3d", nullable = false)
+    private Boolean notifyCenterDeadline3d;
+    @Column(name = "notify_center_deadline_24h", nullable = false)
+    private Boolean notifyCenterDeadline24h;
+    @Column(name = "notify_center_deadline_completed", nullable = false)
+    private Boolean notifyCenterDeadlineCompleted;
+    @Column(name = "notify_center_session_logged", nullable = false)
+    private Boolean notifyCenterSessionLogged;
+    @Column(name = "notify_center_topic_mastered", nullable = false)
+    private Boolean notifyCenterTopicMastered;
+    @Column(name = "notify_center_goal_reached", nullable = false)
+    private Boolean notifyCenterGoalReached;
+    @Column(name = "notify_center_goal_80pct", nullable = false)
+    private Boolean notifyCenterGoal80pct;
+
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
@@ -245,6 +268,29 @@ public class UserSettings {
 
     public String getNotificationCenterToken() { return notificationCenterToken; }
     public void setNotificationCenterToken(String notificationCenterToken) { this.notificationCenterToken = notificationCenterToken; }
+
+    public Boolean getNotifyCenterExam7d() { return notifyCenterExam7d; }
+    public void setNotifyCenterExam7d(Boolean value) { notifyCenterExam7d = value; }
+    public Boolean getNotifyCenterExam3d() { return notifyCenterExam3d; }
+    public void setNotifyCenterExam3d(Boolean value) { notifyCenterExam3d = value; }
+    public Boolean getNotifyCenterExam24h() { return notifyCenterExam24h; }
+    public void setNotifyCenterExam24h(Boolean value) { notifyCenterExam24h = value; }
+    public Boolean getNotifyCenterDeadline7d() { return notifyCenterDeadline7d; }
+    public void setNotifyCenterDeadline7d(Boolean value) { notifyCenterDeadline7d = value; }
+    public Boolean getNotifyCenterDeadline3d() { return notifyCenterDeadline3d; }
+    public void setNotifyCenterDeadline3d(Boolean value) { notifyCenterDeadline3d = value; }
+    public Boolean getNotifyCenterDeadline24h() { return notifyCenterDeadline24h; }
+    public void setNotifyCenterDeadline24h(Boolean value) { notifyCenterDeadline24h = value; }
+    public Boolean getNotifyCenterDeadlineCompleted() { return notifyCenterDeadlineCompleted; }
+    public void setNotifyCenterDeadlineCompleted(Boolean value) { notifyCenterDeadlineCompleted = value; }
+    public Boolean getNotifyCenterSessionLogged() { return notifyCenterSessionLogged; }
+    public void setNotifyCenterSessionLogged(Boolean value) { notifyCenterSessionLogged = value; }
+    public Boolean getNotifyCenterTopicMastered() { return notifyCenterTopicMastered; }
+    public void setNotifyCenterTopicMastered(Boolean value) { notifyCenterTopicMastered = value; }
+    public Boolean getNotifyCenterGoalReached() { return notifyCenterGoalReached; }
+    public void setNotifyCenterGoalReached(Boolean value) { notifyCenterGoalReached = value; }
+    public Boolean getNotifyCenterGoal80pct() { return notifyCenterGoal80pct; }
+    public void setNotifyCenterGoal80pct(Boolean value) { notifyCenterGoal80pct = value; }
 
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }

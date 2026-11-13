@@ -41,7 +41,30 @@ public class NotificationCenterClient {
     }
 
     public void send(UUID userId, String title, String body, String level, String dedupKey) {
-        if (!props.enabled() || userId == null) return;
+        send(userId, title, body, level, dedupKey, true);
+    }
+
+    public void send(UUID userId, String title, String body, String level, String dedupKey, String event) {
+        var settings = userId == null ? null : userSettingsRepository.findById(userId).orElse(null);
+        boolean eventEnabled = settings != null && switch (event) {
+            case "exam7d" -> Boolean.TRUE.equals(settings.getNotifyCenterExam7d());
+            case "exam3d" -> Boolean.TRUE.equals(settings.getNotifyCenterExam3d());
+            case "exam24h" -> Boolean.TRUE.equals(settings.getNotifyCenterExam24h());
+            case "deadline7d" -> Boolean.TRUE.equals(settings.getNotifyCenterDeadline7d());
+            case "deadline3d" -> Boolean.TRUE.equals(settings.getNotifyCenterDeadline3d());
+            case "deadline24h" -> Boolean.TRUE.equals(settings.getNotifyCenterDeadline24h());
+            case "deadlineCompleted" -> Boolean.TRUE.equals(settings.getNotifyCenterDeadlineCompleted());
+            case "sessionLogged" -> Boolean.TRUE.equals(settings.getNotifyCenterSessionLogged());
+            case "topicMastered" -> Boolean.TRUE.equals(settings.getNotifyCenterTopicMastered());
+            case "goalReached" -> Boolean.TRUE.equals(settings.getNotifyCenterGoalReached());
+            case "goal80pct" -> Boolean.TRUE.equals(settings.getNotifyCenterGoal80pct());
+            default -> false;
+        };
+        send(userId, title, body, level, dedupKey, eventEnabled);
+    }
+
+    public void send(UUID userId, String title, String body, String level, String dedupKey, boolean eventEnabled) {
+        if (!props.enabled() || !eventEnabled || userId == null) return;
         var settings = userSettingsRepository.findById(userId).orElse(null);
         if (settings == null || !Boolean.TRUE.equals(settings.getNotificationCenterEnabled())) return;
         String url = settings.getNotificationCenterUrl();
