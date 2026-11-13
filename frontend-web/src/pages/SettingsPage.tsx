@@ -473,7 +473,7 @@ export const SettingsPage: React.FC = () => {
                 if (s.notifyGoal80pct !== undefined) setNotifyGoal80pct(s.notifyGoal80pct);
                 if (s.notificationCenterEnabled !== undefined) setNotificationCenterEnabled(s.notificationCenterEnabled);
                 if (s.notificationCenterUrl !== undefined) setNotificationCenterUrl(s.notificationCenterUrl || '');
-                if (s.notificationCenterToken !== undefined) setNotificationCenterToken(s.notificationCenterToken || '');
+                setNotificationCenterToken('');
             } catch (err) {
                 notify({ title: 'Could not load settings', description: getApiErrorMessage(err), tone: 'error', persist: false });
             }
@@ -1411,8 +1411,8 @@ export const SettingsPage: React.FC = () => {
                                                     type="password"
                                                     value={notificationCenterToken}
                                                     onChange={(event) => setNotificationCenterToken(event.target.value)}
-                                                    onBlur={() => saveAutosetting('notificationCenterToken', { notificationCenterToken })}
-                                                    placeholder="Paste your personal token"
+                                                    onBlur={() => { if (notificationCenterToken.trim()) saveAutosetting('notificationCenterToken', { notificationCenterToken }); }}
+                                                    placeholder="Leave blank to keep the saved token"
                                                     autoComplete="off"
                                                     className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-3 py-2.5 text-sm text-[var(--app-text)] focus:border-[var(--accent-color)] focus:outline-none"
                                                 />

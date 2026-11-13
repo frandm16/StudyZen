@@ -37,25 +37,29 @@ public class DeadlineReminderService {
     private final SubjectRepository subjectRepository;
     private final NotificationRepository notificationRepository;
     private final UserSettingsRepository userSettingsRepository;
+    private final NotificationCenterClient notificationCenterClient;
     private final Clock clock;
 
     @Autowired
     public DeadlineReminderService(DeadlineRepository deadlineRepository,
                                    SubjectRepository subjectRepository,
                                    NotificationRepository notificationRepository,
-                                   UserSettingsRepository userSettingsRepository) {
-        this(deadlineRepository, subjectRepository, notificationRepository, userSettingsRepository, Clock.systemUTC());
+                                   UserSettingsRepository userSettingsRepository,
+                                   NotificationCenterClient notificationCenterClient) {
+        this(deadlineRepository, subjectRepository, notificationRepository, userSettingsRepository, notificationCenterClient, Clock.systemUTC());
     }
 
     DeadlineReminderService(DeadlineRepository deadlineRepository,
                             SubjectRepository subjectRepository,
                             NotificationRepository notificationRepository,
                             UserSettingsRepository userSettingsRepository,
+                            NotificationCenterClient notificationCenterClient,
                             Clock clock) {
         this.deadlineRepository = deadlineRepository;
         this.subjectRepository = subjectRepository;
         this.notificationRepository = notificationRepository;
         this.userSettingsRepository = userSettingsRepository;
+        this.notificationCenterClient = notificationCenterClient;
         this.clock = clock;
     }
 
@@ -102,7 +106,10 @@ public class DeadlineReminderService {
                 String body  = limit(deadline.getTitle() + subjectContext + " is due on " + dueDate.format(DUE_DATE_FORMAT) + ".", 2000);
                 String reminderKey = "deadline:" + deadline.getId() + ":" + dueDate + ":" + window.label();
 
-                notificationRepository.insertReminder(userId, "warning", title, body, reminderKey);
+                int inserted = notificationRepository.insertReminder(userId, "warning", title, body, reminderKey);
+                if (inserted > 0) {
+                    notificationCenterClient.send(userId, title, body, "warning", reminderKey);
+                }
             }
         }
     }

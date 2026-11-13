@@ -101,8 +101,10 @@ public class ExamReminderService {
                 String body  = limit(assessment.getTitle() + subjectContext + " is due on " + dueDate.format(DUE_DATE_FORMAT) + ".", 2000);
                 String reminderKey = "exam:" + assessment.getId() + ":" + dueDate + ":" + window.label();
 
-                notificationRepository.insertExamReminder(userId, title, body, reminderKey);
-                notificationCenterClient.send(userId, title, body, "warning", reminderKey);
+                int inserted = notificationRepository.insertExamReminder(userId, title, body, reminderKey);
+                if (inserted > 0) {
+                    notificationCenterClient.send(userId, title, body, "warning", reminderKey);
+                }
             }
         }
     }

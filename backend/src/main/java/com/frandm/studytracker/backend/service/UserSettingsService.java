@@ -5,6 +5,7 @@ import com.frandm.studytracker.backend.repository.UserSettingsRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -192,7 +193,15 @@ public class UserSettingsService {
             current.setNotificationCenterEnabled(incoming.getNotificationCenterEnabled());
         }
         if (incoming.getNotificationCenterUrl() != null) {
-            current.setNotificationCenterUrl(incoming.getNotificationCenterUrl().trim());
+            String url = incoming.getNotificationCenterUrl().trim();
+            if (!url.isBlank()) {
+                URI parsed = URI.create(url);
+                String scheme = parsed.getScheme();
+                if ((scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) || parsed.getHost() == null || parsed.getUserInfo() != null) {
+                    throw new RuntimeException("NotificationCenter URL must be a valid HTTP or HTTPS URL without embedded credentials");
+                }
+            }
+            current.setNotificationCenterUrl(url);
         }
         if (incoming.getNotificationCenterToken() != null) {
             current.setNotificationCenterToken(incoming.getNotificationCenterToken().trim());
