@@ -1,9 +1,10 @@
 import { ArrowRight, Eye, Server, Code2, Palette } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { getAppUrl } from '../../lib/domain';
+import type { MouseEvent } from 'react';
 
 const HIGHLIGHTS = [
-    { icon: Server, label: 'Self-host with Docker Compose' },
+    { icon: Server, label: 'Self-host with Docker' },
     { icon: Code2, label: 'Open source, MIT licensed' },
     { icon: Palette, label: '8 themes, light and dark' },
 ];
@@ -15,6 +16,15 @@ export function LandingHero() {
     const mockupSrc = isDark ? '/landing/hero-mockup-dark.webp' : '/landing/hero-mockup-light.webp';
     const mockupAlt =
         'StudyZen on a laptop and a phone: the weekly study calendar, the focus timer and the study stats dashboard';
+
+    const handleExploreClick = (event: MouseEvent<HTMLAnchorElement>) => {
+        const target = document.getElementById('gallery');
+        if (!target) return;
+
+        event.preventDefault();
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    };
 
     return (
         <section aria-labelledby="hero-title" className="w-full pt-10 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24">
@@ -47,6 +57,7 @@ export function LandingHero() {
 
                     <a
                         href="#gallery"
+                        onClick={handleExploreClick}
                         className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-card-bg)] px-5 text-sm font-medium text-[var(--app-text)] transition-colors hover:border-[var(--accent-color)] hover:text-[var(--accent-color)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent-color)] sm:w-auto"
                     >
                         <Eye className="h-4 w-4" aria-hidden="true" />
