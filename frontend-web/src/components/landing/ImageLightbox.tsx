@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 interface ImageLightboxProps {
@@ -10,12 +10,21 @@ interface ImageLightboxProps {
 }
 
 export function ImageLightbox({ isOpen, onClose, src, alt, title }: ImageLightboxProps) {
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
+
     useEffect(() => {
         if (!isOpen) return;
+
+        const previouslyFocused = document.activeElement as HTMLElement | null;
+        closeButtonRef.current?.focus();
 
         const handleKeyDown = (event: globalThis.KeyboardEvent) => {
             if (event.key === 'Escape') {
                 onClose();
+            } else if (event.key === 'Tab') {
+                // The close button is the only focusable element, so keep focus on it.
+                event.preventDefault();
+                closeButtonRef.current?.focus();
             }
         };
 
@@ -26,6 +35,7 @@ export function ImageLightbox({ isOpen, onClose, src, alt, title }: ImageLightbo
         return () => {
             document.body.style.overflow = originalOverflow;
             window.removeEventListener('keydown', handleKeyDown);
+            previouslyFocused?.focus();
         };
     }, [isOpen, onClose]);
 
@@ -47,6 +57,7 @@ export function ImageLightbox({ isOpen, onClose, src, alt, title }: ImageLightbo
         >
             <div className="relative flex max-h-[95vh] max-w-[95vw] flex-col items-center justify-center">
                 <button
+                    ref={closeButtonRef}
                     type="button"
                     onClick={onClose}
                     aria-label="Close image preview"

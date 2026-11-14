@@ -2,6 +2,7 @@ import { LandingHeader } from '../components/landing/LandingHeader';
 import { LandingHero } from '../components/landing/LandingHero';
 import { LandingGallery } from '../components/landing/LandingGallery';
 import { LandingFeatures } from '../components/landing/LandingFeatures';
+import { LandingSelfHost } from '../components/landing/LandingSelfHost';
 import { LandingClosingCta } from '../components/landing/LandingClosingCta';
 import { LandingFooter } from '../components/landing/LandingFooter';
 
@@ -13,6 +14,7 @@ export function LandingPage() {
                 <LandingHero />
                 <LandingGallery />
                 <LandingFeatures />
+                <LandingSelfHost />
                 <LandingClosingCta />
             </main>
             <LandingFooter />

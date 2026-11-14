@@ -71,7 +71,7 @@ const SCREENS: GalleryScreen[] = [
 export function LandingGallery() {
     const { colorMode } = useTheme();
     const isDark = colorMode === 'dark';
-    const [selectedId, setSelectedId] = useState<ScreenshotId>('timer');
+    const [selectedId, setSelectedId] = useState<ScreenshotId>('subjects');
     const [isZoomOpen, setIsZoomOpen] = useState(false);
 
     const activeScreen = SCREENS.find((s) => s.id === selectedId) ?? SCREENS[0];
@@ -136,7 +136,7 @@ export function LandingGallery() {
                                     type="button"
                                     role="tab"
                                     aria-selected={isSelected}
-                                    aria-controls={`gallery-panel-${screen.id}`}
+                                    aria-controls={isSelected ? `gallery-panel-${screen.id}` : undefined}
                                     tabIndex={isSelected ? 0 : -1}
                                     onClick={() => setSelectedId(screen.id)}
                                     className={`group flex shrink-0 items-center justify-between rounded-xl border p-3.5 text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)] lg:w-full ${
@@ -198,13 +198,11 @@ export function LandingGallery() {
                                 </div>
                             </div>
 
-                            <div
-                                role="button"
-                                tabIndex={0}
+                            <button
+                                type="button"
                                 onClick={() => setIsZoomOpen(true)}
-                                onKeyDown={(e) => e.key === 'Enter' && setIsZoomOpen(true)}
                                 aria-label={`Click to enlarge ${activeScreen.label} screenshot`}
-                                className="group relative aspect-video w-full cursor-zoom-in overflow-hidden bg-[var(--app-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
+                                className="group relative block aspect-video w-full cursor-zoom-in overflow-hidden bg-[var(--app-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-color)]"
                             >
                                 <img
                                     key={`${activeScreen.id}-${colorMode}`}
@@ -217,7 +215,7 @@ export function LandingGallery() {
                                     <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
                                     Click to enlarge
                                 </div>
-                            </div>
+                            </button>
                         </div>
                     </div>
                 </div>
