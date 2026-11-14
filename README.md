@@ -116,19 +116,21 @@ The root `.env.example` configures the entire stack. Key variables:
 
 | Variable | Description | Default |
 |---|---|---|
-| `DB_NAME` | PostgreSQL database name | `studyzen` |
-| `DB_USER` | PostgreSQL user account | `studyzen_user` |
-| `DB_PASSWORD` | PostgreSQL password (choose a strong value) | `studyzen_secret` |
-| `JWT_SECRET` | Required secret for signing authentication tokens | (placeholder) |
+| `DB_HOST` | Database host | `localhost` |
+| `DB_PORT` | Database port | `5432` |
+| `DB_NAME` | PostgreSQL database name | `studytracker` |
+| `DB_USER` | PostgreSQL user account | `studyzen` |
+| `DB_PASSWORD` | PostgreSQL password (choose a strong value) |  |
+| `JWT_SECRET` | Required secret for signing authentication tokens |  |
 | `FRONTEND_PORT` | Exposed host port for the web frontend | `7777` |
 | `BACKEND_PUBLIC_PORT` | Exposed host port for the backend API | `8082` |
 | `BACKEND_PRIVATE_PORT` | Internal port used by the backend container | `8080` |
 | `FRONTEND_URL` | Public origin of the web client | `http://localhost:7777` |
 | `CORS_ALLOWED_ORIGIN` | Allowed origin for backend CORS requests | `http://localhost:7777` |
 | `COOKIE_SECURE` | Set `true` when behind HTTPS; `false` for local HTTP | `false` |
-| `GOOGLE_CLIENT_ID` | Optional Google OAuth2 client ID | (empty) |
-| `GOOGLE_CLIENT_SECRET` | Optional Google OAuth2 client secret | (empty) |
-| `SMTP_*` | Optional mail delivery configuration for password recovery | (empty) |
+| `GOOGLE_CLIENT_ID` | Optional Google OAuth2 client ID |  |
+| `GOOGLE_CLIENT_SECRET` | Optional Google OAuth2 client secret |  |
+| `SMTP_*` | Optional mail delivery configuration for password recovery |  |
 | `NOTIFICATION_CENTER_ENABLED` | Master switch for per-user NotificationCenter integrations | `false` |
 | `VITE_API_BASE_URL` | Frontend API path prefix (proxied by Nginx) | `/api` |
 
@@ -174,7 +176,7 @@ For standalone backend container deployments, refer to [README-backend.md](READM
 ```text
 StudyZen/
 ├── backend/
-│   ├── src/main/java/com/studyzen/      # Controllers, services, models, security
+│   ├── src/main/java/com/frandm/studytracker/ # Controllers, services, models, security
 │   ├── src/main/resources/db/migration/ # Flyway database migration scripts
 │   └── pom.xml                          # Maven build configuration
 ├── frontend-web/
