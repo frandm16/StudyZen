@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
-export type ScreenshotId = 'timer' | 'subjects' | 'planning' | 'daily' | 'weekly' | 'stats';
+export type ScreenshotId = 'timer' | 'calendar' | 'subjects' | 'stats';
 
 export interface ScreenshotItem {
     id: ScreenshotId;

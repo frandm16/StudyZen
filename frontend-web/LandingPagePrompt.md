@@ -85,20 +85,15 @@ La estructura no exige copiar literalmente los encabezados anteriores ni añadir
 
 En la raíz del repositorio se encontraron estos recursos bajo `images/`:
 
-- `Timer-LightMode.png`
 - `Timer-Running-LightMode.png`
 - `Timer-Running-DarkMode.png`
-- `Daily-LightMode.png`
-- `Daily-DarkMode.png`
-- `Weekly-LightMode.png`
-- `Weekly-DarkMode.png`
-- `Planning-LightMode.png`
-- `Planning-DarkMode.png`
+- `Calendar-LightMode.png`
+- `Calendar-DarkMode.png`
 - `Subjects-LightMode.png`
 - `Subjects-DarkMode.png`
 - `Stats-LightMode.png`
 - `Stats-DarkMode.png`
-- También existen imágenes antiguas bajo `images/old/`; no las uses
+- También existen imágenes antiguas bajo `images/old/` e `images/old-2/`; no las uses
 
 Inspecciona las imágenes antes de decidir cuáles destacar y confirma las rutas existentes en el repositorio. No supongas que los demás archivos de `images/` ya están disponibles públicamente dentro de Vite. Si hace falta incorporar una imagen adicional, hazlo únicamente dentro de `frontend-web/`, verifica su procedencia y añade un texto alternativo que describa la captura sin convertir los datos de ejemplo en claims.
 
@@ -166,7 +161,7 @@ Si aparece un conflicto entre el contenido actual y el brief que no puedas resol
 
 El usuario aprobó el mensaje «la utilidad de StudyZen para organizar el estudio», no una frase de marca definitiva. Escribe copy original en inglés, conciso, concreto y respaldado por las funciones reales. Como orientación de significado, la página puede transmitir que StudyZen reúne el temporizador, las asignaturas, los planes de estudio y el seguimiento del progreso en un espacio. No es obligatorio usar esa frase literalmente.
 
-Las pestañas o controles de la galería pueden nombrar pantallas reales, como **Focus timer**, **Subjects**, **Planning**, **Daily plan**, **Weekly plan** o **Study stats**, si los recursos utilizados están presentes. Elige una cantidad razonable que mantenga la interacción simple en móvil. Si se muestran capturas con variantes claro/oscuro, usa la variante correspondiente al tema activo cuando esté disponible.
+Las pestañas o controles de la galería pueden nombrar pantallas reales, como **Focus timer**, **Study calendar**, **Academic subjects** o **Study stats**, si los recursos utilizados están presentes. Elige una cantidad razonable que mantenga la interacción simple en móvil. Si se muestran capturas con variantes claro/oscuro, usa la variante correspondiente al tema activo cuando esté disponible.
 
 No escribas una secuencia de pasos como si fuera el flujo obligatorio del producto, a menos que el código confirme que es así. No llames «AI planner» a una capacidad disponible: el código de planificación semanal revisado muestra un placeholder de una actualización futura y señala que todavía no está disponible.
 

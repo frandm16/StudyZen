@@ -63,15 +63,15 @@ export function LandingFeatures() {
                                 <Calendar className="h-5 w-5" aria-hidden="true" />
                             </div>
                             <h3 className="mt-4 text-lg font-bold text-[var(--app-text)]">
-                                Multi-scale planning calendars
+                                Unified study calendar
                             </h3>
                             <p className="mt-2 text-sm leading-relaxed text-[var(--app-text-muted)]">
-                                Reconcile high-level monthly deadlines with hour-by-hour daily timelines and weekly workload distributions to avoid exam-week rushes.
+                                Reconcile monthly deadlines with weekly time grids and daily schedules. Track exams, block study sessions, and manage daily to-dos in an integrated planning drawer.
                             </p>
                         </div>
                         <div className="mt-6 flex flex-wrap gap-2 text-xs text-[var(--app-text-muted)]">
-                            <span className="rounded-lg border border-[var(--app-border)] bg-[var(--app-bg)] px-2.5 py-1">Hourly time-blocking</span>
-                            <span className="rounded-lg border border-[var(--app-border)] bg-[var(--app-bg)] px-2.5 py-1">7-day balance</span>
+                            <span className="rounded-lg border border-[var(--app-border)] bg-[var(--app-bg)] px-2.5 py-1">Month, week & day</span>
+                            <span className="rounded-lg border border-[var(--app-border)] bg-[var(--app-bg)] px-2.5 py-1">Planning drawer</span>
                         </div>
                     </div>
 

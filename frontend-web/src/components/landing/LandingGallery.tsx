@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent } from 'react';
-import { Timer, BookOpen, Calendar, CalendarDays, CalendarRange, BarChart3, Maximize2, Monitor } from 'lucide-react';
+import { Timer, BookOpen, Calendar, BarChart3, Maximize2, Monitor } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { ImageLightbox } from './ImageLightbox';
 import type { ScreenshotId } from '../../types/landing';
@@ -31,6 +31,18 @@ const SCREENS: GalleryScreen[] = [
         icon: Timer,
     },
     {
+        id: 'calendar',
+        label: 'Study calendar',
+        role: 'Schedule & milestones',
+        headline: 'Unified calendar for deadlines, study blocks, and tasks',
+        caption: 'Seamlessly toggle between month, week, and day views. Schedule study blocks, track exam milestones, and manage to-dos with an integrated planning drawer.',
+        route: 'studyzen.frandm.dev/calendar',
+        lightSrc: '/landing/Calendar-LightMode.png',
+        darkSrc: '/landing/Calendar-DarkMode.png',
+        alt: 'StudyZen calendar showing scheduled study blocks, deadlines, and planning tools',
+        icon: Calendar,
+    },
+    {
         id: 'subjects',
         label: 'Academic subjects',
         role: 'Coursework hierarchy',
@@ -41,42 +53,6 @@ const SCREENS: GalleryScreen[] = [
         darkSrc: '/landing/Subjects-DarkMode.png',
         alt: 'StudyZen subjects screen showing course progress, topic breakdown, and evaluation records',
         icon: BookOpen,
-    },
-    {
-        id: 'planning',
-        label: 'Planning calendar',
-        role: 'Monthly milestones',
-        headline: 'Term-wide calendar for deadlines and study blocks',
-        caption: 'View upcoming assignment due dates, scheduled exam periods, and allocated study sessions across a unified monthly perspective.',
-        route: 'studyzen.frandm.dev/planner',
-        lightSrc: '/landing/Planning-LightMode.png',
-        darkSrc: '/landing/Planning-DarkMode.png',
-        alt: 'StudyZen planning calendar displaying scheduled study sessions, deadlines, and task checklists',
-        icon: Calendar,
-    },
-    {
-        id: 'daily',
-        label: 'Daily timeline',
-        role: 'Hourly time-blocking',
-        headline: 'Day-by-day scheduling with task priorities',
-        caption: 'Organize your day through an hour-by-hour timeline. Check off targeted study to-dos and adapt scheduled blocks to your actual availability.',
-        route: 'studyzen.frandm.dev/day',
-        lightSrc: '/landing/Daily-LightMode.png',
-        darkSrc: '/landing/Daily-DarkMode.png',
-        alt: 'StudyZen daily view featuring an hourly timeline and a list of daily study goals',
-        icon: CalendarDays,
-    },
-    {
-        id: 'weekly',
-        label: 'Weekly grid',
-        role: 'Workload balance',
-        headline: 'Seven-day distribution of study sessions',
-        caption: 'Distribute study hours across weekdays to ensure balanced preparation without last-minute cramming before major academic deadlines.',
-        route: 'studyzen.frandm.dev/week',
-        lightSrc: '/landing/Weekly-LightMode.png',
-        darkSrc: '/landing/Weekly-DarkMode.png',
-        alt: 'StudyZen weekly planner showing distribution of study sessions across seven days',
-        icon: CalendarRange,
     },
     {
         id: 'stats',

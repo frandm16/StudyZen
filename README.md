@@ -1,69 +1,63 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/header-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="images/header-light.png">
+    <img alt="StudyZen" src="images/header-dark.png" width="100%">
+  </picture>
+</p>
+
 # StudyZen
 
-A self-hosted study platform for planning academic coursework, tracking focus sessions, and reviewing progress over time. Built with React 19, Spring Boot 3, and PostgreSQL.
+A self-hosted study platform for planning academic coursework, tracking focus sessions, and reviewing progress over time.
 
-<p align="center">
-  <img src="images/Timer-Running-DarkMode.png" alt="StudyZen focus timer session" width="100%" />
+<p>
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-6366f1">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white">
+  <img alt="Spring Boot 3" src="https://img.shields.io/badge/Spring%20Boot-3-6db33f?logo=springboot&logoColor=white">
+  <img alt="PostgreSQL 16" src="https://img.shields.io/badge/PostgreSQL-16-4169e1?logo=postgresql&logoColor=white">
+  <img alt="Docker Compose" src="https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker&logoColor=white">
 </p>
 
 ---
 
 ## Overview
 
-StudyZen brings personal study tools together in a single self-hosted web application:
+StudyZen brings your personal study tools together in a single self-hosted web application:
 
-- **Focus Timers**: Pomodoro intervals, countdown, and stopwatch modes with configurable audio signals, session notes, and post-session concentration self-evaluations.
-- **Academic Hierarchy**: Organize study work by academic terms, courses, modules, and topic checklists, with tracking for evaluation weights and recorded grades.
-- **Multi-Scale Planning**: Reconcile monthly exam deadlines with an hour-by-hour daily timeline and weekly workload distribution to avoid exam-week rushes.
-- **Telemetry and History**: Detailed activity records, cumulative study hours, subject distribution charts, and daily focus trends over time.
-- **Personalization**: Multiple curated color palettes with real-time CSS variable bindings, dark and light modes, and customizable timer sounds.
+- **Focus Timers**: Pomodoro, countdown, and stopwatch modes with configurable audio signals, session notes, and post-session concentration ratings.
+- **Academic Hierarchy**: Organize work by terms, courses, modules, and topic checklists, with evaluation weights and recorded grades.
+- **Unified Study Calendar**: Schedule study sessions, track exam deadlines, and plan daily goals across month, week, and day views with an integrated planning drawer.
+- **Statistics and History**: Activity records, cumulative study hours, subject distribution charts, and daily focus trends over time.
+- **Personalization**: Curated color palettes with real-time CSS variable bindings, dark and light modes, and customizable timer sounds.
 
----
+## Screenshots
 
-## Application Views
-
-### Coursework and Subject Hierarchy
-
-Group coursework across terms, courses, and individual topic lists. Track upcoming assessments, weight percentages, and recorded grades in one structured place.
+Timer, subjects, calendar, and stats, available in both dark and light mode.
 
 <p align="center">
-  <img src="images/Subjects-DarkMode.png" alt="StudyZen subjects and topic hierarchy" width="100%" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/Timer-Running-DarkMode.png">
+    <source media="(prefers-color-scheme: light)" srcset="images/Timer-Running-LightMode.png">
+    <img alt="StudyZen focus timer session" src="images/Timer-Running-DarkMode.png" width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/Subjects-DarkMode.png">
+    <source media="(prefers-color-scheme: light)" srcset="images/Subjects-LightMode.png">
+    <img alt="StudyZen subjects and topic hierarchy" src="images/Subjects-DarkMode.png" width="49%">
+  </picture>
 </p>
-
-### Planning Calendar
-
-A unified monthly perspective for mapping study sessions, assignment deadlines, and exam milestones.
-
 <p align="center">
-  <img src="images/Planning-DarkMode.png" alt="StudyZen planning calendar" width="100%" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/Calendar-DarkMode.png">
+    <source media="(prefers-color-scheme: light)" srcset="images/Calendar-LightMode.png">
+    <img alt="StudyZen calendar and schedule planner" src="images/Calendar-DarkMode.png" width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/Stats-DarkMode.png">
+    <source media="(prefers-color-scheme: light)" srcset="images/Stats-LightMode.png">
+    <img alt="StudyZen analytics and study stats" src="images/Stats-DarkMode.png" width="49%">
+  </picture>
 </p>
-
-### Daily Timeline and Weekly Workload
-
-Balance preparation across seven days and execute each day through an hourly time-blocked schedule with prioritized study goals.
-
-<table>
-  <tr>
-    <td width="50%">
-      <p align="center"><strong>Daily Timeline</strong></p>
-      <img src="images/Daily-DarkMode.png" alt="StudyZen daily timeline schedule" width="100%" />
-    </td>
-    <td width="50%">
-      <p align="center"><strong>Weekly Distribution</strong></p>
-      <img src="images/Weekly-DarkMode.png" alt="StudyZen weekly planner view" width="100%" />
-    </td>
-  </tr>
-</table>
-
-### Study Analytics and Performance
-
-Inspect total hours logged per course, review past session notes, and monitor concentration ratings across weeks and months.
-
-<p align="center">
-  <img src="images/Stats-DarkMode.png" alt="StudyZen analytics and study stats" width="100%" />
-</p>
-
----
 
 ## Architecture
 
@@ -73,8 +67,6 @@ Inspect total hours logged per course, review past session notes, and monitor co
 | **Backend** | Java 21, Spring Boot 3, Spring Security (JWT, OAuth2), Hibernate / JPA |
 | **Database** | PostgreSQL 16, Flyway database migrations |
 | **Orchestration** | Docker Compose, multi-stage Docker builds, Nginx reverse proxy |
-
----
 
 ## Quickstart with Docker Compose
 
@@ -108,7 +100,7 @@ Inspect total hours logged per course, review past session notes, and monitor co
    docker compose up -d --build
    ```
 
-4. Access the web interface at `http://localhost:7777`.
+4. Open the web interface at `http://localhost:7777`.
 
 The frontend container proxies `/api` and authentication endpoints internally to the Spring Boot backend. The backend is also directly reachable at `http://localhost:8082/api`.
 
@@ -117,8 +109,6 @@ The frontend container proxies `/api` and authentication endpoints internally to
 - Inspect service logs: `docker compose logs -f`
 - Stop the stack without losing data: `docker compose down`
 - Stop the stack and remove persistent data: `docker compose down -v`
-
----
 
 ## Environment Configuration
 
@@ -144,9 +134,9 @@ The root `.env.example` configures the entire stack. Key variables:
 
 Never commit the `.env` file with production secrets to version control.
 
----
-
 ## Local Development
+
+> **Note:** the Vite dev server uses port `7777`, the same port as the Docker frontend. Stop the Docker stack (`docker compose down`) before running both.
 
 ### Frontend (`frontend-web/`)
 
@@ -178,8 +168,6 @@ mvn -pl backend -am spring-boot:run
 ```
 
 For standalone backend container deployments, refer to [README-backend.md](README-backend.md).
-
----
 
 ## Project Structure
 
