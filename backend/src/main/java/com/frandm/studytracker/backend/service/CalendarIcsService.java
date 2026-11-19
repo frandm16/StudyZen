@@ -6,17 +6,21 @@ import com.frandm.studytracker.backend.model.ScheduledSession;
 import com.frandm.studytracker.backend.model.StudySession;
 import com.frandm.studytracker.backend.model.Subject;
 import com.frandm.studytracker.backend.model.Topic;
+import com.frandm.studytracker.backend.model.User;
 import com.frandm.studytracker.backend.repository.AssessmentRepository;
 import com.frandm.studytracker.backend.repository.DeadlineRepository;
 import com.frandm.studytracker.backend.repository.ScheduledSessionRepository;
 import com.frandm.studytracker.backend.repository.StudySessionRepository;
 import com.frandm.studytracker.backend.repository.SubjectRepository;
 import com.frandm.studytracker.backend.repository.TopicRepository;
+import com.frandm.studytracker.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -34,8 +38,10 @@ public class CalendarIcsService {
 
     private static final DateTimeFormatter UTC_DATETIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter LOCAL_DATETIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
     private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC);
+            DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final ScheduledSessionRepository scheduledSessionRepository;
     private final StudySessionRepository studySessionRepository;
@@ -43,6 +49,7 @@ public class CalendarIcsService {
     private final AssessmentRepository assessmentRepository;
     private final SubjectRepository subjectRepository;
     private final TopicRepository topicRepository;
+    private final UserRepository userRepository;
 
     public CalendarIcsService(
             ScheduledSessionRepository scheduledSessionRepository,
@@ -50,7 +57,8 @@ public class CalendarIcsService {
             DeadlineRepository deadlineRepository,
             AssessmentRepository assessmentRepository,
             SubjectRepository subjectRepository,
-            TopicRepository topicRepository
+            TopicRepository topicRepository,
+            UserRepository userRepository
     ) {
         this.scheduledSessionRepository = scheduledSessionRepository;
         this.studySessionRepository = studySessionRepository;
@@ -58,6 +66,7 @@ public class CalendarIcsService {
         this.assessmentRepository = assessmentRepository;
         this.subjectRepository = subjectRepository;
         this.topicRepository = topicRepository;
+        this.userRepository = userRepository;
     }
 
     public String generateCalendarIcs(UUID userId, Long filterSubjectId, Set<String> layers) {
@@ -74,6 +83,9 @@ public class CalendarIcsService {
             calendarName = "StudyZen - " + subjectMap.get(filterSubjectId).getName();
         }
 
+        User user = userRepository != null ? userRepository.findById(userId).orElse(null) : null;
+        String userTimezone = user != null ? user.getTimezone() : null;
+
         StringBuilder ics = new StringBuilder();
         appendFoldedLine(ics, "BEGIN:VCALENDAR");
         appendFoldedLine(ics, "VERSION:2.0");
@@ -81,7 +93,9 @@ public class CalendarIcsService {
         appendFoldedLine(ics, "CALSCALE:GREGORIAN");
         appendFoldedLine(ics, "METHOD:PUBLISH");
         appendFoldedLine(ics, "X-WR-CALNAME:" + escapeIcsText(calendarName));
-        appendFoldedLine(ics, "X-WR-TIMEZONE:UTC");
+        if (userTimezone != null && !userTimezone.isBlank() && !userTimezone.equalsIgnoreCase("UTC")) {
+            appendFoldedLine(ics, "X-WR-TIMEZONE:" + escapeIcsText(userTimezone.trim()));
+        }
 
         String nowFormatted = formatUtcDateTime(Instant.now());
 
@@ -108,8 +122,8 @@ public class CalendarIcsService {
                 appendFoldedLine(ics, "BEGIN:VEVENT");
                 appendFoldedLine(ics, "UID:studyzen-scheduled-" + session.getId() + "@studyzen.app");
                 appendFoldedLine(ics, "DTSTAMP:" + nowFormatted);
-                appendFoldedLine(ics, "DTSTART:" + formatOffsetDateTime(session.getStartsAt()));
-                appendFoldedLine(ics, "DTEND:" + formatOffsetDateTime(session.getEndsAt()));
+                appendFoldedLine(ics, "DTSTART:" + formatLocalDateTime(session.getStartsAt()));
+                appendFoldedLine(ics, "DTEND:" + formatLocalDateTime(session.getEndsAt()));
                 appendFoldedLine(ics, "SUMMARY:" + escapeIcsText("[" + subjectName + "] " + title));
                 appendFoldedLine(ics, "DESCRIPTION:" + escapeIcsText(
                         (topicName.isBlank() ? "" : "Topic: " + topicName + "\\n") + "Subject: " + subjectName
@@ -138,8 +152,8 @@ public class CalendarIcsService {
                 appendFoldedLine(ics, "BEGIN:VEVENT");
                 appendFoldedLine(ics, "UID:studyzen-session-" + session.getId() + "@studyzen.app");
                 appendFoldedLine(ics, "DTSTAMP:" + nowFormatted);
-                appendFoldedLine(ics, "DTSTART:" + formatOffsetDateTime(session.getStartedAt()));
-                appendFoldedLine(ics, "DTEND:" + formatOffsetDateTime(session.getEndedAt()));
+                appendFoldedLine(ics, "DTSTART:" + formatLocalDateTime(session.getStartedAt()));
+                appendFoldedLine(ics, "DTEND:" + formatLocalDateTime(session.getEndedAt()));
                 appendFoldedLine(ics, "SUMMARY:" + escapeIcsText("✓ [" + subjectName + "] " + title));
                 appendFoldedLine(ics, "DESCRIPTION:" + escapeIcsText(
                         "Studied: " + session.getTotalMinutes() + " min\\n" +
@@ -169,8 +183,8 @@ public class CalendarIcsService {
                     appendFoldedLine(ics, "DTSTART;VALUE=DATE:" + formatDate(deadline.getDueAt()));
                     appendFoldedLine(ics, "DTEND;VALUE=DATE:" + formatDate(deadline.getDueAt().plusDays(1)));
                 } else {
-                    appendFoldedLine(ics, "DTSTART:" + formatOffsetDateTime(deadline.getDueAt()));
-                    appendFoldedLine(ics, "DTEND:" + formatOffsetDateTime(deadline.getDueAt().plusMinutes(30)));
+                    appendFoldedLine(ics, "DTSTART:" + formatLocalDateTime(deadline.getDueAt()));
+                    appendFoldedLine(ics, "DTEND:" + formatLocalDateTime(deadline.getDueAt().plusMinutes(30)));
                 }
 
                 String prefix = deadline.isCompleted() ? "✓ [Done] " : "Due: ";
@@ -206,8 +220,15 @@ public class CalendarIcsService {
                 appendFoldedLine(ics, "BEGIN:VEVENT");
                 appendFoldedLine(ics, "UID:studyzen-assessment-" + assessment.getId() + "@studyzen.app");
                 appendFoldedLine(ics, "DTSTAMP:" + nowFormatted);
-                appendFoldedLine(ics, "DTSTART:" + formatOffsetDateTime(assessment.getDueAt()));
-                appendFoldedLine(ics, "DTEND:" + formatOffsetDateTime(assessment.getDueAt().plusHours(2)));
+
+                if (assessment.isAllDay()) {
+                    appendFoldedLine(ics, "DTSTART;VALUE=DATE:" + formatDate(assessment.getDueAt()));
+                    appendFoldedLine(ics, "DTEND;VALUE=DATE:" + formatDate(assessment.getDueAt().plusDays(1)));
+                } else {
+                    appendFoldedLine(ics, "DTSTART:" + formatLocalDateTime(assessment.getDueAt()));
+                    appendFoldedLine(ics, "DTEND:" + formatLocalDateTime(assessment.getDueAt().plusHours(2)));
+                }
+
                 appendFoldedLine(ics, "SUMMARY:" + escapeIcsText("Exam: " + assessment.getTitle() + " (" + subjectName + ")"));
                 appendFoldedLine(ics, "DESCRIPTION:" + escapeIcsText(
                         "Type: " + assessment.getType() + "\\n" +
@@ -224,11 +245,11 @@ public class CalendarIcsService {
         return ics.toString();
     }
 
-    private String formatOffsetDateTime(OffsetDateTime dateTime) {
+    private String formatLocalDateTime(OffsetDateTime dateTime) {
         if (dateTime == null) {
-            return formatUtcDateTime(Instant.now());
+            return LocalDateTime.now().format(LOCAL_DATETIME_FORMATTER);
         }
-        return UTC_DATETIME_FORMATTER.format(dateTime.toInstant());
+        return dateTime.toLocalDateTime().format(LOCAL_DATETIME_FORMATTER);
     }
 
     private String formatUtcDateTime(Instant instant) {
@@ -237,9 +258,9 @@ public class CalendarIcsService {
 
     private String formatDate(OffsetDateTime dateTime) {
         if (dateTime == null) {
-            return DATE_FORMATTER.format(Instant.now());
+            return LocalDate.now().format(DATE_FORMATTER);
         }
-        return DATE_FORMATTER.format(dateTime.toInstant());
+        return dateTime.toLocalDate().format(DATE_FORMATTER);
     }
 
     private String escapeIcsText(String input) {
