@@ -2,11 +2,14 @@ package com.frandm.studytracker.backend.service;
 
 import com.frandm.studytracker.backend.model.Assessment;
 import com.frandm.studytracker.backend.model.Subject;
+import com.frandm.studytracker.backend.model.User;
 import com.frandm.studytracker.backend.model.UserSettings;
 import com.frandm.studytracker.backend.repository.AssessmentRepository;
 import com.frandm.studytracker.backend.repository.NotificationRepository;
 import com.frandm.studytracker.backend.repository.SubjectRepository;
+import com.frandm.studytracker.backend.repository.UserRepository;
 import com.frandm.studytracker.backend.repository.UserSettingsRepository;
+import com.frandm.studytracker.backend.util.DateTimeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +41,7 @@ public class ExamReminderService {
     private final SubjectRepository subjectRepository;
     private final NotificationRepository notificationRepository;
     private final UserSettingsRepository userSettingsRepository;
+    private final UserRepository userRepository;
     private final NotificationCenterClient notificationCenterClient;
     private final Clock clock;
 
@@ -45,8 +50,9 @@ public class ExamReminderService {
                                SubjectRepository subjectRepository,
                                NotificationRepository notificationRepository,
                                UserSettingsRepository userSettingsRepository,
+                               UserRepository userRepository,
                                NotificationCenterClient notificationCenterClient) {
-        this(assessmentRepository, subjectRepository, notificationRepository, userSettingsRepository, notificationCenterClient, Clock.systemUTC());
+        this(assessmentRepository, subjectRepository, notificationRepository, userSettingsRepository, userRepository, notificationCenterClient, Clock.systemUTC());
     }
 
     ExamReminderService(AssessmentRepository assessmentRepository,
@@ -55,12 +61,40 @@ public class ExamReminderService {
                         UserSettingsRepository userSettingsRepository,
                         NotificationCenterClient notificationCenterClient,
                         Clock clock) {
+        this(assessmentRepository, subjectRepository, notificationRepository, userSettingsRepository, null, notificationCenterClient, clock);
+    }
+
+    ExamReminderService(AssessmentRepository assessmentRepository,
+                        SubjectRepository subjectRepository,
+                        NotificationRepository notificationRepository,
+                        UserSettingsRepository userSettingsRepository,
+                        UserRepository userRepository,
+                        NotificationCenterClient notificationCenterClient,
+                        Clock clock) {
         this.assessmentRepository = assessmentRepository;
         this.subjectRepository = subjectRepository;
         this.notificationRepository = notificationRepository;
         this.userSettingsRepository = userSettingsRepository;
+        this.userRepository = userRepository;
         this.notificationCenterClient = notificationCenterClient;
         this.clock = clock;
+    }
+
+    private ZoneId getUserZone(UUID userId) {
+        if (userRepository == null || userId == null) {
+            return clock.getZone();
+        }
+        return userRepository.findById(userId)
+                .map(User::getTimezone)
+                .filter(tz -> tz != null && !tz.isBlank())
+                .map(tz -> {
+                    try {
+                        return ZoneId.of(tz.trim());
+                    } catch (Exception e) {
+                        return clock.getZone();
+                    }
+                })
+                .orElse(clock.getZone());
     }
 
     private String limit(String value, int maximumLength) {
@@ -93,12 +127,16 @@ public class ExamReminderService {
                     continue;
                 }
 
-                LocalDate dueDate = assessment.getDueAt().toInstant().atZone(clock.getZone()).toLocalDate();
+                ZoneId userZone = getUserZone(userId);
+                LocalDate dueDate = assessment.getDueAt().toInstant().atZone(userZone).toLocalDate();
                 Subject subject = subjectRepository.findById(assessment.getSubjectId()).orElse(null);
                 String subjectContext = subject == null ? "" : " for " + subject.getName();
 
-                String title = limit("Upcoming exam: " + assessment.getTitle(), 200);
-                String body  = limit(assessment.getTitle() + subjectContext + " is due on " + dueDate.format(DUE_DATE_FORMAT) + ".", 2000);
+                String relativeDue = DateTimeUtils.formatRelativeDue(now, assessment.getDueAt(), assessment.isAllDay(), userZone);
+                String formattedDueDate = DateTimeUtils.formatDueDate(assessment.getDueAt(), assessment.isAllDay(), userZone);
+
+                String title = limit("Upcoming exam: " + assessment.getTitle() + " (" + relativeDue + ")", 200);
+                String body  = limit(assessment.getTitle() + subjectContext + ". Due date: " + formattedDueDate + " (" + relativeDue + ").", 2000);
                 String reminderKey = "exam:" + assessment.getId() + ":" + dueDate + ":" + window.label();
 
                 int inserted = notificationRepository.insertExamReminder(userId, title, body, reminderKey);

@@ -2,11 +2,14 @@ package com.frandm.studytracker.backend.service;
 
 import com.frandm.studytracker.backend.model.Deadline;
 import com.frandm.studytracker.backend.model.Subject;
+import com.frandm.studytracker.backend.model.User;
 import com.frandm.studytracker.backend.model.UserSettings;
 import com.frandm.studytracker.backend.repository.DeadlineRepository;
 import com.frandm.studytracker.backend.repository.NotificationRepository;
 import com.frandm.studytracker.backend.repository.SubjectRepository;
+import com.frandm.studytracker.backend.repository.UserRepository;
 import com.frandm.studytracker.backend.repository.UserSettingsRepository;
+import com.frandm.studytracker.backend.util.DateTimeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +41,7 @@ public class DeadlineReminderService {
     private final SubjectRepository subjectRepository;
     private final NotificationRepository notificationRepository;
     private final UserSettingsRepository userSettingsRepository;
+    private final UserRepository userRepository;
     private final NotificationCenterClient notificationCenterClient;
     private final Clock clock;
 
@@ -45,8 +50,9 @@ public class DeadlineReminderService {
                                    SubjectRepository subjectRepository,
                                    NotificationRepository notificationRepository,
                                    UserSettingsRepository userSettingsRepository,
+                                   UserRepository userRepository,
                                    NotificationCenterClient notificationCenterClient) {
-        this(deadlineRepository, subjectRepository, notificationRepository, userSettingsRepository, notificationCenterClient, Clock.systemUTC());
+        this(deadlineRepository, subjectRepository, notificationRepository, userSettingsRepository, userRepository, notificationCenterClient, Clock.systemUTC());
     }
 
     DeadlineReminderService(DeadlineRepository deadlineRepository,
@@ -55,12 +61,40 @@ public class DeadlineReminderService {
                             UserSettingsRepository userSettingsRepository,
                             NotificationCenterClient notificationCenterClient,
                             Clock clock) {
+        this(deadlineRepository, subjectRepository, notificationRepository, userSettingsRepository, null, notificationCenterClient, clock);
+    }
+
+    DeadlineReminderService(DeadlineRepository deadlineRepository,
+                            SubjectRepository subjectRepository,
+                            NotificationRepository notificationRepository,
+                            UserSettingsRepository userSettingsRepository,
+                            UserRepository userRepository,
+                            NotificationCenterClient notificationCenterClient,
+                            Clock clock) {
         this.deadlineRepository = deadlineRepository;
         this.subjectRepository = subjectRepository;
         this.notificationRepository = notificationRepository;
         this.userSettingsRepository = userSettingsRepository;
+        this.userRepository = userRepository;
         this.notificationCenterClient = notificationCenterClient;
         this.clock = clock;
+    }
+
+    private ZoneId getUserZone(UUID userId) {
+        if (userRepository == null || userId == null) {
+            return clock.getZone();
+        }
+        return userRepository.findById(userId)
+                .map(User::getTimezone)
+                .filter(tz -> tz != null && !tz.isBlank())
+                .map(tz -> {
+                    try {
+                        return ZoneId.of(tz.trim());
+                    } catch (Exception e) {
+                        return clock.getZone();
+                    }
+                })
+                .orElse(clock.getZone());
     }
 
     private String limit(String value, int max) {
@@ -93,7 +127,8 @@ public class DeadlineReminderService {
                     continue;
                 }
 
-                LocalDate dueDate = deadline.getDueAt().toInstant().atZone(clock.getZone()).toLocalDate();
+                ZoneId userZone = getUserZone(userId);
+                LocalDate dueDate = deadline.getDueAt().toInstant().atZone(userZone).toLocalDate();
                 String subjectContext = "";
                 if (deadline.getSubjectId() != null) {
                     Subject subject = subjectRepository.findById(deadline.getSubjectId()).orElse(null);
@@ -102,8 +137,11 @@ public class DeadlineReminderService {
                     }
                 }
 
-                String title = limit("Upcoming deadline: " + deadline.getTitle(), 200);
-                String body  = limit(deadline.getTitle() + subjectContext + " is due on " + dueDate.format(DUE_DATE_FORMAT) + ".", 2000);
+                String relativeDue = DateTimeUtils.formatRelativeDue(now, deadline.getDueAt(), deadline.isAllDay(), userZone);
+                String formattedDueDate = DateTimeUtils.formatDueDate(deadline.getDueAt(), deadline.isAllDay(), userZone);
+
+                String title = limit("Upcoming deadline: " + deadline.getTitle() + " (" + relativeDue + ")", 200);
+                String body  = limit(deadline.getTitle() + subjectContext + ". Due date: " + formattedDueDate + " (" + relativeDue + ").", 2000);
                 String reminderKey = "deadline:" + deadline.getId() + ":" + dueDate + ":" + window.label();
 
                 int inserted = notificationRepository.insertReminder(userId, "warning", title, body, reminderKey);
